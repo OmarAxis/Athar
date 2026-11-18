@@ -234,3 +234,11 @@ def test_school_graph_and_printable_report_are_served(client):
     assert client.get("/learners/nope/report").status_code == 400
     home = client.get("/").text
     assert "viewSchool" in home and "mapSvg" in home
+
+
+def test_a_run_uses_a_model_the_local_program_really_offers():
+    from meska_brain.web.app import _usable_model
+    assert _usable_model(["qwen3.5-9b", "llama-3"], "qwen3.5-9b") == "qwen3.5-9b"
+    assert _usable_model(["text-embedding-x", "llama-3", "qwen/qwen3.8-27b"], "qwen3.5-9b") == "qwen/qwen3.8-27b"
+    assert _usable_model(["text-embedding-x", "llama-3"], "qwen3.5-9b") == "llama-3"
+    assert _usable_model([], "qwen3.5-9b") == "qwen3.5-9b"          # nothing listed: say what was configured

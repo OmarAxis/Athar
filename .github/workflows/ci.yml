@@ -55,9 +55,9 @@ jobs:
       - name: Seed, build the presenting state, and write a report (no model)
         run: |
           uv run meska story
-          uv run meska report A-17
+          uv run meska report --all
           uv run meska export-graph
-          test -s reports/A-17.html && test -s exports/school.graphml
+          test -n "$(ls reports/*.html)" && test -s exports/school.graphml
       - name: The teacher app starts and answers
         run: |
           uv run meska demo &
@@ -67,5 +67,6 @@ jobs:
             sleep 1
           done
           curl -sf http://127.0.0.1:8765/api/overview | grep -q '"learners"'
-          curl -sf http://127.0.0.1:8765/ | grep -q "Meska Brain"
+          curl -sf http://127.0.0.1:8765/ | grep -q "Athar"
+          curl -sf http://127.0.0.1:8765/static/ar.json | grep -q '"exact"'
           curl -sf http://127.0.0.1:8765/api/school/graph | grep -q '"nodes"'

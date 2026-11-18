@@ -90,7 +90,7 @@ Who does what:
 | `src/meska_brain/synth.py` | Synthetic cohort and sample documents |
 | `src/meska_brain/evals.py` | The evaluation set that writes `EVALS.md` |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 314 tests, no model needed |
+| `tests/` | 316 tests, no model needed |
 
 ## Commands
 

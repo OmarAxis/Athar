@@ -73,6 +73,37 @@ def find_model(models_dir: Path) -> Path | None:
     return max(files, key=lambda p: p.stat().st_size) if files else None
 
 
+# Model programs a person may already have running on this computer, and where they listen.
+LOCAL_SERVERS = (("LM Studio", "http://127.0.0.1:1234/v1"), ("Ollama", "http://127.0.0.1:11434/v1"))
+
+
+def pick_model(ids: list[str]) -> str | None:
+    """Which of a server's models to use: the one the package is tested with if it is there, then any
+    Qwen, then the first. Embedding models cannot chat and are left out."""
+    chat = [i for i in ids if isinstance(i, str) and "embed" not in i.lower()]
+    for wanted in (lambda i: i.lower() == MODEL_NAME, lambda i: MODEL_NAME in i.lower() and "uncensored" not in i.lower(),
+                   lambda i: "qwen" in i.lower() and "uncensored" not in i.lower()):
+        found = next((i for i in chat if wanted(i)), None)
+        if found:
+            return found
+    return chat[0] if chat else None
+
+
+def find_local_server(timeout: float = 1.5) -> tuple[str, str, str] | None:
+    """(name, address, model) of a model program already running on this computer, or None.
+    Only this computer is asked: nothing leaves it."""
+    for name, url in LOCAL_SERVERS:
+        try:
+            with urllib.request.urlopen(url + "/models", timeout=timeout) as reply:
+                listed = json.loads(reply.read().decode("utf-8", "replace"))
+        except (urllib.error.URLError, OSError, ValueError):
+            continue
+        model = pick_model([m.get("id") for m in listed.get("data") or [] if isinstance(m, dict)])
+        if model:
+            return name, url, model
+    return None
+
+
 def port_is_free(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
@@ -116,7 +147,8 @@ def memory_gb() -> float | None:
         return None
 
 
-def child_env(root: Path, settings: dict[str, str], app_port: int, runner_url: str | None) -> dict[str, str]:
+def child_env(root: Path, settings: dict[str, str], app_port: int, runner_url: str | None,
+              model_name: str = MODEL_NAME) -> dict[str, str]:
     """The environment for the app. The person's own Python settings are removed so that only the
     Python and the libraries inside the package are used. No curriculum pack is named here: each
     learner in the data carries the pack it was generated on."""
@@ -138,7 +170,7 @@ def child_env(root: Path, settings: dict[str, str], app_port: int, runner_url: s
         "DO_NOT_TRACK": "1",
     })
     if runner_url:
-        env.update({"MESKA_LLM_BASE_URL": runner_url, "MESKA_LLM_MODEL": MODEL_NAME,
+        env.update({"MESKA_LLM_BASE_URL": runner_url, "MESKA_LLM_MODEL": model_name,
                     "MESKA_LLM_API_KEY": "local", "MESKA_LLM_REASONING": "default"})
     for name, value in settings.items():
         if name != "MESKA_WEB_PORT":
@@ -250,12 +282,16 @@ def main(argv: list[str]) -> int:
         print("  First start: the synthetic school has been set up in the data folder.")
     settings = read_settings(root / "settings.txt")
 
-    runner, runner_url = None, None
+    runner, runner_url, model_name = None, None, MODEL_NAME
     model = find_model(root / "models")
     if "MESKA_LLM_BASE_URL" in settings:
         print(f"  Model: the address in settings.txt ({settings['MESKA_LLM_BASE_URL']}).")
+    elif model is None and (found := find_local_server()):
+        _, runner_url, model_name = found
+        print(f"  Model: {model_name}, from {found[0]}, which is running on this computer.")
+        print("  Keep it running while you use the agent. To choose another of its models, use the Agent page.")
     elif model is None:
-        print("  No model file in the models folder, so no model runs on this computer.")
+        print("  No model file in the models folder, and no LM Studio or Ollama running on this computer.")
         print("  You can still use everything that needs no model (maps, review, reports).")
         print("  To get the model: run \"Download the model\". To use a model on the internet instead:")
         print("  open the Agent page, then \"Cloud models\", and add a key.")
@@ -279,7 +315,7 @@ def main(argv: list[str]) -> int:
     python = root / "runtime" / "python" / "python.exe"
     log = open(root / "logs" / "app.log", "w", encoding="utf-8", errors="replace")  # noqa: SIM115
     app = subprocess.Popen([str(python), "-s", "-m", "meska_brain.cli", "serve"], cwd=root / "app",
-                           env=child_env(root, settings, app_port, runner_url), stdout=log,
+                           env=child_env(root, settings, app_port, runner_url, model_name), stdout=log,
                            stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
     try:
         if not wait_until(url + "/api/learners", app, 120):

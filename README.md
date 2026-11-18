@@ -30,14 +30,24 @@ Everything Meska Brain had is still here: the graph engine that reaches the conc
 
 ## Run it
 
+The full guide, with every step, is [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md)). In short:
+
+**Windows, no installing.** Download `Athar-windows.zip` from the Releases page, extract it, double-click **Start Athar**.
+
+**From the source.**
+
 ```
-uv sync --extra dev
+uv sync
 uv run meska demo
 ```
 
 Open http://127.0.0.1:8765. The first run builds the synthetic school.
 
-The agent needs a model. The default is `qwen3.5-9b` on an OpenAI-compatible endpoint at `http://localhost:1234/v1` (LM Studio). Everything except the Agent page works without a model.
+**The model.** Only the Agent page needs one. Three ways, pick any:
+
+- **LM Studio or Ollama on your computer.** Switch its server on. Athar finds it and uses a model it offers.
+- **Your own OpenAI or Claude key.** Paste it on the Agent page under "Cloud models". It is kept in memory only.
+- **The model inside the Windows package.** Run "Download the model" once (5.2 GB).
 
 To see findings waiting for a decision without running a model:
 
@@ -102,7 +112,7 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 314 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **Tested by the authors only.** 316 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
 - **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for the original Meska Brain cohort (`uv run meska seed --pack generic-maths`), and `meska eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.

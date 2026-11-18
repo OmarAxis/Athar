@@ -221,3 +221,16 @@ def test_the_package_documents_have_no_dashes_and_no_key():
         text = (PACKAGING / "files" / name).read_text(encoding="utf-8")
         assert "\u2014" not in text and "\u2013" not in text
         assert "sk-" not in text
+
+
+def test_the_launcher_picks_a_chat_model_from_a_local_server(tmp_path, monkeypatch):
+    """With no model file, a model program already running on this computer is used as it is."""
+    assert launch.pick_model(["text-embedding-nomic", "qwen/qwen3.8-27b", "qwen3.5-9b"]) == "qwen3.5-9b"
+    assert launch.pick_model(["text-embedding-nomic", "llama-3", "qwen3.5-9b-uncensored-x", "qwen/qwen3.8-27b"]) == "qwen/qwen3.8-27b"
+    assert launch.pick_model(["text-embedding-nomic", "llama-3"]) == "llama-3"
+    assert launch.pick_model(["text-embedding-nomic"]) is None and launch.pick_model([]) is None
+    assert all(url.startswith("http://127.0.0.1:") for _, url in launch.LOCAL_SERVERS)      # this computer only
+    monkeypatch.setattr(launch, "LOCAL_SERVERS", (("Nothing", "http://127.0.0.1:9/v1"),))
+    assert launch.find_local_server(timeout=0.3) is None
+    env = launch.child_env(tmp_path, {}, 8780, "http://127.0.0.1:1234/v1", "llama-3")
+    assert env["MESKA_LLM_MODEL"] == "llama-3" and env["MESKA_LLM_BASE_URL"] == "http://127.0.0.1:1234/v1"
