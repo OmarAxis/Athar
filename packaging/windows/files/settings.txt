@@ -7,6 +7,8 @@
 # open "Cloud models", and paste your OpenAI or Claude key there. That key is kept in memory
 # only and is forgotten when Athar stops.
 #
+# If LM Studio or Ollama is running on this computer, Athar finds it by itself. No setting needed.
+#
 # The lines below are for when you want the key remembered, or want another provider.
 # A key written here is stored on this computer as plain text. Do not share this file.
 

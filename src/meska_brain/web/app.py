@@ -541,6 +541,14 @@ def start_run(body: RunRequest, request: Request) -> dict:
         if not _MODEL_ID.fullmatch(body.model):
             raise ValueError("That model id has characters a model id cannot have.")
         task["model"] = body.model
+    elif not body.provider or body.provider == "local":
+        try:
+            from ..agent import llm
+            picked = _usable_model(llm.list_models(), get_settings().llm_model)
+            if picked != get_settings().llm_model:
+                task["model"] = picked
+        except Exception:  # noqa: BLE001, S110 - the endpoint being off is reported by the run itself
+            pass
     if body.provider and body.provider != "local":
         from ..agent import llm
         if body.provider not in llm.PROVIDERS:
@@ -549,6 +557,20 @@ def start_run(body: RunRequest, request: Request) -> dict:
             raise ValueError(f"No key for {llm.PROVIDERS[body.provider].label}. Add one on the Agent page first.")
         task["which_model"] = body.provider
     return _runner().start(task)
+
+
+def _usable_model(offered: list[str], configured: str) -> str:
+    """The model a run uses when the teacher did not pick one. The configured model if the local program
+    offers it. Otherwise one it does offer, so a person with LM Studio and any model loaded can start at once."""
+    if configured in offered or not offered:
+        return configured
+    chat = [m for m in offered if "embed" not in m.lower()]
+    for wanted in (lambda m: configured in m.lower() and "uncensored" not in m.lower(),
+                   lambda m: "qwen" in m.lower() and "uncensored" not in m.lower()):
+        found = next((m for m in chat if wanted(m)), None)
+        if found:
+            return found
+    return chat[0] if chat else configured
 
 
 @app.get("/api/models")
@@ -560,7 +582,8 @@ def models() -> dict:
         found, problem = llm.list_models(), None
     except Exception as exc:  # noqa: BLE001 - the endpoint being off must not break the page
         found, problem = [], f"The model endpoint at {settings.llm_base_url} did not answer ({type(exc).__name__})."
-    return {"default": settings.llm_model, "models": found, "endpoint": settings.llm_base_url, "problem": problem,
+    return {"default": _usable_model(found, settings.llm_model), "models": found, "endpoint": settings.llm_base_url,
+            "problem": problem,
             "providers": _providers(found, problem)}
 
 

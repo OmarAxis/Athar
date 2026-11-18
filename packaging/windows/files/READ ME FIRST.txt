@@ -66,6 +66,9 @@ computer. Nothing leaves the computer.
 
 Without the model (the smaller zip), choose one:
 
+  0) If LM Studio or Ollama is already running on this computer with a model loaded, there is
+     nothing to do. Athar finds it when it starts and says so in the black window.
+
   a) Run "Download the model" once, with internet. It fetches one 5.2 GB file into the "models"
      folder and checks it. After that, no internet is needed.
   b) Copy Qwen3.5-9B-Q4_K_M.gguf into the "models" folder yourself, for example from a USB stick.
