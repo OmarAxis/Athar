@@ -94,7 +94,7 @@ def school_graph(db_path=None, only: set[str] | None = None) -> dict[str, Any]:
         for teacher_id in {t for t, _, _ in who}:
             taught_topics[teacher_id] += 1
     return {
-        "curriculum": pack.name, "nodes": nodes, "edges": edges,
+        "curriculum": pack.title(), "nodes": nodes, "edges": edges,
         "teachers": [{"id": t["id"], "name": t["name"], "topics": taught_topics.get(t["id"], 0)} for t in teachers],
         "subjects": [{"id": s, "label": pack.label(s)} for s in pack.subjects],
         "strand_subject": dict(pack.strand_subject),

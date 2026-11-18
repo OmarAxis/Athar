@@ -178,7 +178,7 @@ class _Pack:
         self.concepts = {"decimals": SimpleNamespace(grade=5), "division": SimpleNamespace(grade=3),
                          "place-value": SimpleNamespace(grade=2)}
 
-    def label(self, concept_id):
+    def label(self, concept_id, lang=None):
         return concept_id.replace("-", " ").title()
 
 
@@ -310,3 +310,28 @@ def test_coverage_check_picks_clearly_low_topics():
     assert _clearly_low(timeline, skip=set()) == ["a", "e"]
     assert _clearly_low(timeline, skip={"a"}) == ["e", "b"]
     assert _clearly_low({"periods": []}, skip=set()) == []
+
+
+def test_arabic_wording_uses_the_arabic_topic_names():
+    """With the school's language set to Arabic, names in the facts and the fallback wording are Arabic."""
+    from meska_brain import guard
+    from meska_brain.agent.language import looks_like
+    from meska_brain.agent.workflow import _template_question, _template_statement, in_language
+    from meska_brain.curriculum import load_pack
+    pack = load_pack("egypt-maths")
+    some = next(iter(pack.concepts))
+    english = pack.label(some, "en")
+    candidate = {"kind": "strength", "facts": {"in": english, "terms": ["2021-T1", "2021-T2", "2021-T3"],
+                                               "average": 0.91, "items": 12, "topics": [english]}}
+    assert in_language(candidate, pack, "en") is candidate
+    arabic = in_language(candidate, pack, "ar")
+    assert arabic["lang"] == "ar" and arabic["facts"]["in"] == pack.label(some, "ar") == arabic["facts"]["topics"][0]
+    text = _template_statement(arabic)
+    assert looks_like(text, "ar") and "91%" in text and "12" in text
+    root = {"kind": "root_cause", "lang": "ar", "facts": {"struggling_with": "النسبة", "possible_root": "القسمة",
+                                                         "root_average": 0.27, "root_period": "2023-T2"}}
+    said = _template_statement(root)
+    assert "قد ترجع إلى القسمة" in said and "27%" in said and "2023-T2" in said
+    asked = _template_question("النسبة", "القسمة", 5, "ar")
+    assert "؟" in asked and looks_like(asked, "ar")
+    assert not guard.check_statement(said) and not guard.check_statement(asked) and not guard.check_statement(text)

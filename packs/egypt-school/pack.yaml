@@ -10,6 +10,7 @@
 # We graph the school's curriculum. We never change it.
 id: egypt-school
 name: Egypt, Primary 4 to Preparatory 2
+name_ar: "مصر، من الصف الرابع الابتدائي إلى الصف الثاني الإعدادي"
 subject: school
 grades: [4, 8]
 terms: 2

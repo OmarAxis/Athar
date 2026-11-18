@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from . import audit, db
-from .curriculum import Pack, load_pack
+from .curriculum import Pack, current_lang, load_pack
 
 MAX_FILE_BYTES = 2_000_000
 MAX_QUESTIONS = 60
@@ -109,10 +109,29 @@ def topics(pack: Pack, grade: int | None = None, term: int | None = None,
     return found
 
 
-def template_rows(learners: list[dict[str, Any]], questions: int = 5) -> list[list[str]]:
-    heads = [f"Q{i}" for i in range(1, questions + 1)]
+# The words of the marks sheet, in the reader's language. A filled sheet is read in either language.
+SHEET = {
+    "en": {"code": "Learner code", "name": "Name", "q": "Q", "topic": "Topic", "out_of": "Out of",
+           "marks": "Marks", "topics": "Topics", "columns": ["Topic", "Grade", "Term", "Area", "Topic id"],
+           "pick": "Pick a topic from the list (see the Topics sheet).", "unknown": "Unknown topic"},
+    "ar": {"code": "كود التلميذ", "name": "الاسم", "q": "س", "topic": "الموضوع", "out_of": "الدرجة من",
+           "marks": "الدرجات", "topics": "الموضوعات", "columns": ["الموضوع", "الصف", "الترم", "المجال", "كود الموضوع"],
+           "pick": "اختار موضوع من القائمة (شوف ورقة الموضوعات).", "unknown": "موضوع مش معروف"},
+}
+_CODE_ROW = ("learner", "كود")
+_TOPIC_ROW = ("topic", "الموضوع")
+_OUT_ROW = ("out of", "max", "الدرجة من", "من")
+
+
+def sheet_words(lang: str | None = None) -> dict[str, Any]:
+    return SHEET["ar" if (lang or current_lang.get()) == "ar" else "en"]
+
+
+def template_rows(learners: list[dict[str, Any]], questions: int = 5, lang: str | None = None) -> list[list[str]]:
+    w = sheet_words(lang)
+    heads = [f"{w['q']}{i}" for i in range(1, questions + 1)]
     blank = [""] * questions
-    rows = [["Learner code", "Name", *heads], ["Topic", "", *blank], ["Out of", "", *blank]]
+    rows = [[w["code"], w["name"], *heads], [w["topic"], "", *blank], [w["out_of"], "", *blank]]
     rows += [[_code(row["alias"]), row.get("name") or "", *blank] for row in learners]
     return rows
 
@@ -123,16 +142,17 @@ def template_csv(rows: list[list[str]]) -> bytes:
     return ("﻿" + out.getvalue()).encode("utf-8")     # the mark lets Excel read Arabic names
 
 
-def template_xlsx(rows: list[list[str]], topic_list: list[dict[str, Any]]) -> bytes:
+def template_xlsx(rows: list[list[str]], topic_list: list[dict[str, Any]], lang: str | None = None) -> bytes:
     """The template as a workbook: a Marks sheet, and a Topics sheet the topic row picks from."""
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
     from openpyxl.worksheet.datavalidation import DataValidation
 
+    w = sheet_words(lang)
     book = Workbook()
     sheet = book.active
-    sheet.title = "Marks"
+    sheet.title = w["marks"]
     for row in rows:
         sheet.append(row)
     head, soft = PatternFill("solid", fgColor="2871F4"), PatternFill("solid", fgColor="E3E8F2")
@@ -146,8 +166,10 @@ def template_xlsx(rows: list[list[str]], topic_list: list[dict[str, Any]]) -> by
     for col in range(3, len(rows[0]) + 1):
         sheet.column_dimensions[get_column_letter(col)].width = 26
     sheet.freeze_panes = "C4"
-    listing = book.create_sheet("Topics")
-    listing.append(["Topic", "Grade", "Term", "Area", "Topic id"])
+    listing = book.create_sheet(w["topics"])
+    listing.append(w["columns"])
+    if w is SHEET["ar"]:
+        sheet.sheet_view.rightToLeft = listing.sheet_view.rightToLeft = True
     for cell in listing[1]:
         cell.font = Font(bold=True)
     for topic in topic_list:
@@ -155,8 +177,8 @@ def template_xlsx(rows: list[list[str]], topic_list: list[dict[str, Any]]) -> by
     listing.column_dimensions["A"].width, listing.column_dimensions["D"].width = 60, 34
     listing.column_dimensions["E"].width = 40
     if topic_list:
-        pick = DataValidation(type="list", formula1=f"=Topics!$A$2:$A${len(topic_list) + 1}", allow_blank=True)
-        pick.error, pick.errorTitle = "Pick a topic from the list (see the Topics sheet).", "Unknown topic"
+        pick = DataValidation(type="list", formula1=f"='{listing.title}'!$A$2:$A${len(topic_list) + 1}", allow_blank=True)
+        pick.error, pick.errorTitle = w["pick"], w["unknown"]
         sheet.add_data_validation(pick)
         pick.add(f"C2:{get_column_letter(len(rows[0]))}2")
     out = io.BytesIO()
@@ -183,12 +205,13 @@ def check_marks(table: list[list[str]], *, title: str, year: int, term: int, gra
             (f"upload:{int(year)}-T{int(term)}:{_slug(title)}#%",))}
     pack = load_pack(learners[0]["pack_id"] if learners else None)
     by_code = {_code(row["alias"]): row for row in learners}
-    by_label = {_norm(pack.label(cid)): cid for cid in pack.concepts}
+    # A topic may be named in any language the map has: a sheet filled in Arabic is read in English mode too.
+    by_label = {_norm(text): c.id for c in pack.concepts.values() for text in c.label.values()}
 
     def find_row(*starts: str) -> list[str] | None:
         return next((row for row in table if _norm(row[0]).startswith(starts)), None)
 
-    header, topic_row, out_row = find_row("learner"), find_row("topic"), find_row("out of", "max")
+    header, topic_row, out_row = find_row(*_CODE_ROW), find_row(*_TOPIC_ROW), find_row(*_OUT_ROW)
     if header is None or topic_row is None or out_row is None:
         return {"ok": False, "questions": [], "learners": [], "new_rows": 0, "already_imported": 0, "blank": 0,
                 "quiz": {"title": title, "year": year, "term": term, "grade": grade},

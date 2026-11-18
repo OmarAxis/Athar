@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import base64
 import math
+import re
 from html import escape
 from pathlib import Path
 from typing import Any
 
 from . import db, review
-from .curriculum import load_pack
+from .curriculum import current_lang, load_pack
+from .i18n import tr
 
 KIND_TITLE = {"strength": "A strength held over time", "root_cause": "Where a difficulty may have started",
               "struggle": "A difficulty held over time", "what_worked": "What seems to have helped"}
@@ -26,6 +28,40 @@ AUDIENCE = {"guardian": "Note for the family", "teacher_handover": "Note for the
 MAX_RECORDS_SHOWN = 12
 RTL = {"ar", "fa", "ur", "he"}
 _LOGO = Path(__file__).parent / "web" / "static" / "brand" / "meska-white.png"
+
+
+# ---------------------------------------------------------------- the reader's language
+#
+# The report is written in English and put into Arabic a whole sentence at a time, from the dictionaries
+# `i18n.tr` reads. Data is never translated: a teacher's words, a finding's statement, names and record ids
+# are printed as they were written. In English every helper below returns exactly what it was given.
+
+def _arabic() -> bool:
+    return current_lang.get() == "ar"
+
+
+def _t(text: str) -> str:
+    """A fixed piece of the report's own text, ready for the page."""
+    return escape(tr(" ".join(text.split())), quote=False) if _arabic() else text
+
+
+def _p(sentence: str) -> str:
+    """A sentence with data in it: translated as one unit, then escaped."""
+    return escape(tr(sentence))
+
+
+def _svg(label: str) -> str:
+    """The charts keep their left-to-right geometry. An Arabic label is marked as right-to-left text of its
+    own, so its numbers and brackets stay where an Arabic reader expects them."""
+    return f"\u202b{label}\u202c" if _arabic() else label
+
+
+_TERM_CODE = re.compile(r"(?<![\w-])\d{4}-T\d(?!\w)")
+
+
+def _keep_codes_whole(page: str) -> str:
+    """In right-to-left text a term code such as 2023-T2 would be shown as T2-2023. Isolate each one."""
+    return _TERM_CODE.sub(lambda m: f"\u2066{m.group(0)}\u2069", page)
 
 
 def _cited(pack, rows: list[dict]) -> list[dict]:
@@ -149,7 +185,7 @@ def graph_svg(data: dict[str, Any]) -> str:
         lines.append(f'<line x1="{x0:.1f}" y1="{y0:.1f}" x2="{x:.1f}" y2="{y:.1f}" stroke="#9AA4B8" stroke-width="1.5"{dashed}/>')
         if st["mean"] is None:
             nodes.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="15" fill="#FFFFFF" stroke="#9AA4B8" stroke-width="1.5" stroke-dasharray="4 4"/>')
-            score, ink = "none", "#5B6478"
+            score, ink = _svg(_t("none")), "#5B6478"
         else:
             fill, ink = _shade(st["mean"])
             nodes.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{radius:.1f}" fill="{fill}" stroke="#FFFFFF" stroke-width="2"/>')
@@ -163,30 +199,32 @@ def graph_svg(data: dict[str, Any]) -> str:
             ly += -6 - 13 * (len(words) - 1) if math.sin(a) < 0 else 14
         else:
             ly += 4 - 6.5 * (len(words) - 1)
-        spans = "".join(f'<tspan x="{lx:.1f}" dy="{13 if i else 0}">{escape(w)}</tspan>' for i, w in enumerate(words))
+        spans = "".join(f'<tspan x="{lx:.1f}" dy="{13 if i else 0}">{_svg(escape(w))}</tspan>' for i, w in enumerate(words))
         nodes.append(f'<text x="{lx:.1f}" y="{ly:.1f}" text-anchor="{anchor}" font-size="11.5" fill="#0A0A0A">{spans}</text>')
     for subject, (x, y) in hubs.items():
         label = next(st["subject_label"] for st in strands if st["subject"] == subject)
         width = 16 + 7.2 * len(label)
         nodes.append(f'<rect x="{x - width / 2:.1f}" y="{y - 13:.1f}" width="{width:.1f}" height="26" rx="13" fill="#FFFFFF" stroke="#2871F4" stroke-width="2"/>'
-                     f'<text x="{x:.1f}" y="{y + 4:.1f}" text-anchor="middle" font-size="12" font-weight="700" fill="#0A0A0A">{escape(label)}</text>')
+                     f'<text x="{x:.1f}" y="{y + 4:.1f}" text-anchor="middle" font-size="12" font-weight="700" fill="#0A0A0A">{_svg(escape(label))}</text>')
     learner = data["learner"]
     named = learner.get("name") and learner["name"] != learner["alias"]
     alias = escape(learner["name"].split()[0] if named else learner["alias"].split()[-1])
     centre = (f'<circle cx="{CX}" cy="{CY}" r="44" fill="#000038"/><circle cx="{CX}" cy="{CY}" r="50" fill="none" stroke="#2871F4" stroke-width="2"/>'
-              f'<text x="{CX}" y="{CY - 3}" text-anchor="middle" font-size="11" fill="#FFFFFF" opacity=".85">Learner</text>'
+              f'<text x="{CX}" y="{CY - 3}" text-anchor="middle" font-size="11" fill="#FFFFFF" opacity=".85">{_svg(_t("Learner"))}</text>'
               f'<text x="{CX}" y="{CY + 15}" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">{alias}</text>')
     key = "".join(f'<rect x="{24 + i * 26}" y="608" width="26" height="12" fill="{c}"/>' for i, c in enumerate(RAMP))
-    legend = (f'{key}<text x="24" y="602" font-size="11" fill="#5B6478">Average on record</text>'
-              f'<text x="24" y="634" font-size="10.5" fill="#5B6478">lower</text>'
-              f'<text x="154" y="634" text-anchor="end" font-size="10.5" fill="#5B6478">higher</text>'
+    legend = (f'{key}<text x="24" y="602" font-size="11" fill="#5B6478">{_svg(_t("Average on record"))}</text>'
+              f'<text x="24" y="634" font-size="10.5" fill="#5B6478">{_svg(_t("lower"))}</text>'
+              f'<text x="154" y="634" text-anchor="end" font-size="10.5" fill="#5B6478">{_svg(_t("higher"))}</text>'
               f'<circle cx="196" cy="614" r="6" fill="#C5D9FC"/><circle cx="218" cy="614" r="11" fill="#C5D9FC"/>'
-              f'<text x="236" y="618" font-size="11" fill="#5B6478">A bigger circle means more records</text>'
+              f'<text x="236" y="618" font-size="11" fill="#5B6478">{_svg(_t("A bigger circle means more records"))}</text>'
               f'<circle cx="462" cy="614" r="8" fill="#FFFFFF" stroke="#9AA4B8" stroke-width="1.5" stroke-dasharray="4 4"/>'
-              f'<text x="478" y="618" font-size="11" fill="#5B6478">No scored records yet (not the same as struggling)</text>')
-    summary = "; ".join(f"{st['label']}: " + (f"{round(st['mean'] * 100)}% over {st['records']} records" if st["mean"] is not None
-                                              else "no scored records") for st in strands)
-    return (f'<svg class="graph" viewBox="0 0 860 645" role="img" aria-label="Knowledge graph of the records. {escape(summary)}" '
+              f'<text x="478" y="618" font-size="11" fill="#5B6478">{_svg(_t("No scored records yet (not the same as struggling)"))}</text>')
+    summary = ("؛ " if _arabic() else "; ").join(
+        f"{st['label']}: " + (tr(f"{round(st['mean'] * 100)}% over {st['records']} records") if st["mean"] is not None
+                              else tr("no scored records")) for st in strands)
+    title = _p("Knowledge graph of the records.")
+    return (f'<svg class="graph" viewBox="0 0 860 645" role="img" aria-label="{title} {escape(summary)}" '
             f'font-family="inherit" style="-webkit-print-color-adjust:exact;print-color-adjust:exact">'
             f'{"".join(lines)}{centre}{"".join(nodes)}{legend}</svg>')
 
@@ -205,13 +243,15 @@ def term_chart_svg(series: list[dict]) -> str:
         parts.append(f'<rect x="{x}" y="{base - height:.1f}" width="32" height="{height:.1f}" rx="4" fill="{fill}" stroke="#5C93F6" stroke-width="1"/>'
                      f'<text x="{x + 16}" y="{base - height - 4:.1f}" text-anchor="middle" font-size="11" font-weight="700" fill="#0A0A0A">{round(point["mean"] * 100)}%</text>'
                      f'<text x="{x + 16}" y="{base + 14}" text-anchor="middle" font-size="10" fill="#5B6478">{escape(point["period"][2:])}</text>')
-    label = "Results term by term: " + ", ".join(f"{p['period']} {round(p['mean'] * 100)}%" for p in series)
+    label = tr("Results term by term:") + " " + ("، " if _arabic() else ", ").join(
+        f"{p['period']} {round(p['mean'] * 100)}%" for p in series)
     return (f'<svg class="terms" viewBox="0 0 {width} 116" width="{width}" height="116" role="img" aria-label="{escape(label)}" '
             f'font-family="inherit" style="-webkit-print-color-adjust:exact;print-color-adjust:exact">{"".join(parts)}</svg>')
 
 
 def _chain(chain: list[dict]) -> str:
-    """Where it began, on the left, to where it shows now, on the right."""
+    """Where it began, first, to where it shows now, last. The row follows the page's direction, so it starts
+    on the left in English and on the right in Arabic."""
     if not chain:
         return ""
     chips = []
@@ -219,19 +259,20 @@ def _chain(chain: list[dict]) -> str:
         tag = "Began here" if i == 0 else "Shows up here now" if i == len(chain) - 1 else "On the way"
         result = f"{round(topic['mean'] * 100)}% on record" if topic["mean"] is not None else "no records cited"
         edge = " start" if i == 0 else ""
-        chips.append(f'<div class="chip{edge}"><span class="tag">{tag}</span><strong>{escape(topic["label"])}</strong>'
-                     f'<span>Grade {topic["grade"]}, {result}</span></div>')
-    return '<div class="chain" role="img" aria-label="' + escape(" then ".join(t["label"] for t in chain)) + '">' + \
-        '<span class="arrow" aria-hidden="true">is needed for</span>'.join(chips) + "</div>"
+        where = _p(f"Grade {topic['grade']}, {result}")
+        chips.append(f'<div class="chip{edge}"><span class="tag">{_t(tag)}</span><strong>{escape(topic["label"])}</strong>'
+                     f'<span>{where}</span></div>')
+    return '<div class="chain" role="img" aria-label="' + escape(tr(" then ").join(t["label"] for t in chain)) + '">' + \
+        f'<span class="arrow" aria-hidden="true">{_t("is needed for")}</span>'.join(chips) + "</div>"
 
 
 def _why(explained: dict | None) -> str:
     if not explained:
         return ""
-    facts = "".join(f"<li>{escape(fact)}</li>" for fact in explained["facts"])
+    facts = "".join(f"<li>{escape(tr(fact))}</li>" for fact in explained["facts"])
     chart = term_chart_svg(explained["series"])
-    chart = f'<div class="chartbox"><div class="small">Results on the cited records, term by term</div>{chart}</div>' if chart else ""
-    return f'{_chain(explained["chain"])}<div class="why"><div><div class="small"><strong>Why this is suggested</strong></div><ul>{facts}</ul></div>{chart}</div>'
+    chart = f'<div class="chartbox"><div class="small">{_t("Results on the cited records, term by term")}</div>{chart}</div>' if chart else ""
+    return f'{_chain(explained["chain"])}<div class="why"><div><div class="small"><strong>{_t("Why this is suggested")}</strong></div><ul>{facts}</ul></div>{chart}</div>'
 
 
 # ---------------------------------------------------------------- HTML
@@ -283,6 +324,21 @@ footer{border-top:1px solid #E3E8F2;margin-top:28px;padding-top:12px;font-size:1
 @media print{body{background:#fff}.print{display:none}.page{max-width:none}@page{margin:14mm}}
 """
 
+# Added for a right-to-left page. Arabic letters join, so they are never spaced out or upper-cased, and they are
+# set a little larger and looser. The charts keep their own left-to-right geometry.
+_CSS_ARABIC = """[dir=rtl] body{font-family:'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif;line-height:1.7}
+[dir=rtl] .facts dt,[dir=rtl] .chip .tag,[dir=rtl] .kind,[dir=rtl] th{letter-spacing:0;text-transform:none}
+[dir=rtl] .facts dt,[dir=rtl] .chip .tag{font-size:12px}
+[dir=rtl] .kind{font-size:12.5px}
+[dir=rtl] th{font-size:11.5px;text-align:right}
+[dir=rtl] .why ul{padding-left:0;padding-right:18px}
+[dir=rtl] .arrow::after{content:" \\2190"}
+[dir=rtl] .empty{font-style:normal}
+[dir=rtl] .print{right:auto;left:18px}
+[dir=rtl] svg{direction:ltr}
+[dir=rtl] td.id{direction:ltr;text-align:right}
+"""
+
 
 def _logo() -> str:
     if not _LOGO.is_file():
@@ -297,72 +353,91 @@ def _when(iso: str | None) -> str:
 
 def _score(row: dict) -> str:
     if row["kind"] == "attendance":
-        return f"{row['absent_days']} days absent" if row["absent_days"] is not None else ""
+        return tr(f"{row['absent_days']} days absent") if row["absent_days"] is not None else ""
     return f"{round(row['score'] * 100)}%" if row["score"] is not None else ""
 
 
 def _finding(f: dict) -> str:
     rows = "".join(
-        f"<tr><td>{escape(r['period'])}</td><td>{escape(EVIDENCE_KIND.get(r['kind'], r['kind']))}</td>"
+        f"<tr><td>{escape(r['period'])}</td><td>{escape(tr(EVIDENCE_KIND.get(r['kind'], r['kind'])))}</td>"
         f"<td>{escape(r['topic'])}</td><td>{escape(_score(r))}</td>"
         f"<td dir=\"auto\">{escape((r['text'] or '')[:140])}</td><td class=\"id\">{escape(r['id'])}</td></tr>"
         for r in f["records"])
     more = f["records_total"] - len(f["records"])
-    extra = f'<p class="small">and {more} more records in the teacher app.</p>' if more > 0 else ""
+    more_line = _p(f"and {more} more records in the teacher app.")
+    extra = f'<p class="small">{more_line}</p>' if more > 0 else ""
     how = "Edited and approved" if f["edited"] else "Approved"
-    note = f' Teacher\'s note: {escape(f["note"])}' if f["note"] else ""
-    return (f'<section class="finding"><div class="kind">{escape(KIND_TITLE.get(f["kind"], f["kind"]))}</div>'
+    approved = _p(f'{how} by {f["teacher"] or "a teacher"} on {_when(f["decided_at"])}.')
+    rests = _p(f'Rests on {f["records_total"]} records.')
+    note = f' {_t("Teacher's note:")} {escape(f["note"])}' if f["note"] else ""
+    heads = "".join(f"<th>{_t(head)}</th>" for head in ("Term", "Record", "Topic", "Result", "Words on the record", "Record id"))
+    return (f'<section class="finding"><div class="kind">{escape(tr(KIND_TITLE.get(f["kind"], f["kind"])))}</div>'
             f'<p class="statement">{escape(f["statement"])}</p>{_why(f.get("explain"))}'
-            f'<p class="by">{how} by {escape(f["teacher"] or "a teacher")} on {escape(_when(f["decided_at"]))}. '
-            f'Rests on {f["records_total"]} records.{note}</p>'
-            f'<table><thead><tr><th>Term</th><th>Record</th><th>Topic</th><th>Result</th><th>Words on the record</th>'
-            f'<th>Record id</th></tr></thead><tbody>{rows}</tbody></table>{extra}</section>')
+            f'<p class="by">{approved} {rests}{note}</p>'
+            f'<table><thead><tr>{heads}</tr></thead><tbody>{rows}</tbody></table>{extra}</section>')
 
 
 def _note(n: dict) -> str:
     direction = "rtl" if n["language"] in RTL else "auto"
-    return (f'<section class="note"><div class="kind">{escape(AUDIENCE.get(n["audience"], n["audience"]))} '
+    approved = _p(f'Approved by {n["teacher"] or "a teacher"} on {_when(n["decided_at"])}.')
+    return (f'<section class="note"><div class="kind">{escape(tr(AUDIENCE.get(n["audience"], n["audience"])))} '
             f'({escape(n["language"])})</div><p lang="{escape(n["language"])}" dir="{direction}">{escape(n["text"])}</p>'
-            f'<p class="by">Approved by {escape(n["teacher"] or "a teacher")} on {escape(_when(n["decided_at"]))}.</p></section>')
+            f'<p class="by">{approved}</p></section>')
 
 
 def _gap(g: dict) -> str:
+    # The topic is escaped first, so this sentence is looked up with its markup in place.
+    missing = tr(f'There are no records for <strong>{escape(g["topic"])}</strong>.')
     if g["answered"]:
-        return (f'<li>There are no records for <strong>{escape(g["topic"])}</strong>. '
-                f'{escape(g["teacher"] or "A teacher")} confirmed on {escape(_when(g["answered_at"]))} that none exist.</li>')
-    return f'<li>There are no records for <strong>{escape(g["topic"])}</strong>. A teacher has been asked and has not answered yet.</li>'
+        confirmed = _p(f'{g["teacher"] or "A teacher"} confirmed on {_when(g["answered_at"])} that none exist.')
+        return f'<li>{missing} {confirmed}</li>'
+    return f'<li>{missing} {_t("A teacher has been asked and has not answered yet.")}</li>'
 
 
-def render_html(data: dict[str, Any]) -> str:
-    """One self-contained page: no script except the print button, no outside files."""
+def render_html(data: dict[str, Any], lang: str | None = None) -> str:
+    """One self-contained page: no script except the print button, no outside files. It is written in the
+    reader's language (`lang`, else the language of the request): Arabic comes out right to left."""
+    if lang is not None:
+        token = current_lang.set(lang)
+        try:
+            return render_html(data)
+        finally:
+            current_lang.reset(token)
+    arabic = _arabic()
     learner, span = data["learner"], data["span"]
     shown = learner.get("name") or learner["alias"]
-    code = f'Record code {learner["alias"].split()[-1]}. ' if shown != learner["alias"] else ""
-    followed = (f'{span["first_period"]} to {span["last_period"]}' if span["first_period"] else "no dated records yet")
-    findings = "".join(_finding(f) for f in data["findings"]) or \
-        '<p class="empty">No finding has been approved by a teacher yet, so there is nothing to report.</p>'
-    notes = "".join(_note(n) for n in data["notes"]) or '<p class="empty">No note has been approved yet.</p>'
-    gaps = f'<h2>What the records cannot tell</h2><ul>{"".join(_gap(g) for g in data["gaps"])}</ul>' if data["gaps"] else ""
+    title = _p(f"Learning report: {shown}")
+    about = [_p(f'Record code {learner["alias"].split()[-1]}.')] if shown != learner["alias"] else []
+    about.append(_p(f'Grade {learner["grade_now"]}.'))
+    about.append(escape(tr(learner["curriculum"])) + ".")
+    about.append(_p(f'Followed {span["first_period"]} to {span["last_period"]}.') if span["first_period"]
+                 else _p("Followed no dated records yet."))
+    nothing = _t("No finding has been approved by a teacher yet, so there is nothing to report.")
+    findings = "".join(_finding(f) for f in data["findings"]) or f'<p class="empty">{nothing}</p>'
+    notes = "".join(_note(n) for n in data["notes"]) or f'<p class="empty">{_t("No note has been approved yet.")}</p>'
+    gaps = f'<h2>{_t("What the records cannot tell")}</h2><ul>{"".join(_gap(g) for g in data["gaps"])}</ul>' if data["gaps"] else ""
     count = data["waiting"]
-    waiting = (f' {count} {"item is" if count == 1 else "items are"} still waiting for a teacher and not in this report.'
+    waiting = (" " + _p(f'{count} {"item is" if count == 1 else "items are"} still waiting for a teacher and not in this report.')
                if count else "")
-    return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Learning report: {escape(shown)}</title><style>{_CSS}</style></head>
-<body><button class="print" type="button" onclick="window.print()">Print or save as PDF</button>
-<div class="page"><header>{_logo()}<h1>Learning report: {escape(shown)}</h1>
-<p>{escape(code)}Grade {escape(str(learner["grade_now"]))}. {escape(learner["curriculum"])}. Followed {escape(followed)}.</p></header>
+    generated = _p(f'Generated {data["generated_at"][:16].replace("T", " ")} UTC by Meska Brain.')
+    page = f"""<!doctype html>
+<html lang="{'ar" dir="rtl' if arabic else 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title><style>{_CSS}{_CSS_ARABIC if arabic else ""}</style></head>
+<body><button class="print" type="button" onclick="window.print()">{_t("Print or save as PDF")}</button>
+<div class="page"><header>{_logo()}<h1>{title}</h1>
+<p>{" ".join(about)}</p></header>
 <main>
-<dl class="facts"><div><dt>Records</dt><dd>{span["records"]}</dd></div><div><dt>Terms followed</dt><dd>{span["terms"]}</dd></div>
-<div><dt>Days absent</dt><dd>{span["days_absent"]}</dd></div><div><dt>Approved findings</dt><dd>{len(data["findings"])}</dd></div></dl>
-<h2>What the records show</h2>
-<p class="small">The learner's own results on record, by subject and strand, across every term followed. This is not
-compared with any other learner, and an average is not a judgement of the child.</p>
+<dl class="facts"><div><dt>{_t("Records")}</dt><dd>{span["records"]}</dd></div><div><dt>{_t("Terms followed")}</dt><dd>{span["terms"]}</dd></div>
+<div><dt>{_t("Days absent")}</dt><dd>{span["days_absent"]}</dd></div><div><dt>{_t("Approved findings")}</dt><dd>{len(data["findings"])}</dd></div></dl>
+<h2>{_t("What the records show")}</h2>
+<p class="small">{_t("""The learner's own results on record, by subject and strand, across every term followed. This is not
+compared with any other learner, and an average is not a judgement of the child.""")}</p>
 {graph_svg(data)}
-<h2>What a teacher has approved</h2>{findings}
-<h2>Notes</h2>{notes}
+<h2>{_t("What a teacher has approved")}</h2>{findings}
+<h2>{_t("Notes")}</h2>{notes}
 {gaps}
-<footer>The picture shows averages of the records themselves. The findings and notes are only those a named teacher has read and approved.{escape(waiting)} The report describes patterns in the
-work, not the child. It is not a grade, a rank or a recommendation of a subject or career. Every finding lists the records
-it rests on. Generated {escape(data["generated_at"][:16].replace("T", " "))} UTC by Meska Brain.</footer>
+<footer>{_t("The picture shows averages of the records themselves.")} {_t("The findings and notes are only those a named teacher has read and approved.")}{waiting} {_t("""The report describes patterns in the
+work, not the child.""")} {_t("It is not a grade, a rank or a recommendation of a subject or career.")} {_t("""Every finding lists the records
+it rests on.""")} {generated}</footer>
 </main></div></body></html>"""
+    return _keep_codes_whole(page) if arabic else page

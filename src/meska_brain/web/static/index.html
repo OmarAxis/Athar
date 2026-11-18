@@ -82,7 +82,7 @@ header.top {
 }
 .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .brand img { height: 24px; width: auto; display: block; margin: 6px 4px 6px 0; }
-.brand .product { padding-left: 16px; border-left: 1px solid rgba(255, 255, 255, .28); }
+.brand .product { padding-inline-start: 16px; border-inline-start: 1px solid rgba(255, 255, 255, .28); }
 .brand h1 { font-size: 18px; font-weight: 700; color: #fff; }
 .brand .sub { font-size: 13px; color: rgba(255, 255, 255, .78); }
 .who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
@@ -97,7 +97,7 @@ header.top :focus-visible { outline-color: #fff; }
 #rail { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px; position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
 #rail h2 { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px 10px; }
 #rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-#rail button { width: 100%; text-align: left; border: 1px solid transparent; background: transparent; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; min-height: 40px; }
+#rail button { width: 100%; text-align: start; border: 1px solid transparent; background: transparent; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; min-height: 40px; }
 #rail button:hover { background: var(--bg); }
 #rail button[aria-current=true] { background: var(--blue-soft); border-color: var(--blue); color: #0B2E7A; font-weight: 600; }
 #rail .grade { color: var(--muted); font-size: 12px; white-space: nowrap; font-weight: 400; }
@@ -107,7 +107,7 @@ nav.tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin
 nav.tabs button { border: none; background: transparent; padding: 7px 16px; min-height: 36px; border-radius: 10px; color: var(--muted); font-weight: 500; }
 nav.tabs button:hover { color: var(--ink); background: rgba(255, 255, 255, .6); }
 nav.tabs button[aria-current=page] { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 56, .14); }
-.badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 7px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; text-align: center; line-height: 20px; }
+.badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-inline-start: 7px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; text-align: center; line-height: 20px; }
 
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
 .card + .card { margin-top: 14px; }
@@ -185,7 +185,7 @@ svg text { font-family: inherit; }
 .chain-chip.start .chain-tag { color: #A63F00; }
 .chain-arrow { align-self: center; font-size: 12px; color: var(--muted); }
 .why { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: flex-start; margin: 6px 0 10px; }
-.why ul { margin: 4px 0; padding-left: 18px; font-size: 14px; max-width: 470px; }
+.why ul { margin: 4px 0; padding-inline-start: 18px; font-size: 14px; max-width: 470px; }
 svg.terms { display: block; max-width: 100%; height: auto; }
 .btnlink { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); font-weight: 600; text-decoration: none; }
 .btnlink:hover { border-color: var(--blue); }
@@ -201,7 +201,7 @@ dl.kv dt { color: var(--muted); }
 dl.kv dd { margin: 0; }
 
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
-th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th, td { text-align: start; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; background: #F8FAFD; white-space: nowrap; }
 tbody tr:hover td { background: #FAFBFE; }
 .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); }
@@ -244,13 +244,13 @@ details[open] > summary { margin-bottom: 6px; }
 .side .brand .sub { font-size: 12px; color: rgba(255, 255, 255, .66); margin-top: 2px; line-height: 1.4; }
 #nav { display: grid; gap: 4px; }
 #nav button {
-  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; min-height: 42px; padding: 8px 12px;
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: start; min-height: 42px; padding: 8px 12px;
   border: 1px solid transparent; border-radius: 12px; background: transparent; color: rgba(255, 255, 255, .78); font-weight: 500;
 }
 #nav button svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #nav button:hover { background: rgba(255, 255, 255, .08); color: #fff; }
 #nav button[aria-current=page] { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .2); color: #fff; font-weight: 600; }
-#nav .badge { margin-left: auto; background: #fff; color: var(--blue-strong); }
+#nav .badge { margin-inline-start: auto; background: #fff; color: var(--blue-strong); }
 .side .who { margin-top: auto; display: grid; gap: 6px; padding: 14px 12px; border-radius: 14px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); }
 .side .who label { color: rgba(255, 255, 255, .7); margin: 0; }
 .side .who select { width: 100%; min-width: 0; background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .3); }
@@ -270,7 +270,7 @@ main.content { padding: 28px 36px 48px; min-width: 0; max-width: 1500px; }
 .pagehead p { margin: 6px 0 0; }
 
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 16px; }
-.tile { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; min-height: 0; display: block; font-weight: 400; }
+.tile { text-align: start; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; min-height: 0; display: block; font-weight: 400; }
 button.tile:hover { border-color: var(--blue); background: #fff; }
 .tile-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .tile-value { font-size: 32px; font-weight: 700; line-height: 1.15; margin-top: 6px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
@@ -316,8 +316,8 @@ table.heat tbody th { text-transform: none; letter-spacing: 0; font-size: 13px; 
 .heat-cell { display: block; text-align: center; padding: 9px 4px; border-radius: 8px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 58px; }
 .heat-cell.none { background: transparent; border: 1px dashed var(--line-strong); color: var(--muted); font-weight: 400; font-size: 11px; padding: 10px 2px; }
 .heat-key { display: flex; align-items: center; gap: 4px; margin-top: 10px; }
-.heat-key span:first-child { margin-right: 4px; }
-.heat-key span:last-child { margin-left: 4px; }
+.heat-key span:first-child { margin-inline-end: 4px; }
+.heat-key span:last-child { margin-inline-start: 4px; }
 .heat-swatch { width: 22px; height: 10px; border-radius: 3px; }
 .tablewrap.plain { border: none; }
 table.heat tbody tr:hover td { background: transparent; }
@@ -332,17 +332,17 @@ table.heat tbody tr:hover td { background: transparent; }
 .keyline { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
 .key { width: 12px; height: 10px; border-radius: 3px; display: inline-block; }
 .key.a { background: var(--blue); }
-.key.b { background: #B9C2D4; margin-left: 12px; }
+.key.b { background: #B9C2D4; margin-inline-start: 12px; }
 
 .numcol { font-variant-numeric: tabular-nums; }
-button.linkish { border: none; background: transparent; padding: 0; min-height: 0; color: var(--accent); font-weight: 600; white-space: nowrap; text-align: left; }
+button.linkish { border: none; background: transparent; padding: 0; min-height: 0; color: var(--accent); font-weight: 600; white-space: nowrap; text-align: start; }
 button.linkish:hover { text-decoration: underline; background: transparent; }
 
 .feed { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
 .feed li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .feed li:last-child { border-bottom: none; }
 .feed code { font: 12px ui-monospace, "Cascadia Mono", Consolas, monospace; background: var(--bg); padding: 2px 7px; border-radius: 6px; }
-.feed-time { margin-left: auto; }
+.feed-time { margin-inline-start: auto; }
 .dotmark { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
 .dotmark.bad { background: var(--bad); }
 
@@ -381,12 +381,21 @@ button.linkish:hover { text-decoration: underline; background: transparent; }
   .side { position: static; height: auto; padding: 14px 16px; gap: 12px; }
   #nav { display: flex; flex-wrap: wrap; gap: 4px; }
   #nav button { width: auto; min-height: 38px; padding: 6px 10px; gap: 8px; }
-  #nav .badge { margin-left: 2px; }
+  #nav .badge { margin-inline-start: 2px; }
   .app > *, main.content > *, .grid2 > *, .card, .card > * { min-width: 0; }
   #nav button span:not(.badge) { white-space: nowrap; }
   main.content { padding: 18px 16px 36px; }
   .pagehead h2 { font-size: 22px; }
 }
+
+/* Arabic: right to left. Letter spacing breaks joined letters, and capitals do not exist. */
+html[dir="rtl"] body { font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", "Noto Naskh Arabic", "Geeza Pro", Arial, sans-serif; line-height: 1.7; }
+html[dir="rtl"] * { letter-spacing: 0 !important; }
+html[dir="rtl"] label, html[dir="rtl"] th, html[dir="rtl"] .tile-label, html[dir="rtl"] #rail h2 { font-size: 13px; }
+html[dir="rtl"] svg { direction: ltr; }
+html[dir="rtl"] input[type="number"], html[dir="rtl"] input[type="password"] { direction: ltr; text-align: right; }
+#lang-switch { align-self: flex-start; min-height: 30px; padding: 3px 12px; font-size: 13px; background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px; }
+#lang-switch:hover { background: rgba(255, 255, 255, .14); }
 </style>
 </head>
 <body>
@@ -405,6 +414,7 @@ button.linkish:hover { text-decoration: underline; background: transparent; }
       <span class="note" id="who-note">Demonstration data, so there is no password yet. It records who made each decision.</span>
       <button type="button" id="sign-out" hidden>Sign out</button>
     </div>
+    <button type="button" id="lang-switch" data-raw hidden></button>
   </aside>
 
   <main class="content">
@@ -470,6 +480,84 @@ async function api(path, opts) {
   return body;
 }
 let PRODUCT = "Athar";
+
+// ---------------------------------------------------------------- language
+// The page is written in English. In Arabic every piece of text that reaches the screen is looked up in
+// two dictionaries (/static/ar.json for the page, /static/ar-server.json for sentences the server writes).
+// Text that is data (a teacher's words, a finding, a name) is marked dir="auto" or lang and is left alone.
+let LANG = "en";
+const I18N = { exact: {}, patterns: [], fragments: [] };
+const LATIN = /[A-Za-z]{2}/;
+function tr(text) {
+  if (LANG !== "ar" || typeof text !== "string" || !LATIN.test(text)) return text;
+  const core = text.trim();
+  if (!core) return text;
+  const at = text.indexOf(core);
+  const lead = text.slice(0, at), tail = text.slice(at + core.length);
+  const hit = I18N.exact[core];
+  if (hit !== undefined) return lead + hit + tail;
+  for (const p of I18N.patterns) if (p.re.test(core)) return lead + core.replace(p.re, p.ar) + tail;
+  let out = text;
+  for (const [k, v] of I18N.fragments) if (out.includes(k)) out = out.split(k).join(v);
+  return out;
+}
+async function loadArabic() {
+  for (const file of ["/static/ar.json", "/static/ar-server.json"]) {
+    try {
+      const res = await fetch(file);
+      if (!res.ok) continue;
+      const d = await res.json();
+      Object.assign(I18N.exact, d.exact || {});
+      for (const p of d.patterns || []) { try { I18N.patterns.push({ re: new RegExp(p.re), ar: p.ar }); } catch (e) { /* a bad pattern is skipped */ } }
+      I18N.fragments.push(...Object.entries(d.fragments || {}));
+    } catch (e) { /* without the dictionary the page stays in English */ }
+  }
+  I18N.fragments.sort((a, b) => b[0].length - a[0].length);
+}
+const TR_ATTRS = ["placeholder", "aria-label", "title", "alt"];
+function isData(el) { return !!(el && el.closest && el.closest('[dir="auto"], [data-raw], script, style, body [lang]')); }
+function localize(node) {
+  if (node.nodeType === 3) {
+    if (isData(node.parentElement)) return;
+    const t = tr(node.nodeValue);
+    if (t !== node.nodeValue) node.nodeValue = t;
+    return;
+  }
+  if (node.nodeType !== 1 || isData(node)) return;
+  const walk = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+  let cur = node;
+  while (cur) {
+    if (cur.nodeType === 3) {
+      if (!isData(cur.parentElement)) { const t = tr(cur.nodeValue); if (t !== cur.nodeValue) cur.nodeValue = t; }
+    } else if (!isData(cur)) {
+      for (const a of TR_ATTRS) if (cur.hasAttribute(a)) { const v = cur.getAttribute(a), t = tr(v); if (t !== v) cur.setAttribute(a, t); }
+    }
+    cur = walk.nextNode();
+  }
+}
+async function startLanguage(serverDefault) {
+  LANG = store("athar.lang") || serverDefault || "en";
+  if (LANG !== "ar") LANG = "en";
+  document.cookie = "athar_lang=" + LANG + "; path=/; max-age=31536000; samesite=strict";
+  const sw = document.getElementById("lang-switch");
+  sw.hidden = false;
+  sw.textContent = LANG === "ar" ? "English" : "العربية";
+  sw.setAttribute("lang", LANG === "ar" ? "en" : "ar");
+  sw.onclick = () => { store("athar.lang", LANG === "ar" ? "en" : "ar"); document.cookie = "athar_lang=" + (LANG === "ar" ? "en" : "ar") + "; path=/; max-age=31536000; samesite=strict"; location.reload(); };
+  if (LANG !== "ar") return;
+  await loadArabic();
+  document.documentElement.lang = "ar";
+  document.documentElement.dir = "rtl";
+  for (const name of ["confirm", "prompt", "alert"]) { const real = window[name].bind(window); window[name] = (m, ...rest) => real(tr(m), ...rest); }
+  localize(document.body);
+  new MutationObserver((changes) => {
+    for (const c of changes) {
+      if (c.type === "characterData") localize(c.target);
+      else if (c.type === "attributes") { if (!isData(c.target)) { const v = c.target.getAttribute(c.attributeName), t = v === null ? v : tr(v); if (t !== v) c.target.setAttribute(c.attributeName, t); } }
+      else for (const n of c.addedNodes) localize(n);
+    }
+  }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: TR_ATTRS });
+}
 function postForm(path, form) { return api(path, { method: "POST", body: form }); }
 function post(path, data) {
   return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
@@ -609,8 +697,11 @@ async function init() {
     document.getElementById("view").append(h("p", { class: "err", text: e.message }));
     return;
   }
-  PRODUCT = state.session.product || PRODUCT;
-  document.title = PRODUCT + ": learning map";
+  const hadCookie = /(?:^|; )athar_lang=/.test(document.cookie);
+  await startLanguage(state.session.language);
+  if (LANG === "ar" && !hadCookie) state.session = await api("/api/session");   // topic names in the chosen language
+  PRODUCT = tr(state.session.product || PRODUCT);
+  document.title = tr(PRODUCT + ": learning map");
   document.getElementById("product").textContent = PRODUCT;
   if (state.session.sign_in && !state.session.teacher) { showSignIn(); return; }
   try {
@@ -819,10 +910,10 @@ async function viewOverview(root) {
   const list = h("ul", { class: "waitlist" });
   for (const f of p.findings.slice(0, 5)) list.append(h("li", {},
     h("div", { class: "row" }, h("span", { class: "pill", text: KIND[f.kind] || f.kind }), h("strong", { text: aliasOf(f.learner_id) }), h("span", { class: "small muted", text: f.evidence.length + " records behind it" })),
-    h("div", { class: "wait-text", text: f.statement })));
+    h("div", { class: "wait-text", dir: "auto", text: f.statement })));
   for (const sm of p.summaries.slice(0, Math.max(0, 5 - p.findings.length))) list.append(h("li", {},
     h("div", { class: "row" }, h("span", { class: "pill plain", text: "Drafted note, " + langName(sm.language) }), h("strong", { text: aliasOf(sm.learner_id) })),
-    h("div", { class: "wait-text", text: sm.text })));
+    h("div", { class: "wait-text", dir: "auto", text: sm.text })));
   if (list.children.length) waitCard.append(list);
   const more = p.findings.length + p.summaries.length - list.children.length;
   if (more > 0) waitCard.append(h("p", { class: "small muted", text: "and " + more + " more in the review queue." }));
@@ -1183,7 +1274,9 @@ async function viewMap(root) {
   root.append(h("p", { class: "muted", text: "Loading the map..." }));
   let g = await getGraph(state.learnerId);
   const subjects = g.subjects || [];
-  if (!state.subject || (state.subject !== "all" && !subjects.some((x) => x.id === state.subject))) state.subject = "all";
+  // With many subjects the whole map is too crowded to read, so it opens on the first subject.
+  if (!state.subject) state.subject = subjects.length > 3 ? subjects[0].id : "all";
+  if (state.subject !== "all" && !subjects.some((x) => x.id === state.subject)) state.subject = "all";
   if (subjects.length > 1 && state.subject !== "all") {
     const keep = (n) => n.type !== "concept" ? (n.type !== "strand" || g.strand_subject[n.id] === state.subject) : g.strand_subject[n.strand] === state.subject;
     const nodes = g.nodes.filter(keep), ids = new Set(nodes.map((n) => n.id));
@@ -1296,7 +1389,7 @@ async function drawDetail(panel, g, cid, repaint) {
   const needs = g.edges.filter((e) => e.type === "requires" && e.target === cid).map((e) => e.source);
   const leads = g.edges.filter((e) => e.type === "requires" && e.source === cid).map((e) => e.target);
   const linkList = (ids) => ids.length
-    ? h("ul", { style: "margin:4px 0 0;padding-left:18px" }, ids.map((id) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.trace = null; state.sel = id; repaint(); drawDetail(panel, g, id, repaint); document.querySelector('[data-id="' + id + '"]').scrollIntoView({ block: "nearest", inline: "nearest" }); } }, labelOf(id) + " (grade " + (g.byId[id] ? g.byId[id].grade : "?") + ")"))))
+    ? h("ul", { style: "margin:4px 0 0;padding-inline-start:18px" }, ids.map((id) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.trace = null; state.sel = id; repaint(); drawDetail(panel, g, id, repaint); document.querySelector('[data-id="' + id + '"]').scrollIntoView({ block: "nearest", inline: "nearest" }); } }, labelOf(id) + " (grade " + (g.byId[id] ? g.byId[id].grade : "?") + ")"))))
     : h("p", { class: "muted small", text: "None in this curriculum." });
   const traceBox = h("div", { class: "stack" });
   const evBox = h("div", {}, h("p", { class: "muted", text: "Loading records..." }));
@@ -1353,11 +1446,11 @@ function renderTrace(box, g, t) {
   }
   if (t.context && t.context.length) {
     parts.push(h("div", {}, h("strong", { text: "Absences around that time" }),
-      h("ul", { style: "margin:4px 0;padding-left:18px" }, t.context.map((c) => h("li", { text: c.absent_days + " day(s) absent in " + c.period + " (record " + c.evidence_id + ")" })))));
+      h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, t.context.map((c) => h("li", { text: c.absent_days + " day(s) absent in " + c.period + " (record " + c.evidence_id + ")" })))));
   }
   if (t.unknowns && t.unknowns.length) {
     parts.push(h("div", {}, h("strong", { text: "No records for these concepts (not guessed)" }),
-      h("ul", { style: "margin:4px 0;padding-left:18px" }, t.unknowns.map((id) => h("li", { text: labelOf(id) })))));
+      h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, t.unknowns.map((id) => h("li", { text: labelOf(id) })))));
   }
   if (t.alternatives && t.alternatives.length) {
     parts.push(h("p", { class: "small", text: "Other possible starting points: " + t.alternatives.map((a) => a.label).join(", ") + "." }));
@@ -1416,7 +1509,7 @@ async function viewPatterns(root) {
     wwBox.append(h("div", { class: "stack", style: "margin-top:8px" },
       h("strong", { text: a.label }),
       h("div", { class: "small", text: "Scores rose after " + a.improved + " time(s) and did not rise after " + a.not_improved + ". Average change " + (a.mean_gain >= 0 ? "+" : "") + Math.round(a.mean_gain * 100) + " points." }),
-      h("ul", { class: "small", style: "margin:0;padding-left:18px" }, a.instances.map((i) => h("li", { text: labelOf(i.concept_id) + ", " + i.period + ": " + pct(i.before) + " before, " + pct(i.after) + " after" })))));
+      h("ul", { class: "small", style: "margin:0;padding-inline-start:18px" }, a.instances.map((i) => h("li", { text: labelOf(i.concept_id) + ", " + i.period + ": " + pct(i.before) + " before, " + pct(i.after) + " after" })))));
   }
   root.append(wwBox);
 }
@@ -1478,13 +1571,13 @@ async function viewSchool(root) {
         h("dt", { text: "Learners with records" }), h("dd", { text: c.learners + " of " + full.totals.learners }),
         h("dt", { text: "Across the class" }), h("dd", { text: c.mean === null ? "No scored records" : Math.round(c.mean * 100) + "% on average. " + CLASS_WORDS[c.state] + "." })),
       h("h4", { text: "Taught by" }),
-      c.taught.length ? h("ul", { style: "margin:4px 0;padding-left:18px" }, c.taught.map((t) => h("li", { text: t.teacher + ", " + t.approach }))) : h("p", { class: "small muted", text: "No teaching unit is recorded for this topic." }),
+      c.taught.length ? h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, c.taught.map((t) => h("li", { text: t.teacher + ", " + t.approach }))) : h("p", { class: "small muted", text: "No teaching unit is recorded for this topic." }),
       h("h4", { text: "Approved findings about this topic" }),
       c.approved_for.length
-        ? h("ul", { style: "margin:4px 0;padding-left:18px" }, c.approved_for.map((a) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.sel = cid; state.trace = null; pickLearner(a.learner_id, "map"); } }, a.name || a.alias), ": " + (KIND[a.kind] || a.kind))))
+        ? h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, c.approved_for.map((a) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.sel = cid; state.trace = null; pickLearner(a.learner_id, "map"); } }, a.name || a.alias), ": " + (KIND[a.kind] || a.kind))))
         : h("p", { class: "small muted", text: "None yet. A learner is named here only after a teacher approves a finding." }),
-      needs.length ? h("div", {}, h("h4", { text: "Needs first" }), h("ul", { style: "margin:4px 0;padding-left:18px" }, needs.map(jump))) : null,
-      leads.length ? h("div", {}, h("h4", { text: "Is needed for" }), h("ul", { style: "margin:4px 0;padding-left:18px" }, leads.map(jump))) : null);
+      needs.length ? h("div", {}, h("h4", { text: "Needs first" }), h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, needs.map(jump))) : null,
+      leads.length ? h("div", {}, h("h4", { text: "Is needed for" }), h("ul", { style: "margin:4px 0;padding-inline-start:18px" }, leads.map(jump))) : null);
   }
 
   function select(cid) {
@@ -1623,7 +1716,7 @@ function requestCard(q, files) {
   const card = h("article", { class: "card", "aria-label": "Record request for " + (q.learner_name || q.learner_alias) },
     h("div", { class: "row" }, h("span", { class: "pill", text: "Missing record" }), h("strong", { text: q.learner_name || q.learner_alias }),
       h("span", { class: "small muted", text: (q.concept_label || q.concept_id) + (q.grade ? ", grade " + q.grade : "") })),
-    h("p", { class: "statement", style: "font-size:16px;margin:8px 0", text: q.question }),
+    h("p", { class: "statement", style: "font-size:16px;margin:8px 0", dir: "auto", text: q.question }),
     h("p", { class: "small muted", text: "The agent stopped instead of guessing. If you add a record, it reads it, files it as your answer, and looks again before it proposes anything. If you say none exists, it will not ask again." }),
     h("div", { class: "controls", style: "display:grid;gap:8px;margin-top:10px" },
       h("div", {}, h("label", { for: "ans-" + q.id, text: "What you have, in your own words (marks as “2 out of 5”)" }), text),
@@ -1663,7 +1756,7 @@ function findingCard(f) {
   const card = h("article", { class: "card finding", "aria-label": "Proposed finding for " + aliasOf(f.learner_id) },
     h("div", { class: "row" }, h("span", { class: "pill", text: KIND[f.kind] || f.kind }), h("strong", { text: aliasOf(f.learner_id) }),
       h("span", { class: "muted small", text: confWords(f.confidence) })),
-    h("p", { class: "statement", text: f.statement }),
+    h("p", { class: "statement", dir: "auto", text: f.statement }),
     whyBlock(f),
     f.next_step ? h("div", { class: "nextstep" }, h("strong", { text: "A possible next step, for you to decide" }), h("div", { text: f.next_step })) : null,
     h("details", { open: true }, h("summary", { text: "Evidence behind this (" + f.evidence.length + " records)" }), evidenceTable(f.evidence)),
@@ -1702,7 +1795,7 @@ function summaryCard(sm) {
       : null,
     h("p", { class: "statement" + (rtl ? " rtl" : ""), lang: sm.language, dir: rtl ? "rtl" : "auto", style: "font-size:16px;margin:8px 0", text: sm.text }),
     h("details", {}, h("summary", { text: "Approved findings this is built from (" + sm.findings.length + ")" }),
-      sm.findings.map((f) => h("div", { class: "stack", style: "margin-bottom:10px" }, h("div", { text: f.statement }), evidenceTable(f.evidence)))),
+      sm.findings.map((f) => h("div", { class: "stack", style: "margin-bottom:10px" }, h("div", { dir: "auto", text: f.statement }), evidenceTable(f.evidence)))),
     h("div", { class: "controls", style: "display:grid;gap:8px;margin-top:10px" },
       h("div", {}, h("label", { for: "snote-" + sm.id, text: "Note (optional)" }), note),
       h("div", { class: "row" }, approve, reject)),
@@ -1751,7 +1844,7 @@ async function viewApproved(root) {
       h("div", { class: "row" },
         h("span", { class: "pill", text: KIND[f.kind] || f.kind }),
         h("span", { class: "pill ok", text: (f.status === "edited" ? "Edited and approved by " : "Approved by ") + teacherName(f.decided_by) + (f.decided_at ? " on " + when(f.decided_at) : "") })),
-      h("p", { class: "statement", text: f.statement }),
+      h("p", { class: "statement", dir: "auto", text: f.statement }),
       whyBlock(f),
       f.next_step ? h("div", { class: "nextstep" }, h("strong", { text: "A possible next step" }), h("div", { text: f.next_step })) : null,
       h("details", {}, h("summary", { text: "Evidence behind this (" + f.evidence.length + " records)" }), evidenceTable(f.evidence))));

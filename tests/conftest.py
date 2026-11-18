@@ -16,9 +16,12 @@ Planted cases:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
+
+os.environ.setdefault("MESKA_LANGUAGE", "en")   # the product opens in Arabic; these tests read English wording
 
 from meska_brain import db
 

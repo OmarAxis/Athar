@@ -35,6 +35,7 @@ from langgraph.types import interrupt
 from pydantic import BaseModel, Field
 
 from .. import db, guard
+from ..config import get_settings
 from ..curriculum import load_pack
 from . import prompts
 from .language import language_name, looks_like
@@ -150,7 +151,8 @@ async def _read_file(hub: McpHub, file: Path) -> tuple[str, str, bool]:
 
 def _concept_menu(pack, grade_now: int | None) -> str:
     concepts = [c for c in pack.concepts.values() if grade_now is None or c.grade <= grade_now + 1]
-    return "\n".join(f"{c.id}: {pack.label(c.id)} (grade {c.grade})" for c in sorted(concepts, key=lambda c: (c.grade, c.id)))
+    lang = get_settings().language      # documents in an Arabic school name topics in Arabic
+    return "\n".join(f"{c.id}: {pack.label(c.id, lang)} (grade {c.grade})" for c in sorted(concepts, key=lambda c: (c.grade, c.id)))
 
 
 def _table_row_count(text: str) -> int:
@@ -453,8 +455,11 @@ def _record_gaps(analyses: dict) -> list[dict]:
     return list(gaps.values())
 
 
-def _template_question(about: str, missing: str, grade: int) -> str:
+def _template_question(about: str, missing: str, grade: int, lang: str = "en") -> str:
     """Fallback wording when the model's question does not pass the guard."""
+    if lang == "ar":
+        return (f"النتائج في {about} منخفضة، ولا توجد سجلات عن {missing} (الصف {grade}) الذي يعتمد عليه. "
+                f"هل لديك اختبار أو امتحان أو ملاحظة عن {missing} لهذا التلميذ؟ وإذا لم يوجد شيء، فضلًا اذكر ذلك.")
     return (f"Results in {about} are low, and there are no records for {missing} (grade {grade}), which it "
             f"builds on. Do you have a quiz, a test or a note about {missing} for this learner? "
             "If nothing exists, please say so.")
@@ -480,27 +485,34 @@ async def ask_for_records(state: RunState) -> dict:
         return {"open_request": None, **_step("ask_for_records", f"There are still no records for {labels}, but "
                                               f"{len(asked)} questions were already asked in this run. Left as an open question.")}
     gap = fresh[0]
-    about, missing = pack.label(gap["about"]), pack.label(gap["concept_id"])
+    lang = get_settings().language
+    about, missing = pack.label(gap["about"], lang), pack.label(gap["concept_id"], lang)
     grade = pack.concepts[gap["concept_id"]].grade
     question, problems = "", ["not written"]
     facts = {"topic_with_low_results": about, "earlier_topic_with_no_records": missing,
              "grade_in_which_the_earlier_topic_is_taught": grade}
-    messages = [SystemMessage(prompts.REQUEST_SYSTEM), HumanMessage("FACTS:\n" + json.dumps(facts, ensure_ascii=False))]
-    for _ in (1, 2):
+    messages = [SystemMessage(prompts.REQUEST_SYSTEM + (prompts.IN_ARABIC if lang == "ar" else "")),
+                HumanMessage("FACTS:\n" + json.dumps(facts, ensure_ascii=False))]
+    # The small local model words Arabic loosely (it drops words and adds claims). So in Arabic the fixed
+    # sentence is used unless the school has turned the model's wording on.
+    fixed = lang == "ar" and get_settings().arabic_wording != "model"
+    for _ in (() if fixed else (1, 2)):
         try:
             reply = await timed_invoke(llm, messages, usage, "ask_for_records")
         except Exception:  # noqa: BLE001 - the template below is always available
             break
         question = text_of(reply).strip().strip('"')
         problems = guard.check_statement(question) if question else ["empty"]
-        if not problems and "?" not in question:
+        if not problems and "?" not in question and "؟" not in question:
             problems = ["it is not a question"]
+        if not problems and lang == "ar" and not looks_like(question, "ar"):
+            problems = ["it must be written in Arabic"]
         if not problems:
             break
         messages += [reply, HumanMessage("Rewrite it. Problems: " + "; ".join(problems))]
     used_template = bool(problems)
     if used_template:
-        question = _template_question(about, missing, grade)
+        question = _template_question(about, missing, grade, lang)
     try:
         result = await hub.call("request_record", learner_id=state["learner_id"], concept_id=gap["concept_id"],
                                 about_concept_id=gap["about"], question=question)
@@ -508,8 +520,10 @@ async def ask_for_records(state: RunState) -> dict:
         return {"open_request": None,
                 **_step("ask_for_records", f"Could not ask about {missing}: {str(exc)[:160]}", ok=False)}
     note = f"The records cannot tell where the difficulty with {about} began: nothing is recorded for {missing}. Asked a teacher for it."
-    if used_template:
+    if used_template and not fixed:
         note += " The model's wording was not usable, so the plain template was used."
+    if fixed:
+        note += " Worded with the fixed Arabic sentence, not by the model."
     return {"open_request": {"request_id": result["request_id"], **gap},
             "request_ids": list(dict.fromkeys([*asked, result["request_id"]])),
             **_step("ask_for_records", note, request_id=result["request_id"])}
@@ -670,8 +684,41 @@ def _without_repeats(candidates: list[dict]) -> list[dict]:
     return kept
 
 
+def in_language(candidate: dict, pack, lang: str) -> dict:
+    """Put the topic, strand and approach names in a candidate's facts into `lang`, and remember the
+    language so the fallback wording matches. The tools give names in English; the pack has both."""
+    if lang == "en":
+        return candidate
+    names = {pack.label(i, "en"): pack.label(i, lang)
+             for i in [*pack.concepts, *pack.strands, *pack.skills, *pack.approaches]}
+    swap = lambda v: names.get(v, v) if isinstance(v, str) else [names.get(x, x) for x in v] if isinstance(v, list) else v
+    return {**candidate, "lang": lang, "facts": {k: swap(v) for k, v in candidate["facts"].items()}}
+
+
+def _template_statement_ar(candidate: dict) -> str:
+    f = candidate["facts"]
+    if candidate["kind"] == "root_cause" and candidate.get("starts_here"):
+        return (f"النتائج في {f['struggling_with']} منخفضة (المتوسط {round((f.get('root_average') or 0) * 100)}%)، "
+                "بينما تبدو الموضوعات السابقة التي يعتمد عليها جيدة، مما يشير إلى أن الصعوبة تبدأ من هذا الموضوع.")
+    if candidate["kind"] == "root_cause":
+        text = (f"الصعوبة الأخيرة في {f['struggling_with']} قد ترجع إلى {f['possible_root']}، "
+                f"حيث كان متوسط النتائج {round((f.get('root_average') or 0) * 100)}% في {f.get('root_period')}. "
+                f"يُفضَّل مراجعة {f['possible_root']} مباشرة قبل إعادة شرح {f['struggling_with']}.")
+        if f.get("earlier_topics_with_no_records"):
+            text += " وقد تبدأ الصعوبة قبل ذلك: لا توجد سجلات عن " + "، ".join(f["earlier_topics_with_no_records"]) + "."
+        return text
+    if candidate["kind"] == "what_worked":
+        return (f"تحسنت النتائج {f['times_followed_by_improvement']} مرة بعد دروس استُخدمت فيها طريقة "
+                f"{f['teaching_approach']}، مما يشير إلى أن هذه الطريقة قد تناسب هذا التلميذ في تعلم الموضوعات الجديدة.")
+    word = "مرتفعة" if candidate["kind"] == "strength" else "منخفضة"
+    return (f"النتائج في {f['in']} {word} باستمرار خلال {len(f['terms'])} من الترمات "
+            f"(المتوسط {round(f['average'] * 100)}% في {f['items']} سؤال).")
+
+
 def _template_statement(candidate: dict) -> str:
     """Fallback wording when the model's statement does not pass the guard."""
+    if candidate.get("lang") == "ar":
+        return _template_statement_ar(candidate)
     f = candidate["facts"]
     if candidate["kind"] == "root_cause" and candidate.get("starts_here"):
         return (f"Results in {f['struggling_with']} have been low (average {round((f.get('root_average') or 0) * 100)}%), "
@@ -699,30 +746,36 @@ async def compose_findings(state: RunState) -> dict:
     # Skip what a teacher has already been shown (approved or rejected), so a rerun does
     # not flood the review list with the same claim.
     existing = (await hub.call("get_findings", learner_id=state["learner_id"]))["findings"]
-    fresh = [c for c in candidates if not any(_same_claim(c, old) for old in existing)]
+    lang = get_settings().language
+    fixed = lang == "ar" and get_settings().arabic_wording != "model"     # see ask_for_records
+    fresh = [in_language(c, pack, lang) for c in candidates if not any(_same_claim(c, old) for old in existing)]
     fallbacks = 0
     for candidate in fresh:
         statement, problems = "", ["not written"]
         facts = {k: (f"{round(v * 100)}%" if "average" in k and isinstance(v, float) else v)
                  for k, v in candidate["facts"].items() if k != "items" and v not in (None, [], 0)}
-        messages = [SystemMessage(prompts.WORD_SYSTEM),
+        messages = [SystemMessage(prompts.WORD_SYSTEM + (prompts.IN_ARABIC if lang == "ar" else "")),
                     HumanMessage("FACTS:\n" + json.dumps(facts, ensure_ascii=False))]
-        for _ in (1, 2):
+        for _ in (() if fixed else (1, 2)):
             try:
                 reply = await timed_invoke(llm, messages, usage, "compose_findings")
             except Exception:  # noqa: BLE001
                 break
             statement = text_of(reply).strip().strip('"')
             problems = guard.check_statement(statement) if statement else ["empty"]
+            if not problems and lang == "ar" and not looks_like(statement, "ar"):
+                problems = ["it must be written in Arabic"]
             if not problems:
                 break
             messages += [reply, HumanMessage("Rewrite it. Problems: " + "; ".join(problems))]
         if problems:
-            statement, fallbacks = _template_statement(candidate), fallbacks + 1
+            statement, fallbacks = _template_statement(candidate), fallbacks + (0 if fixed else 1)
         candidate["statement"] = statement
     note = (f"{len(candidates)} candidate finding(s), {len(fresh)} not seen by a teacher before. "
             f"{fallbacks} statement(s) used the template after the guard rejected the model's wording. "
             f"{len(open_questions)} open question(s) left unanswered rather than guessed.")
+    if fixed and fresh:
+        note += " Worded with the fixed Arabic sentences, not by the model."
     return {"candidates": fresh, "open_questions": open_questions, **_step("compose_findings", note)}
 
 

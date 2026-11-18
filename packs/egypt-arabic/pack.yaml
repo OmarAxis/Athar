@@ -24,6 +24,7 @@
 # We graph the school's curriculum. We never change it.
 id: egypt-arabic
 name: Egypt, Arabic Language, Primary 4 to Preparatory 2
+name_ar: "مصر، اللغة العربية، من الصف الرابع الابتدائي إلى الصف الثاني الإعدادي"
 subject: arabic
 subject_label: {en: Arabic, ar: "اللغة العربية"}
 grades: [4, 8]
@@ -66,12 +67,12 @@ skills:
   - {id: literary-appreciation, label: {en: Appreciating literary language, ar: "التذوق الأدبي"}}
 
 approaches:
-  - {id: concrete_objects, label: {en: Hands-on objects}}
-  - {id: visual_models, label: {en: Diagrams and visual models}}
-  - {id: worked_examples, label: {en: Worked examples}}
-  - {id: peer_groups, label: {en: Group work with peers}}
-  - {id: story_problems, label: {en: Story and real-life problems}}
-  - {id: drill_practice, label: {en: Drill and practice}}
+  - {id: concrete_objects, label: {en: Hands-on objects, ar: "وسائل محسوسة"}}
+  - {id: visual_models, label: {en: Diagrams and visual models, ar: "رسومات ونماذج بصرية"}}
+  - {id: worked_examples, label: {en: Worked examples, ar: "أمثلة محلولة"}}
+  - {id: peer_groups, label: {en: Group work with peers, ar: "العمل في مجموعات"}}
+  - {id: story_problems, label: {en: Story and real-life problems, ar: "مسائل من الحياة اليومية"}}
+  - {id: drill_practice, label: {en: Drill and practice, ar: "التدريب والتكرار"}}
 
 concepts:
   # ---------------------------------------------------------------- Primary 4, term 1

@@ -234,3 +234,21 @@ through the timeline tool and traces up to two topics that average under 40% on 
 tuned to it. A learner with many low topics gets only the two lowest traced. Nobody who teaches these
 subjects has read a finding. The maps themselves are unreviewed drafts, so a correct trace on the map is
 not yet a correct statement about a child.
+
+### Arabic
+
+Three more runs by hand on `qwen3.5-9b`, on the five-subject school written in Arabic, with the model wording
+the findings in Arabic:
+
+- It read a quiz sheet written in Arabic and recorded the six marks correctly, tagged with the right topic.
+- It found the planted gap in another subject and the planted strength, and asked a teacher about the hole in
+  the record instead of guessing. The analysis was right in all three.
+- **The Arabic wording was not good enough.** One finding dropped a word from a topic name, one wrote the term
+  as "2023-ت1", one added a claim that was not in the facts ("a need to review the basics of algebra"), one
+  called the learner's understanding "deep", and the question used different words for teacher and learner
+  than the rest of the app. None of these was caught by the guard.
+
+Because of that, Arabic findings and questions now use fixed sentences written in code (`MESKA_ARABIC_WORDING`
+turns the model's wording back on). After the change the same cases were checked without a model through
+`meska story` and a unit test: the sentences carry the right topic names, averages and terms. Notes for
+families in Arabic are still worded by the model and were not tried again. Three runs is not a measurement.

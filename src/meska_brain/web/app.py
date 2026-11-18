@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 from .. import accounts, audit, classes, db, graph, imports, privacy, report, review, school, tools
 from ..config import get_settings
-from ..curriculum import load_pack
+from ..curriculum import current_lang, load_pack
 from . import dashboard, people
 
 STATIC = Path(__file__).with_name("static")
@@ -58,6 +58,9 @@ async def _require_sign_in(request: Request, call_next):
     """Once the school has an account, learner data is served to a signed-in teacher only."""
     path = request.url.path
     request.state.who = None
+    # Topic names follow the reader's language: their own choice (a cookie), else the school's setting.
+    chosen = request.cookies.get("athar_lang")
+    current_lang.set(chosen if chosen in ("ar", "en") else get_settings().language)
     if path.startswith(("/api/", "/learners/")) and path not in _OPEN and accounts.enabled():
         who = accounts.session_teacher(request.cookies.get(accounts.COOKIE))
         if who is None:
@@ -643,7 +646,8 @@ def _latest_year() -> int | None:
 def _session_view(who: dict | None) -> dict:
     pack = _pack()
     return {"product": get_settings().product_name, "sign_in": accounts.enabled(), "teacher": who,
-            "curriculum": {"id": pack.id, "name": pack.name, "grades": list(pack.grades), "terms": pack.terms,
+            "language": get_settings().language, "curriculum_name": pack.title(),
+            "curriculum": {"id": pack.id, "name": pack.title(), "grades": list(pack.grades), "terms": pack.terms,
                            "subjects": [{"id": sid, "label": pack.label(sid)} for sid in pack.subjects]},
             "latest_year": _latest_year()}
 

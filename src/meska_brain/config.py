@@ -29,6 +29,8 @@ class Settings:
     demo_pack: str = "egypt-school"  # what `meska demo` seeds the first time
     tls_cert: str | None = None      # a certificate file: the app then serves HTTPS
     tls_key: str | None = None
+    language: str = "ar"             # the language the page opens in, and the agent words findings in
+    arabic_wording: str = "fixed"    # "fixed": plain sentences written in code. "model": the model words them
 
 
 def get_settings() -> Settings:
@@ -50,4 +52,6 @@ def get_settings() -> Settings:
         demo_pack=env("MESKA_DEMO_PACK", "egypt-school"),
         tls_cert=env("MESKA_TLS_CERT") or None,
         tls_key=env("MESKA_TLS_KEY") or None,
+        language=env("MESKA_LANGUAGE", "ar") if env("MESKA_LANGUAGE", "ar") in ("ar", "en") else "en",
+        arabic_wording="model" if env("MESKA_ARABIC_WORDING", "fixed") == "model" else "fixed",
     )

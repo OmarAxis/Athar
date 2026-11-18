@@ -209,3 +209,25 @@ def test_csv_template_and_document_upload(client, tmp_path):
     bad = client.post("/api/upload/document", data={"teacher_id": "tch_amina"},
                       files={"file": ("run.exe", b"MZ", "application/octet-stream")})
     assert bad.status_code == 400
+
+
+def test_a_marks_sheet_in_arabic_is_read_in_either_language(tmp_path, monkeypatch):
+    """The Arabic template has Arabic row names and Arabic topic names. It is read whatever the reader's language."""
+    from meska_brain import synth_school
+    from meska_brain.curriculum import current_lang
+    monkeypatch.setenv("MESKA_DB", str(tmp_path / "meska.db"))
+    made = synth_school.generate_school(db_path=tmp_path / "meska.db", pack_id="egypt-maths", out_dir=tmp_path, lang="ar")
+    with open(made["sample_marks_sheet"], "rb") as fh:
+        table = imports.read_table("sample.csv", fh.read())
+    assert table[0][0] == "كود التلميذ" and table[1][0] == "الموضوع" and table[2][0] == "الدرجة من"
+    grade = int(made["sample_marks_sheet"].split("marks-grade")[1].split("-")[0])
+    for lang in ("en", "ar"):
+        token = current_lang.set(lang)
+        try:
+            checked = imports.check_marks(table, title="اختبار قصير", year=2026, term=1, grade=grade)
+            rows = imports.template_rows([{"alias": "Learner A-01", "name": "زينب أ."}], 2)
+        finally:
+            current_lang.reset(token)
+        assert checked["ok"], checked["problems"]
+        assert rows[0][0] == ("كود التلميذ" if lang == "ar" else "Learner code")
+    assert len(imports.template_xlsx(imports.template_rows([], 2, "ar"), imports.topics(__import__("meska_brain").curriculum.load_pack("egypt-maths"), 4, 1), "ar")) > 2000

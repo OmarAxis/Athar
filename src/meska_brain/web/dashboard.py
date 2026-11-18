@@ -98,7 +98,7 @@ def overview(db_path=None, only: set[str] | None = None) -> dict[str, Any]:
         "roster": roster,
         "calls_by_tool": by_tool,
         "recent_calls": recent,
-        "curriculum": {"id": pack.id, "name": pack.name,
+        "curriculum": {"id": pack.id, "name": pack.title(),
                        "subjects": [pack.label(s) for s in pack.subjects]} if pack else None,
     }
 
@@ -159,7 +159,7 @@ def learner_dashboard(learner_id: str, db_path=None) -> dict[str, Any]:
         "learner": {"learner_id": learner_id, "alias": learner["alias"],
                     "name": learner.get("display_name") or learner["alias"], "home_language": learner["home_language"],
                     "grade_now": max(grade_of.values()) if grade_of else learner["start_grade"],
-                    "curriculum": pack.name},
+                    "curriculum": pack.title()},
         "totals": {"records": len(evidence), "terms": len(periods),
                    "first_period": db.period_label(periods[0]) if periods else None,
                    "last_period": db.period_label(periods[-1]) if periods else None,

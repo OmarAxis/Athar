@@ -1,7 +1,8 @@
 {
   "seed": 11,
   "pack_id": "egypt-school",
-  "school": "Al-Nahda Demonstration School (synthetic)",
+  "school": "مدرسة النهضة التجريبية (بيانات غير حقيقية)",
+  "language": "ar",
   "current_period": "2026-T1",
   "note": "Synthetic data. Planted patterns are what an honest analysis should find.",
   "planted": [

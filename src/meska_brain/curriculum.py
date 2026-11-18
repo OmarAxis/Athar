@@ -5,6 +5,7 @@ We graph the school's curriculum; we never change it."""
 from __future__ import annotations
 
 from collections import deque
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,6 +16,11 @@ from .config import get_settings
 
 SKILL_KINDS = ("thinking", "disposition")  # a disposition describes character, never a struggle finding
 _CACHE: dict[tuple[str, Path], Pack] = {}
+
+
+# The language labels are given in when a caller does not say. The web app sets it for each request from
+# the reader's choice. Everything else (the MCP tools, tests, the command line) gets English unless it asks.
+current_lang: ContextVar[str] = ContextVar("current_lang", default="en")
 
 
 @dataclass(frozen=True)
@@ -44,9 +50,15 @@ class Pack:
     subjects: dict[str, dict[str, str]] = field(default_factory=dict)  # subject id -> labels
     strand_subject: dict[str, str] = field(default_factory=dict)       # strand id -> subject id
     terms: int = 3                                                     # terms in a school year
+    names: dict[str, str] = field(default_factory=dict)                # the pack's own name in other languages
 
-    def label(self, any_id: str, lang: str = "en") -> str:
+    def title(self, lang: str | None = None) -> str:
+        """The curriculum's name in the reader's language, else in English."""
+        return self.names.get(lang or current_lang.get()) or self.name
+
+    def label(self, any_id: str, lang: str | None = None) -> str:
         """Label of a concept, strand, skill or approach; falls back to English, then the id."""
+        lang = lang or current_lang.get()
         if any_id in self.concepts:
             labels = self.concepts[any_id].label
         else:
@@ -135,6 +147,7 @@ def _read_pack(path: Path) -> Pack:
         subjects={s["id"]: dict(s["label"]) for s in data["subjects"]},
         strand_subject={s["id"]: s["subject"] for s in data.get("strands", [])},
         terms=int(data.get("terms", 3)),
+        names={"ar": data["name_ar"]} if data.get("name_ar") else {},
     )
     _validate(pack)
     return pack

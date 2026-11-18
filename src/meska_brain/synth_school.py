@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from . import db
-from .config import ROOT
+from .config import ROOT, get_settings
 from .synth import _clip, _Ids, _load_pack, _load_templates, _topo_order
 
 SCHOOL_NAME = "Al-Nahda Demonstration School (synthetic)"
@@ -48,6 +48,39 @@ FIRST_NAMES = [
     "Kenzy", "Nader", "Lina", "Hazem", "Tasneem", "Amr", "Dalia", "Sami", "Yara", "Belal", "Nada", "Ramy",
 ]
 FAMILY_INITIALS = "AEHIKMNSRTFG"
+# The same invented people, written in Arabic, for a school whose language is Arabic.
+SCHOOL_NAME_AR = "مدرسة النهضة التجريبية (بيانات غير حقيقية)"
+TEACHERS_AR = ["منى عبد الرحمن", "هاني منصور", "دينا الشريف", "طارق سليمان", "نرمين فوزي", "شريف بركات"]
+MORE_TEACHERS_AR = ["أمل زكي", "وائل حجازي", "رانيا لطفي", "أشرف نجيب", "هدى صبري", "عماد توفيق", "سمر يحيى", "مجدي إبراهيم"]
+FIRST_NAMES_AR = [
+    "زينب", "يوسف", "ملك", "عمر", "حبيبة", "محمود", "فريدة", "كريم", "سلمى", "زياد", "نور", "حمزة",
+    "جنى", "مصطفى", "رقية", "أدهم", "مريم", "سيف", "هنا", "ياسين", "ليلى", "خالد", "آية", "أنس",
+    "بسملة", "تامر", "ريم", "فارس", "شهد", "مروان", "منة", "إياد", "رحمة", "باسل", "جودي", "مازن",
+    "كنزي", "نادر", "لينا", "حازم", "تسنيم", "عمرو", "داليا", "سامي", "يارا", "بلال", "ندى", "رامي",
+]
+FAMILY_INITIALS_AR = "أعحإكمنسرتفج"
+WHAT_WORKS_AR = [
+    "أبدأ ب{approach} قبل أي شغل مكتوب، وكل تلميذين يشرحوا إجابتهم لبعض.",
+    "تمهيد قصير في أول كل حصة، وبعده {approach}. وبحتفظ بكراسة لكل تلميذ كسجل.",
+    "{approach}، مع أمثلة من السوق ومن نتايج الماتشات. واللي يخلص بدري يساعد زميله.",
+    "{approach} في مجموعات صغيرة والباقي بيشتغل من السبورة. وبصحح 8 كراسات في اليوم.",
+]
+WANTS_HELP_AR = [
+    "ألاقي وقت أشوف شغل كل تلميذ والفصل فيه أكتر من خمسين.",
+    "أعرف التلميذ درس إيه قبل ما يوصل لفصلي.",
+    "تدريس {strand} لتلاميذ فاتهم الصف اللي قبله.",
+    "أوضح للأسرة ابنهم واقف فين بكلام بسيط.",
+]
+WORDS = {
+    "en": {"question": "{topic}: question {k}", "homework": "Homework task: {topic}",
+           "project": "End-of-year performance task: {topic}", "absent": "Absent {n} days this term",
+           "taught": "Taught with: {approach}", "the_topic": "the topic", "languages": "Arabic, English",
+           "default_approach": "Worked examples", "the_subject": "the subject"},
+    "ar": {"question": "{topic}: السؤال {k}", "homework": "واجب: {topic}",
+           "project": "مهمة أداء آخر السنة: {topic}", "absent": "غياب {n} يوم في هذا الترم",
+           "taught": "طريقة التدريس: {approach}", "the_topic": "الموضوع", "languages": "العربية والإنجليزية",
+           "default_approach": "أمثلة محلولة", "the_subject": "المادة"},
+}
 WHAT_WORKS = [
     "Starting with {approach} before any written work. Pairs explain their answer to each other.",
     "A short warm-up every lesson, then {approach}. I keep one copybook per learner as a record.",
@@ -71,7 +104,12 @@ def _term_dates(year: int, term: int, terms: int) -> tuple[dt.date, dt.date]:
 
 
 def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: str = "egypt-maths",
-                    n_learners: int = 40, out_dir: Path | str | None = None) -> dict[str, Any]:
+                    n_learners: int = 40, out_dir: Path | str | None = None, lang: str | None = None) -> dict[str, Any]:
+    """`lang`: the language the made-up names, notes and labels are written in (the school's language
+    by default). The numbers are the same in either language."""
+    lang = lang or get_settings().language
+    words = WORDS["ar" if lang == "ar" else "en"]
+    named = lambda item: item["label"].get(lang) or item["label"]["en"]
     rng = random.Random(seed)
     ids = _Ids(rng)
     out = Path(out_dir) if out_dir else ROOT / "data"
@@ -82,14 +120,14 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
     pack = _load_pack(pack_id)
     concepts = _topo_order(pack["concepts"])
     by_id = {c["id"]: c for c in concepts}
-    label = lambda cid: by_id[cid]["label"]["en"]
+    label = lambda cid: named(by_id[cid])
     approach_ids = [a["id"] for a in pack["approaches"]]
-    approach_label = {a["id"]: a["label"]["en"] for a in pack["approaches"]}
-    strand_label = {s["id"]: s["label"]["en"] for s in pack["strands"]}
+    approach_label = {a["id"]: named(a) for a in pack["approaches"]}
+    strand_label = {s["id"]: named(s) for s in pack["strands"]}
     strand_subject = {s["id"]: s.get("subject", pack["subject"]) for s in pack["strands"]}
     subject_of = lambda cid: strand_subject[by_id[cid]["strand"]]
     subjects = list(dict.fromkeys(subject_of(c["id"]) for c in concepts))
-    subject_label = {s["id"]: s["label"]["en"] for s in pack.get("subjects") or []}
+    subject_label = {s["id"]: named(s) for s in pack.get("subjects") or []}
     templates = _load_templates()
     terms = int(pack.get("terms", 3))
     g_lo, g_hi = pack["grades"]
@@ -137,7 +175,9 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
                 break
         specs.append(dict(alias=alias, grade_now=grade_now, start_year=start_year,
                           start_grade=grade_now - (CURRENT_YEAR - start_year), case="mild",
-                          name=f"{FIRST_NAMES[i % len(FIRST_NAMES)]} {FAMILY_INITIALS[(i * 5 + i // len(FIRST_NAMES)) % len(FAMILY_INITIALS)]}.",
+                          name=(f"{FIRST_NAMES_AR[i % len(FIRST_NAMES_AR)]} {FAMILY_INITIALS_AR[(i * 5 + i // len(FIRST_NAMES_AR)) % len(FAMILY_INITIALS_AR)]}."
+                                if lang == "ar" else
+                                f"{FIRST_NAMES[i % len(FIRST_NAMES)]} {FAMILY_INITIALS[(i * 5 + i // len(FIRST_NAMES)) % len(FAMILY_INITIALS)]}."),
                           ability=round(rng.uniform(0.58, 0.78), 3), tilt_sd=0.04, noise_sd=0.04,
                           missing=set(), sparse=set(), plant={}))
 
@@ -202,7 +242,8 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
 
     # ---- teachers and teaching units: one unit per (year, grade, topic) some learner met
     multi = len(subjects) > 1
-    names = (TEACHERS + MORE_TEACHERS)[:2 * len(subjects)] if multi else TEACHERS
+    staff = (TEACHERS_AR, MORE_TEACHERS_AR) if lang == "ar" else (TEACHERS, MORE_TEACHERS)
+    names = (staff[0] + staff[1])[:2 * len(subjects)] if multi else staff[0]
     if multi and len(names) < 2 * len(subjects):
         raise ValueError("This generator has names for at most seven subjects.")
     teacher_ids = [ids.new("tch") for _ in names]
@@ -232,7 +273,7 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
                     approach = special if t == terms else rng.choice([a for a in approach_ids if a != special])
                 units[(y, g, cid)] = dict(id=ids.new("unt"), teacher_id=teacher_of(subject_of(cid), g, y), year=y, term=t,
                                           grade=g, concept_id=cid, approach_id=approach,
-                                          note=f"Taught with: {approach_label[approach]}")
+                                          note=words["taught"].format(approach=approach_label[approach]))
 
     def latent(spec: dict) -> dict[str, float]:
         gap_line, m = spec["ability"] - 0.15, {}
@@ -282,7 +323,7 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
                 if topic:
                     kw["concept_id"] = topic
                 evidence.append(dict(dict(concept_id=None, skill_id=None, score=None, absent_days=None, raw_text=None,
-                                          language="en", unit_id=None, status="active"),
+                                          language=("ar" if lang == "ar" else "en"), unit_id=None, status="active"),
                                      id=ids.new("evd"), learner_id=lid, kind=kind, year=y, term=t, period_ord=po,
                                      grade=grade, teacher_id=tid, source_ref=ref, recorded_at=recorded_at,
                                      logged_late=late, **kw))
@@ -292,26 +333,26 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
                 for k in range(1, (rng.randint(1, 2) if thin else rng.randint(3, 5)) + 1):
                     add("quiz_item", f"quiz:{y}-T{t}-{subject_of(cid)}-{ci:02d}#item{k}", at, topic=cid,
                         skill_id=(by_id[cid]["skills"] or [None])[0], score=round(_clip(rng.gauss(mastery[cid], 0.08)), 2),
-                        raw_text=f"{label(cid)}: question {k}", unit_id=unit["id"] if unit else None)
+                        raw_text=words["question"].format(topic=label(cid), k=k), unit_id=unit["id"] if unit else None)
             for subject in subjects:
                 own = [cid for cid in topics if subject_of(cid) == subject]
                 if own and not thin:
                     cid = rng.choice(own)
                     add("assignment", f"assignment:{y}-T{t}-{subject}-1", topic=cid,
-                        score=round(_clip(rng.gauss(mastery[cid], 0.10)), 2), raw_text=f"Homework task: {label(cid)}",
+                        score=round(_clip(rng.gauss(mastery[cid], 0.10)), 2), raw_text=words["homework"].format(topic=label(cid)),
                         unit_id=units[(y, grade, cid)]["id"])
                 if own and t == terms and y < CURRENT_YEAR and not thin:
                     cid = rng.choice(own)
                     add("project", f"project:{y}-T{t}-{subject}-task", topic=cid, skill_id=(by_id[cid]["skills"] or [None])[0],
                         score=round(_clip(rng.gauss(mastery[cid], 0.10)), 2),
-                        raw_text=f"End-of-year performance task: {label(cid)}", unit_id=units[(y, grade, cid)]["id"])
+                        raw_text=words["project"].format(topic=label(cid)), unit_id=units[(y, grade, cid)]["id"])
             if spec["plant"].get("period") == (y, t):
                 absent = 17
             elif spec["case"] == "mild" and rng.random() < 0.08:
                 absent = rng.randint(10, 14)
             else:
                 absent = rng.choice([0, 0, 1, 1, 2, 3, 4, 5]) if y < CURRENT_YEAR else rng.choice([0, 0, 1, 2])
-            add("attendance", f"register:{y}-T{t}", absent_days=absent, raw_text=f"Absent {absent} days this term")
+            add("attendance", f"register:{y}-T{t}", absent_days=absent, raw_text=words["absent"].format(n=absent))
 
             lo, hi = min(topics, key=lambda x: mastery[x]), max(topics, key=lambda x: mastery[x])
             mean = sum(mastery[c] for c in topics) / len(topics)
@@ -329,10 +370,12 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
             for n, (sig, cid) in enumerate([(signal, target)] + ([("absent_often", None)] if absent >= 10 else []), start=1):
                 if cid is not None and rng.random() < 0.12:
                     cid = None                                           # the teacher did not say which topic
-                lang = "ar" if rng.random() < 0.35 and "ar" in templates.get(sig, {}) else "en"
-                text = rng.choice(templates.get(sig, {}).get(lang) or templates["engaged"]["en"])
-                add("observation", f"note:{y}-T{t}-{n}", topic=cid, language=lang,
-                    raw_text=text.replace("{concept}", label(cid) if cid else "the topic"))
+                # In an Arabic school every note is in Arabic. Otherwise about a third are.
+                in_arabic = (rng.random() < 0.35 or lang == "ar") and "ar" in templates.get(sig, {})
+                note_lang = "ar" if in_arabic else "en"
+                text = rng.choice(templates.get(sig, {}).get(note_lang) or templates["engaged"]["en"])
+                add("observation", f"note:{y}-T{t}-{n}", topic=cid, language=note_lang,
+                    raw_text=text.replace("{concept}", label(cid) if cid else words["the_topic"]))
 
     # ---- write
     db.init_db(db_path)
@@ -375,10 +418,11 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
             said = {a: "often" if i < third else "sometimes" if i < 2 * third else "rarely" for i, a in enumerate(ranked)}
             said.update({a: "rarely" for a in approach_ids if a not in said})
             areas = sorted({strand_label[by_id[r["concept_id"]]["strand"]] for r in db.rows(
-                conn, "SELECT DISTINCT concept_id FROM teaching_units WHERE teacher_id = ?", (tid,))}) or ["the subject"]
-            answers = {"approaches": said, "languages": "Arabic, English", "class_size": str(44 + (index * 7) % 19),
-                       "what_works": prof.choice(WHAT_WORKS).format(approach=approach_label[ranked[0]] if ranked else "Worked examples"),
-                       "wants_help_with": prof.choice(WANTS_HELP).format(strand=prof.choice(areas))}
+                conn, "SELECT DISTINCT concept_id FROM teaching_units WHERE teacher_id = ?", (tid,))}) or [words["the_subject"]]
+            works, wants = (WHAT_WORKS_AR, WANTS_HELP_AR) if lang == "ar" else (WHAT_WORKS, WANTS_HELP)
+            answers = {"approaches": said, "languages": words["languages"], "class_size": str(44 + (index * 7) % 19),
+                       "what_works": prof.choice(works).format(approach=approach_label[ranked[0]] if ranked else words["default_approach"]),
+                       "wants_help_with": prof.choice(wants).format(strand=prof.choice(areas))}
             conn.execute("INSERT INTO teacher_profiles (teacher_id, answers, updated_at) VALUES (?, ?, ?)",
                          (tid, db.jdump(answers), CREATED_AT))
         by_kind = {r[0]: r[1] for r in conn.execute("SELECT kind, COUNT(*) FROM evidence GROUP BY kind")}
@@ -398,7 +442,7 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
             plant["period"] = db.period_label(db.period_ord(*plant["period"]))
         planted.append({"learner_id": spec["id"], "alias": spec["alias"], "case": spec["case"], **plant})
     (out / "ground_truth.json").write_text(json.dumps(
-        {"seed": seed, "pack_id": pack_id, "school": SCHOOL_NAME, "current_period": f"{CURRENT_YEAR}-T1",
+        {"seed": seed, "pack_id": pack_id, "school": SCHOOL_NAME_AR if lang == "ar" else SCHOOL_NAME, "language": lang, "current_period": f"{CURRENT_YEAR}-T1",
          "note": "Synthetic data. Planted patterns are what an honest analysis should find.", "planted": planted},
         ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -413,13 +457,22 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
     ahead = [cid for cid in ahead if subject_of(cid) == subject_of(topic)]
     subject_name = subject_label.get(subject_of(topic), subject_of(topic))
     code = focus["alias"].replace("Learner ", "")
-    marks = [(n, f"{label(topic)}: question {n}", rng.choice([0, 0, 1, 1, 2]) if n != 4 else "-", rng.choice([2, 3]))
+    marks = [(n, words["question"].format(topic=label(topic), k=n), rng.choice([0, 0, 1, 1, 2]) if n != 4 else "-", rng.choice([2, 3]))
              for n in range(1, 7)]
-    lines = ["# Quiz sheet (synthetic)", "", f"Learner: {focus['alias']}", f"Grade: {grade}", f"Term: {CURRENT_YEAR}-T1",
+    sheet_teacher = teacher_name[teacher_of(subject_of(topic), grade, CURRENT_YEAR)]
+    if lang == "ar":
+        lines = ["# كشف اختبار قصير (بيانات تجريبية غير حقيقية)", "", f"التلميذ: {focus['alias']}", f"الصف: {grade}",
+                 f"الترم: {CURRENT_YEAR}-T1", f"المدرس: {sheet_teacher}", f"المادة: {subject_name}",
+                 f"الاختبار: {CURRENT_YEAR}-T1-{subject_of(topic)}-quiz ({label(topic)})",
+                 "", "| رقم السؤال | السؤال | الدرجة | من |", "|------|----------|-------|--------|"]
+        lines += [f"| {n} | {q} | {m} | {o} |" for n, q, m, o in marks] + ["", "السؤال 4 لم يُجب عنه."]
+    lines_en = ["# Quiz sheet (synthetic)", "", f"Learner: {focus['alias']}", f"Grade: {grade}", f"Term: {CURRENT_YEAR}-T1",
              f"Teacher: {teacher_name[teacher_of(subject_of(topic), grade, CURRENT_YEAR)]}", f"Subject: {subject_name}",
              f"Quiz: {CURRENT_YEAR}-T1-{subject_of(topic)}-quiz ({label(topic)})",
              "", "| Item | Question | Marks | Out of |", "|------|----------|-------|--------|"]
-    lines += [f"| {n} | {q} | {m} | {o} |" for n, q, m, o in marks] + ["", "Item 4 not attempted."]
+    lines_en += [f"| {n} | {q} | {m} | {o} |" for n, q, m, o in marks] + ["", "Item 4 not attempted."]
+    if lang != "ar":
+        lines = lines_en
     name = f"quiz_sheet_{code}_{CURRENT_YEAR}-T1.md"
     (inbox / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
     files.append(name)
@@ -439,9 +492,11 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
     quiz_topics = (ahead * 5)[:5]
     with open(samples / f"marks-grade{grade}-{CURRENT_YEAR}-T1.csv", "w", encoding="utf-8-sig", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["Learner code", "Name"] + [f"Q{i}" for i in range(1, 6)])
-        w.writerow(["Topic", ""] + [label(cid) for cid in quiz_topics])
-        w.writerow(["Out of", ""] + [2, 2, 3, 3, 4])
+        from .imports import sheet_words
+        sheet = sheet_words(lang)
+        w.writerow([sheet["code"], sheet["name"]] + [f"{sheet['q']}{i}" for i in range(1, 6)])
+        w.writerow([sheet["topic"], ""] + [label(cid) for cid in quiz_topics])
+        w.writerow([sheet["out_of"], ""] + [2, 2, 3, 3, 4])
         for s in class_now:
             w.writerow([s["alias"].replace("Learner ", ""), s["name"]] + [
                 round(_clip(rng.gauss(s["mastery"][cid], 0.12)) * top) for cid, top in zip(quiz_topics, [2, 2, 3, 3, 4], strict=True)])

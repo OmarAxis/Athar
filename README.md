@@ -24,6 +24,8 @@ Status: stage two, on synthetic data only. It has not been used with a real teac
 - **An Add records page**: a marks sheet for Excel that needs no model, and document upload for the agent.
 - **Looking after the records** (School page, admin): a backup copy, one learner's whole record as a file, deleting one learner for good, and withdrawing one wrong record.
 
+- **Arabic, right to left.** The page opens in Egyptian Arabic and has a button to switch to English. Topic names, the made-up school, the marks sheet, the printable report and the agent's findings are in Arabic too. See "Arabic" below.
+
 Everything Meska Brain had is still here: the graph engine that reaches the conclusions, the agent that only reads and words, the two teacher gates, the guard, and the audit log.
 
 ## Run it
@@ -60,6 +62,23 @@ To make your own sheet, download the template on the same page. Choose a class a
 
 Seeding again (`uv run meska seed`) wipes all data, accounts and classes included.
 
+## Arabic
+
+The page is written in English. In Arabic, every piece of text that reaches the screen is looked up in three dictionaries in `src/meska_brain/web/static`: `ar.json` (the page), `ar-server.json` (sentences the server writes) and `ar-report.json` (the printable report). To change a word, change it there. Three registers are used on purpose:
+
+- buttons, labels and help text: light Egyptian Arabic, the way Egyptian apps write;
+- topic, strand and subject names: the Arabic of the school books;
+- findings, explanations and the report: simple Modern Standard Arabic, because they go on a child's record.
+
+Settings, read from the environment:
+
+```
+MESKA_LANGUAGE=ar          # ar (default) or en: the language the page opens in and findings are worded in
+MESKA_ARABIC_WORDING=fixed # fixed (default): Arabic findings use sentences written in code. model: the model words them
+```
+
+`uv run meska seed` writes the made-up school in the language of `MESKA_LANGUAGE`.
+
 ## Looking after the records
 
 ```
@@ -76,11 +95,14 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **No teacher has reviewed the maps.** The curriculum says what is taught and when. It does not say which topic depends on which. Those "needs this first" links (814 across the five subjects) were written by the authors of this software. The trace-back is only as good as those links. This is the first thing to fix before a pilot.
 - **The topic lists come mostly from secondary sources.** The ministry's own site could not be read. Each pack lists its sources and says which were scanned ministry books, which were workbooks that follow the books, and which were news articles in Arabic. In short: English and Social Studies rest mostly on ministry books; Mathematics on ministry books for Primary term 1 and workbooks or articles for the rest; Science and Arabic on workbooks and articles only. Titles were shortened and, where the source was Arabic, translated by the authors.
 - **The curriculum is changing under the map.** Primary 4 to 6 Science changed to new books in 2026/27 and the new term 2 books were not out when the map was made, so those 14 topics follow the earlier books and are marked `verified: false`. Preparatory 1 and 2 changed in 2024/25 and 2025/26. The Mathematics map was not checked against 2026/27 printings.
-- **English only on the page.** Arabic topics carry Arabic names in the pack, and teacher notes in Arabic are read and shown, but the page itself is English and reads left to right.
+- **No Arabic speaker other than the authors has read the Arabic.** The page text (about 770 phrases), the server sentences (about 350) and 578 topic names were translated by the authors with the help of a language model. The topic names were written from knowledge of the school books, not copied from them, so some will differ from the book's wording. Teachers of each subject need to check them.
+- **In Arabic the model does not word the findings.** The local model's Arabic dropped words and added claims in our tries, so Arabic findings and questions use fixed sentences. They are correct but all sound alike. Notes for families are still worded by the model, and a teacher must approve each one.
+- **The guard is weaker in Arabic.** It is a word list written mostly for English. A teacher's Arabic edit that labels a child may get through. The teacher gates are the real protection.
+- **Parts still in English in Arabic mode:** the raw entries of the audit log, tool names, file names, model names, and any server message that has no entry in the dictionary yet. The learning map and charts keep their left-to-right shape (grade 4 on the left). Numbers are not given Arabic plural forms, so counts are written like "عدد السجلات: 5".
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 305 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **Tested by the authors only.** 314 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
 - **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for the original Meska Brain cohort (`uv run meska seed --pack generic-maths`), and `meska eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.

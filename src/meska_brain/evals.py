@@ -552,6 +552,7 @@ def _attempt(task: Callable, seed_dir: Path, model: str | None = None) -> dict:
 def run_all(repeats: int = 3, skip_model: bool = False, models: list[str] | None = None) -> dict:
     from rich.console import Console
     console = Console()
+    os.environ["MESKA_LANGUAGE"] = "en"       # the evaluation set checks English wording
     previous_db = os.environ.get("MESKA_DB")
     seed_dir = Path(tempfile.mkdtemp(prefix="meska-eval-seed-"))
     _seed(seed_dir)

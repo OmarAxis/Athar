@@ -25,6 +25,19 @@ The original cohort is `uv run meska seed --pack generic-maths`, and `meska eval
 Seeding wipes everything, accounts and classes included. No account is ever seeded: the admin is created on the
 School page.
 
+Arabic:
+
+- The page (`index.html`) is written in English. In Arabic, `tr()` in the page looks every piece of visible text up in
+  `static/ar.json` and `static/ar-server.json` (exact match, then whole-string patterns, then fragments). A
+  MutationObserver applies it to everything added to the page, so new English text shows up translated only if it has
+  an entry. Add the entry when you add text. Data (a finding, a teacher's words, a name) must be marked `dir="auto"`
+  or `lang`, which keeps it out of the dictionary.
+- Server side, `curriculum.current_lang` is set per request from the `athar_lang` cookie, and `pack.label(id)` follows
+  it. `i18n.tr()` is the same lookup in Python, used by `report.py` with `static/ar-report.json`.
+- `MESKA_LANGUAGE` (default `ar`) decides the language of seeded data and of the agent's findings. Tests set it to
+  `en` in `tests/conftest.py`; `meska eval` forces `en`.
+- Wording rules and fixed terms are in `docs/arabic-glossary.md`. Follow them.
+
 Things that bite:
 
 - A label in a pack with a comma must be in quotes (`{en: "Ratio, proportion and percent"}`). The loader refuses
@@ -77,7 +90,7 @@ Who does what:
 | `src/meska_brain/synth.py` | Synthetic cohort and sample documents |
 | `src/meska_brain/evals.py` | The evaluation set that writes `EVALS.md` |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 305 tests, no model needed |
+| `tests/` | 314 tests, no model needed |
 
 ## Commands
 
