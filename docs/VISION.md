@@ -29,7 +29,7 @@ We looked in November 2026. We did not find one product that puts all of Athar's
 | Diagnosing a misconception from one wrong answer | Eedi | Mathematics only, built for the UK. |
 | Offline, open source, with an Arabic interface | Kolibri | Delivers lessons and shows progress. It does not trace causes over years. |
 | Open-source tutors and learner models | OATutor, pyBKT, Oppia | Research tools and tutors, not a school record. |
-| A national record of each learner | Egypt's ministry announced a platform to track attendance and results from 2026/27 | Data goes up to the ministry. It is a different job from helping one teacher understand one learner. |
+| A national record of each learner | Egypt's ministry and the Japanese company SPRIX announced a platform to track attendance and results from 2026/27 | Data goes up to the ministry. It is a different job from helping one teacher understand one learner. |
 
 What we think is different about Athar:
 
@@ -163,6 +163,67 @@ flowchart LR
 
 We would not build one central database of children. It is the simplest thing to build and the hardest to undo.
 
+## What a long-term profile needs
+
+Less than people expect. What matters is that each record is tied to a topic and a date.
+
+Needed:
+
+- A code for the learner that stays the same across years and schools.
+- Which class, grade and school year they were in.
+- Marks for each question or topic, not only a term total. A total of 14 out of 20 says nothing about where the gap is.
+- Which topic each question tested.
+- Attendance for each term.
+
+Makes it much better:
+
+- The teacher's short notes.
+- How each topic was taught, so that "what seemed to help" can be seen.
+- Who taught it.
+
+Not needed, and better left out: family income, address, religion, health and behaviour records. They add risk and the analysis does not use them.
+
+The hard part is not this list. Most schools keep only term totals, so the detail by topic has to start being written down. That is why the marks sheet with a topic row matters more than any other feature.
+
+## The national platform, and where Athar fits
+
+In August 2026 Egypt's Ministry of Education and Technical Education signed an agreement with SPRIX, a Japanese education company, for a national platform. As reported, teachers will record attendance and results on it, it will help schools see which students need support, and the ministry will receive updated data every day. It starts in several education departments in 2026/27 and then widens. SPRIX has worked on Egypt's mathematics curriculum since 2025. We found no public statement of who runs the data or of the privacy terms, and no report that it has launched.
+
+Athar is not a rival to this and should not try to be. The two do different jobs.
+
+| | The ministry platform | Athar |
+|---|---|---|
+| Who it serves | The ministry, looking at the whole system | One teacher, looking at one learner |
+| The question it answers | Who is absent, who is failing | Why, and where it may have started |
+| Where the data goes | To the ministry, daily | It stays in the school |
+| How it comes | Under contract, closed | Open source, runs with no internet |
+
+## Who would use it first
+
+Three ways in, in the order we would try them.
+
+1. **Private schools.** They choose their own software and are not waiting for the national platform. Private schools that follow the national curriculum can use the maps as they are. Language schools teach mathematics and science in English, and every topic in the maps has an English name as well as an Arabic one. This is where real teachers can use Athar soonest and tell us what is wrong with it. Schools on other curricula (British, American) would need their own packs.
+2. **The "why" on top of the national platform.** If that platform can export marks, Athar could read them and add the trace-back. Nobody has confirmed that it can export.
+3. **The curriculum map by itself.** A reviewed, open map of which topic needs which, for grades 4 to 8 in five subjects, does not seem to exist in public. It would be useful to the ministry, to SPRIX, to publishers and to researchers, whether or not they use the rest of Athar.
+
+What a first private school pilot needs, before anything else on this page:
+
+- one teacher per subject to review the maps and the Arabic;
+- the consent, backup and HTTPS work listed in [SECURITY.md](../SECURITY.md) finished and tested;
+- a school that agrees to try it with a few classes for one term, with the families' consent;
+- someone to sit with the teachers in the first weeks and write down what they do not use.
+
+## How it could pay for itself
+
+The code is open, so the software is not what is sold. What a school could pay for:
+
+- setting it up and moving its class lists and past marks in;
+- training its teachers;
+- curriculum packs reviewed by subject teachers, kept up to date as the books change;
+- support, and a backup kept safely for the school.
+
+One caution. Anyone paid to run software that holds children's records takes on the duties of the data protection law. That needs legal advice before the first contract, not after.
+
 ## What we will not build
 
 Each of these has been built elsewhere and each has a known cost.
@@ -199,6 +260,8 @@ Checked against the page in November 2026:
 - OATutor: https://github.com/CAHLR/OATutor
 - pyBKT: https://github.com/CAHLR/pyBKT
 - Egypt's ministry platform, as reported: https://english.ahram.org.eg/News/574335.aspx
+- SPRIX and Egypt's mathematics curriculum, as reported: https://en.amwalalghad.com/?p=214913
+- The national platform in Arabic, as reported: https://filgamaa.com/?p=304862
 - OneRoster 1.2: https://standards.1edtech.org/oneroster/specifications/standards/v1p2
 - CASE: https://www.1edtech.org/standards/case
 - OpenEMIS: https://en.wikipedia.org/wiki/OpenEMIS
