@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from meska_brain import synth
-from meska_brain.config import ROOT
+from athar import synth
+from athar.config import ROOT
 
 PACK = ROOT / "packs" / "generic-maths" / "pack.yaml"
 

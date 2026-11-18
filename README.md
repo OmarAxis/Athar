@@ -1,6 +1,6 @@
 # Athar
 
-Athar follows one learner across years and shows a teacher where that learner is strong, where they struggle, and where a struggle may have started. It is the school product built on [Meska Brain](docs/meska-brain-readme.md), starting with Egypt. The name is Arabic for a trace, the mark something leaves behind.
+Athar follows one learner across years and shows a teacher where that learner is strong, where they struggle, and where a struggle may have started. It starts with Egypt. The name is Arabic for a trace, the mark something leaves behind.
 
 Status: stage two, on synthetic data only. It has not been used with a real teacher or a real learner. Do not put real learner data in it yet. See [SECURITY.md](SECURITY.md).
 
@@ -26,7 +26,7 @@ Status: stage two, on synthetic data only. It has not been used with a real teac
 
 - **Arabic, right to left.** The page opens in Egyptian Arabic and has a button to switch to English. Topic names, the made-up school, the marks sheet, the printable report and the agent's findings are in Arabic too. See "Arabic" below.
 
-Everything Meska Brain had is still here: the graph engine that reaches the conclusions, the agent that only reads and words, the two teacher gates, the guard, and the audit log.
+Underneath: a graph engine in plain code that reaches the conclusions, an agent that only reads and words, two teacher gates, a guard that refuses labels, and a log of every action.
 
 ## Run it
 
@@ -38,7 +38,7 @@ The full guide, with every step, is [docs/GETTING-STARTED.md](docs/GETTING-START
 
 ```
 uv sync
-uv run meska demo
+uv run athar demo
 ```
 
 Open http://127.0.0.1:8765. The first run builds the synthetic school.
@@ -52,7 +52,7 @@ Open http://127.0.0.1:8765. The first run builds the synthetic school.
 To see findings waiting for a decision without running a model:
 
 ```
-uv run meska story
+uv run athar story
 ```
 
 ## Try the upload
@@ -70,11 +70,11 @@ To make your own sheet, download the template on the same page. Choose a class a
 2. On the same page, add each teacher. A new teacher sees no learner yet.
 3. Open a class and give it to a teacher for a subject. The synthetic school already has one class per grade.
 
-Seeding again (`uv run meska seed`) wipes all data, accounts and classes included.
+Seeding again (`uv run athar seed`) wipes all data, accounts and classes included.
 
 ## Arabic
 
-The page is written in English. In Arabic, every piece of text that reaches the screen is looked up in three dictionaries in `src/meska_brain/web/static`: `ar.json` (the page), `ar-server.json` (sentences the server writes) and `ar-report.json` (the printable report). To change a word, change it there. Three registers are used on purpose:
+The page is written in English. In Arabic, every piece of text that reaches the screen is looked up in three dictionaries in `src/athar/web/static`: `ar.json` (the page), `ar-server.json` (sentences the server writes) and `ar-report.json` (the printable report). To change a word, change it there. Three registers are used on purpose:
 
 - buttons, labels and help text: light Egyptian Arabic, the way Egyptian apps write;
 - topic, strand and subject names: the Arabic of the school books;
@@ -83,19 +83,19 @@ The page is written in English. In Arabic, every piece of text that reaches the 
 Settings, read from the environment:
 
 ```
-MESKA_LANGUAGE=ar          # ar (default) or en: the language the page opens in and findings are worded in
-MESKA_ARABIC_WORDING=fixed # fixed (default): Arabic findings use sentences written in code. model: the model words them
+ATHAR_LANGUAGE=ar          # ar (default) or en: the language the page opens in and findings are worded in
+ATHAR_ARABIC_WORDING=fixed # fixed (default): Arabic findings use sentences written in code. model: the model words them
 ```
 
-`uv run meska seed` writes the made-up school in the language of `MESKA_LANGUAGE`.
+`uv run athar seed` writes the made-up school in the language of `ATHAR_LANGUAGE`.
 
 ## Looking after the records
 
 ```
-uv run meska backup                          # one file in data/backups, newest 14 kept
-uv run meska restore data/backups/<file>     # stop the app first
-uv run meska export-learner K-42             # everything held about one learner, as a file
-uv run meska delete-learner K-42 --code K-42 # for good
+uv run athar backup                          # one file in data/backups, newest 14 kept
+uv run athar restore data/backups/<file>     # stop the app first
+uv run athar export-learner K-42             # everything held about one learner, as a file
+uv run athar delete-learner K-42 --code K-42 # for good
 ```
 
 The same four jobs are on the School page for the admin. A backup holds names and is not encrypted. It stays on the same disk unless someone copies it elsewhere.
@@ -112,10 +112,18 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 316 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
-- **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for the original Meska Brain cohort (`uv run meska seed --pack generic-maths`), and `meska eval` still expects that cohort. See the note at the end of `EVALS.md`.
+- **Tested by the authors only.** 317 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for a small reference cohort on a generic curriculum (`uv run athar seed --pack generic-maths`), and `athar eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.
+
+## Guides
+
+- [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md))
+- [Which model to use, especially for Arabic](docs/MODELS.md)
+- [Using your own class data](docs/DATA-GUIDE.md) ([بالعربي](docs/DATA-GUIDE.ar.md))
+- [How it is built](ARCHITECTURE.md), [what the code protects](SECURITY.md), [how it was tested](EVALS.md)
+- [Contributing](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md)
 
 ## Where this could go
 
@@ -126,13 +134,13 @@ The same four jobs are on the School page for the admin. A backup holds names an
 ```
 uv run pytest -q                           # tests, no model needed
 uv run ruff check src tests                # lint
-uv run meska seed                          # rebuild the synthetic Egyptian school, five subjects (wipes everything)
-uv run meska seed --pack egypt-maths       # one subject only
-uv run meska seed --pack generic-maths     # the original Meska Brain cohort
-uv run meska story                         # findings waiting and decided, no model used
-uv run meska learners                      # list learners
-uv run meska run <code> --file data/inbox/<file>   # run the agent for one learner
-uv run meska report <code>                 # printable report, approved findings only
+uv run athar seed                          # rebuild the synthetic Egyptian school, five subjects (wipes everything)
+uv run athar seed --pack egypt-maths       # one subject only
+uv run athar seed --pack generic-maths     # the small reference cohort the evaluation set uses
+uv run athar story                         # findings waiting and decided, no model used
+uv run athar learners                      # list learners
+uv run athar run <code> --file data/inbox/<file>   # run the agent for one learner
+uv run athar report <code>                 # printable report, approved findings only
 ```
 
 ## Licence

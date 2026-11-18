@@ -1,5 +1,5 @@
 # ruff: noqa: C408, B023  (dict() keeps row builders readable; closures are called inside their loop)
-"""Synthetic data for Meska Brain. Everything here is made up: no real learners, no real schools.
+"""Synthetic data for Athar. Everything here is made up: no real learners, no real schools.
 
 `generate()` writes learners, teachers, teaching units and evidence straight into the database, plus
 `ground_truth.json` (the planted patterns, used by evals) and a few raw files in `inbox/` for the agent
@@ -45,7 +45,7 @@ TERM_DATES = {  # (start month, start day, end month, end day)
 
 # A whole school (`generate(school=True)`): more staff, each teaching a subject, each with a described
 # way of teaching. Every name is fictional.
-SCHOOL_NAME = "Meska Demonstration School (synthetic)"
+SCHOOL_NAME = "Demonstration School (synthetic)"
 SCHOOL_LEARNERS = 36
 EXTRA_TEACHERS = ["Ibrahim Diallo", "Thandiwe Nkosi", "Mariam El-Sayed", "Chinedu Okafor"]
 STAFF_PER_SUBJECT = {"maths": 3, "language": 3, "science": 2, "technology": 2}
@@ -757,7 +757,7 @@ def generate(
         w.writerow([reg_specs[1]["alias"], new_year, 1, 58, 11, "family travel, back in week 7"])
         w.writerow([reg_specs[2]["alias"], new_year, 1, 58, "", "register page missing"])
     (inbox / "README.md").write_text(
-        "# Inbox (synthetic)\n\nEvery file here is made up by `meska_brain.synth`. The learners are "
+        "# Inbox (synthetic)\n\nEvery file here is made up by `athar.synth`. The learners are "
         "aliases, the teachers are fictional, and nothing refers to a real child or school.\n\n"
         f"Each file is about the new term {new_year}-T1, which is not in the database yet, so the agent "
         "can ingest it as fresh evidence.\n\n"

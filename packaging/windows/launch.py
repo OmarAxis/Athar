@@ -37,8 +37,8 @@ APP_PORT = 8780
 RUNNER_PORT = 11812
 CONTEXT_TOKENS = 16384
 # The only names read from settings.txt. Anything else in the file is ignored.
-SETTINGS_KEYS = ("MESKA_LLM_BASE_URL", "MESKA_LLM_MODEL", "MESKA_LLM_API_KEY", "MESKA_LLM_REASONING",
-                 "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "MESKA_WEB_PORT")
+SETTINGS_KEYS = ("ATHAR_LLM_BASE_URL", "ATHAR_LLM_MODEL", "ATHAR_LLM_API_KEY", "ATHAR_LLM_REASONING",
+                 "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ATHAR_WEB_PORT")
 # Variables from the person's own shell that could point our Python at other code.
 UNSAFE_ENV = ("PYTHONHOME", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONUSERBASE", "VIRTUAL_ENV")
 
@@ -124,7 +124,7 @@ def free_port(preferred: int, tries: int = 30) -> int:
 def first_run_data(root: Path) -> bool:
     """Copy the synthetic school into `data` if it is not there yet. Returns True if it copied."""
     data = root / "data"
-    if (data / "meska.db").is_file():
+    if (data / "athar.db").is_file():
         return False
     shutil.copytree(root / "app" / "data", data, dirs_exist_ok=True)
     return True
@@ -158,26 +158,26 @@ def child_env(root: Path, settings: dict[str, str], app_port: int, runner_url: s
         "PYTHONPATH": str(root / "app" / "src"),
         "PYTHONNOUSERSITE": "1",
         "PYTHONUTF8": "1",
-        "MESKA_DB": str(root / "data" / "meska.db"),
-        "MESKA_PACKS": str(root / "app" / "packs"),
-        "MESKA_WEB_HOST": "127.0.0.1",
-        "MESKA_WEB_PORT": str(app_port),
+        "ATHAR_DB": str(root / "data" / "athar.db"),
+        "ATHAR_PACKS": str(root / "app" / "packs"),
+        "ATHAR_WEB_HOST": "127.0.0.1",
+        "ATHAR_WEB_PORT": str(app_port),
         # The document reader we borrow (markitdown) runs from the package, not from the internet.
-        "MESKA_MARKITDOWN_CMD": str(python),
-        "MESKA_MARKITDOWN_ARGS": "-S -m _markitdown_runner",
+        "ATHAR_MARKITDOWN_CMD": str(python),
+        "ATHAR_MARKITDOWN_ARGS": "-S -m _markitdown_runner",
         # Libraries that would otherwise look online for files they already have.
         "HF_HUB_OFFLINE": "1",
         "DO_NOT_TRACK": "1",
     })
     if runner_url:
-        env.update({"MESKA_LLM_BASE_URL": runner_url, "MESKA_LLM_MODEL": model_name,
-                    "MESKA_LLM_API_KEY": "local", "MESKA_LLM_REASONING": "default"})
+        env.update({"ATHAR_LLM_BASE_URL": runner_url, "ATHAR_LLM_MODEL": model_name,
+                    "ATHAR_LLM_API_KEY": "local", "ATHAR_LLM_REASONING": "default"})
     for name, value in settings.items():
-        if name != "MESKA_WEB_PORT":
+        if name != "ATHAR_WEB_PORT":
             env[name] = value
-    if "MESKA_LLM_BASE_URL" in settings and "MESKA_LLM_REASONING" not in settings:
+    if "ATHAR_LLM_BASE_URL" in settings and "ATHAR_LLM_REASONING" not in settings:
         # Hosted endpoints reject the "no reasoning" hint that a local runner accepts.
-        env["MESKA_LLM_REASONING"] = "default"
+        env["ATHAR_LLM_REASONING"] = "default"
     return env
 
 
@@ -273,7 +273,7 @@ def main(argv: list[str]) -> int:
             earlier = {}
         if earlier.get("url") and answers(earlier["url"]):
             print(f"  It is already running at {earlier['url']}")
-            if not os.environ.get("MESKA_NO_BROWSER"):
+            if not os.environ.get("ATHAR_NO_BROWSER"):
                 webbrowser.open(earlier["url"])
             return 0
         state_file(root).unlink(missing_ok=True)
@@ -284,8 +284,8 @@ def main(argv: list[str]) -> int:
 
     runner, runner_url, model_name = None, None, MODEL_NAME
     model = find_model(root / "models")
-    if "MESKA_LLM_BASE_URL" in settings:
-        print(f"  Model: the address in settings.txt ({settings['MESKA_LLM_BASE_URL']}).")
+    if "ATHAR_LLM_BASE_URL" in settings:
+        print(f"  Model: the address in settings.txt ({settings['ATHAR_LLM_BASE_URL']}).")
     elif model is None and (found := find_local_server()):
         _, runner_url, model_name = found
         print(f"  Model: {model_name}, from {found[0]}, which is running on this computer.")
@@ -310,11 +310,11 @@ def main(argv: list[str]) -> int:
             print("  The model could not be started on this computer. The rest of the app still works,")
             print("  and a model on the internet can be added on the Agent page under Cloud models.")
 
-    app_port = free_port(int(settings.get("MESKA_WEB_PORT", APP_PORT)))
+    app_port = free_port(int(settings.get("ATHAR_WEB_PORT", APP_PORT)))
     url = f"http://127.0.0.1:{app_port}"
     python = root / "runtime" / "python" / "python.exe"
     log = open(root / "logs" / "app.log", "w", encoding="utf-8", errors="replace")  # noqa: SIM115
-    app = subprocess.Popen([str(python), "-s", "-m", "meska_brain.cli", "serve"], cwd=root / "app",
+    app = subprocess.Popen([str(python), "-s", "-m", "athar.cli", "serve"], cwd=root / "app",
                            env=child_env(root, settings, app_port, runner_url, model_name), stdout=log,
                            stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
     try:
@@ -326,7 +326,7 @@ def main(argv: list[str]) -> int:
         print(f"\n  Ready. Open this address in your browser:\n\n      {url}\n")
         print("  It works on this computer only. All data in it is synthetic.")
         print("  Keep this window open. Close it, or press Ctrl+C, to stop Athar.\n")
-        if not os.environ.get("MESKA_NO_BROWSER"):
+        if not os.environ.get("ATHAR_NO_BROWSER"):
             webbrowser.open(url)
         while app.poll() is None:
             if runner is not None and runner.poll() is not None:

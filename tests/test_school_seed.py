@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from meska_brain import db, review, synth, tools
-from meska_brain.curriculum import load_pack
+from athar import db, review, synth, tools
+from athar.curriculum import load_pack
 
 
 @pytest.fixture(scope="module")
 def school(tmp_path_factory):
     base = tmp_path_factory.mktemp("school")
-    path = base / "meska.db"
+    path = base / "athar.db"
     summary = synth.generate(db_path=path, n_learners=14, pack_id="generic-school", out_dir=base / "out", school=True)
     return path, summary
 
@@ -68,7 +68,7 @@ def test_the_school_layer_does_not_change_the_learners_or_their_records(tmp_path
 
 def test_reseeding_works_after_the_agent_asked_for_a_record(tmp_path):
     """A record request points at a learner. Reseeding used to fail on that link."""
-    path = tmp_path / "meska.db"
+    path = tmp_path / "athar.db"
     synth.generate(db_path=path, n_learners=6, out_dir=tmp_path / "out")
     with db.connect(path) as conn:
         learner = db.one(conn, "SELECT id, pack_id FROM learners ORDER BY id LIMIT 1")
@@ -89,23 +89,23 @@ def test_reseeding_works_after_the_agent_asked_for_a_record(tmp_path):
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
-    path = tmp_path / "meska.db"
-    monkeypatch.setenv("MESKA_DB", str(path))
+    path = tmp_path / "athar.db"
+    monkeypatch.setenv("ATHAR_DB", str(path))
     synth.generate(db_path=path, n_learners=6, out_dir=tmp_path / "out")
-    from meska_brain.web.app import app
+    from athar.web.app import app
     return TestClient(app)
 
 
 def test_models_endpoint_lists_what_the_endpoint_serves(client, monkeypatch):
-    from meska_brain.agent import llm
+    from athar.agent import llm
     monkeypatch.setattr(llm, "list_models", lambda: ["gemma-3-12b", "qwen3.5-9b"])
-    monkeypatch.setenv("MESKA_LLM_MODEL", "qwen3.5-9b")
+    monkeypatch.setenv("ATHAR_LLM_MODEL", "qwen3.5-9b")
     got = client.get("/api/models").json()
     assert got["models"] == ["gemma-3-12b", "qwen3.5-9b"] and got["default"] == "qwen3.5-9b" and got["problem"] is None
 
 
 def test_models_endpoint_says_so_when_the_model_server_is_off(client, monkeypatch):
-    from meska_brain.agent import llm
+    from athar.agent import llm
 
     def down():
         raise ConnectionError("refused")
@@ -117,7 +117,7 @@ def test_models_endpoint_says_so_when_the_model_server_is_off(client, monkeypatc
 def test_list_models_leaves_out_embedding_models(monkeypatch):
     import httpx
 
-    from meska_brain.agent import llm
+    from athar.agent import llm
 
     class Reply:
         def raise_for_status(self):
@@ -130,7 +130,7 @@ def test_list_models_leaves_out_embedding_models(monkeypatch):
 
 
 def test_a_run_takes_the_chosen_model_and_refuses_a_strange_id(client, monkeypatch):
-    from meska_brain.web import app as web
+    from athar.web import app as web
     started = []
 
     class Runner:

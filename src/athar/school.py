@@ -109,7 +109,7 @@ def export_graph(path: Path | str, *, db_path=None) -> dict[str, int]:
     Learners are aliases. A learner links to a topic by the number of records and by approved
     findings only: no scores per learner leave the database this way."""
     data = school_graph(db_path)
-    graph = nx.DiGraph(name="Meska Brain school graph")
+    graph = nx.DiGraph(name="Athar school graph")
     for node in data["nodes"]:
         if node["type"] == "strand":
             graph.add_node(node["id"], kind="strand", label=node["label"])

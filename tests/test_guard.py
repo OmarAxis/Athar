@@ -1,6 +1,6 @@
 import pytest
 
-from meska_brain import guard
+from athar import guard
 
 TUNED = [p for p in guard.PROBES if not p.held_out]
 

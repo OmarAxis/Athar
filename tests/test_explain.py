@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from meska_brain import db, report, review, tools
-from meska_brain.curriculum import load_pack
-from meska_brain.explain import explain
+from athar import db, report, review, tools
+from athar.curriculum import load_pack
+from athar.explain import explain
 
 
 def _root_cause(db_path) -> dict:

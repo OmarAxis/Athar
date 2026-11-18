@@ -23,7 +23,7 @@ from typing import Any
 from . import audit, db
 
 ROLES = ("admin", "teacher")
-COOKIE = "meska_session"
+COOKIE = "athar_session"
 SESSION_HOURS = 12
 MIN_PASSWORD = 8
 _SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1}

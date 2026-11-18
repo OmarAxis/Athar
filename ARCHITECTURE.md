@@ -1,6 +1,6 @@
 # Architecture
 
-Meska Brain is two things on one SQLite file: an MCP server that holds the learner map and does the reasoning, and a LangGraph agent that uses that server to read a new document, investigate a learner and propose findings. A named teacher approves at two gates, and answers the agent when it asks for a missing record.
+Athar is two things on one SQLite file: an MCP server that holds the learner map and does the reasoning, and a LangGraph agent that uses that server to read a new document, investigate a learner and propose findings. A named teacher approves at two gates, and answers the agent when it asks for a missing record.
 
 ```mermaid
 flowchart TD
@@ -20,7 +20,7 @@ flowchart TD
   I --> J{{teacher gate 2: summaries}}
   J --> K[done]
   B -. stdio .-> MD[markitdown-mcp, borrowed]
-  A & D & E & Q & QG & F & G & H & I & J -. stdio .-> M[meska-brain MCP server, ours, 12 tools]
+  A & D & E & Q & QG & F & G & H & I & J -. stdio .-> M[athar MCP server, ours, 12 tools]
   M --> DB[(SQLite: evidence, findings, audit_log, approvals)]
   H -. decision .-> R[review.py, teacher only]
   J -. decision .-> R
@@ -30,7 +30,7 @@ flowchart TD
 
 ## Agent shape
 
-The nodes are in `agent/workflow.py`. There is one loop. When `trace_root` reports that a topic with no records stops it from telling where a difficulty began, `ask_for_records` words a question, stores it with the `request_record` tool and the run stops. A teacher answers in the review page with a record (typed, or a file from the inbox) or with "no record exists". With a record, the agent reads it, records the rows and investigates again before it proposes anything. A teacher is asked about a topic once, and a run asks at most two questions. Each run is a LangGraph thread checkpointed to `data/checkpoints.db`. At a gate the node reads finding or summary status through the `get_findings` and `get_summaries` tools, so the check is in the audit log, and calls `interrupt` while anything is undecided. The run stops and `agent/runner.py` saves a record of the steps. The gate only passes when the database shows a teacher has decided every item, so resuming early just stops again. `meska resume` (or the web app, after a decision) continues the thread, even from a new process. The graph itself makes no database reads. The runner reads the database for one scheduling check (is anything at this gate still undecided) and finds open runs from its run record files; that is run scheduling, not an agent action.
+The nodes are in `agent/workflow.py`. There is one loop. When `trace_root` reports that a topic with no records stops it from telling where a difficulty began, `ask_for_records` words a question, stores it with the `request_record` tool and the run stops. A teacher answers in the review page with a record (typed, or a file from the inbox) or with "no record exists". With a record, the agent reads it, records the rows and investigates again before it proposes anything. A teacher is asked about a topic once, and a run asks at most two questions. Each run is a LangGraph thread checkpointed to `data/checkpoints.db`. At a gate the node reads finding or summary status through the `get_findings` and `get_summaries` tools, so the check is in the audit log, and calls `interrupt` while anything is undecided. The run stops and `agent/runner.py` saves a record of the steps. The gate only passes when the database shows a teacher has decided every item, so resuming early just stops again. `athar resume` (or the web app, after a decision) continues the thread, even from a new process. The graph itself makes no database reads. The runner reads the database for one scheduling check (is anything at this gate still undecided) and finds open runs from its run record files; that is run scheduling, not an agent action.
 
 Where it recovers or checks itself:
 
@@ -73,7 +73,7 @@ The target is a stranger running one command. SQLite is a file and networkx is a
 
 ## Why thinking mode is off
 
-Small local models spend most of their time in "thinking" mode. The tasks here are narrow, and on `qwen3.5-9b` we measured about 70 seconds per call with thinking and under one second without. It is off by default (`MESKA_LLM_REASONING`).
+Small local models spend most of their time in "thinking" mode. The tasks here are narrow, and on `qwen3.5-9b` we measured about 70 seconds per call with thinking and under one second without. It is off by default (`ATHAR_LLM_REASONING`).
 
 ## What would change for a real school
 

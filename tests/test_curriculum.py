@@ -1,7 +1,7 @@
 import pytest
 from conftest import FIXTURE_PACKS
 
-from meska_brain.curriculum import load_pack
+from athar.curriculum import load_pack
 
 
 def test_loads_concepts_and_edges():
@@ -38,7 +38,7 @@ def test_pack_is_cached():
 
 
 def test_default_dir_comes_from_env(monkeypatch):
-    monkeypatch.setenv("MESKA_PACKS", str(FIXTURE_PACKS))
+    monkeypatch.setenv("ATHAR_PACKS", str(FIXTURE_PACKS))
     assert load_pack("mini-maths").id == "mini-maths"
 
 

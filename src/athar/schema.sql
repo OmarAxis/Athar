@@ -1,4 +1,4 @@
--- Meska Brain storage. One SQLite file. The knowledge graph is these tables plus the
+-- Athar storage. One SQLite file. The knowledge graph is these tables plus the
 -- curriculum pack (concept nodes and prerequisite edges) loaded from packs/<id>/pack.yaml.
 -- Node types: learner, teacher, concept, skill, evidence, finding.
 -- `alias` is the handle used everywhere a record is written, read by the agent or sent to a model.

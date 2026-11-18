@@ -24,10 +24,10 @@ build = _load("build")
 def test_settings_reads_only_known_names_and_skips_comments(tmp_path):
     path = tmp_path / "settings.txt"
     path.write_text("# a comment\n\nOPENAI_API_KEY = made-up-key \n# ANTHROPIC_API_KEY=commented-out\n"
-                    "MESKA_LLM_BASE_URL=\"https://example.test/v1\"\nPATH=C:\\somewhere\nPYTHONPATH=evil\n"
-                    "MESKA_LLM_MODEL=\nnot a setting line\n", encoding="utf-8")
+                    "ATHAR_LLM_BASE_URL=\"https://example.test/v1\"\nPATH=C:\\somewhere\nPYTHONPATH=evil\n"
+                    "ATHAR_LLM_MODEL=\nnot a setting line\n", encoding="utf-8")
     assert launch.read_settings(path) == {"OPENAI_API_KEY": "made-up-key",
-                                          "MESKA_LLM_BASE_URL": "https://example.test/v1"}
+                                          "ATHAR_LLM_BASE_URL": "https://example.test/v1"}
 
 
 def test_settings_file_may_be_missing(tmp_path):
@@ -62,13 +62,13 @@ def test_free_port_moves_past_a_port_in_use():
 def test_first_start_copies_the_school_once_and_never_overwrites(tmp_path):
     seed = tmp_path / "app" / "data"
     (seed / "inbox").mkdir(parents=True)
-    (seed / "meska.db").write_text("seed")
+    (seed / "athar.db").write_text("seed")
     (seed / "inbox" / "note.txt").write_text("a note")
     assert launch.first_run_data(tmp_path) is True
     assert (tmp_path / "data" / "inbox" / "note.txt").read_text() == "a note"
-    (tmp_path / "data" / "meska.db").write_text("the teacher's own work")
+    (tmp_path / "data" / "athar.db").write_text("the teacher's own work")
     assert launch.first_run_data(tmp_path) is False
-    assert (tmp_path / "data" / "meska.db").read_text() == "the teacher's own work"
+    assert (tmp_path / "data" / "athar.db").read_text() == "the teacher's own work"
 
 
 def test_app_environment_uses_only_the_package_and_this_computer(tmp_path, monkeypatch):
@@ -77,27 +77,27 @@ def test_app_environment_uses_only_the_package_and_this_computer(tmp_path, monke
     env = launch.child_env(tmp_path, {}, 8780, "http://127.0.0.1:11812/v1")
     assert env["PYTHONPATH"] == str(tmp_path / "app" / "src")
     assert "PYTHONHOME" not in env
-    assert env["MESKA_WEB_HOST"] == "127.0.0.1"
-    assert env["MESKA_DB"] == str(tmp_path / "data" / "meska.db")
-    assert env["MESKA_LLM_BASE_URL"] == "http://127.0.0.1:11812/v1"
-    assert env["MESKA_LLM_MODEL"] == launch.MODEL_NAME
+    assert env["ATHAR_WEB_HOST"] == "127.0.0.1"
+    assert env["ATHAR_DB"] == str(tmp_path / "data" / "athar.db")
+    assert env["ATHAR_LLM_BASE_URL"] == "http://127.0.0.1:11812/v1"
+    assert env["ATHAR_LLM_MODEL"] == launch.MODEL_NAME
     # The borrowed document reader runs from the package's own Python, never from a download.
-    assert env["MESKA_MARKITDOWN_CMD"] == str(tmp_path / "runtime" / "python" / "python.exe")
-    assert env["MESKA_MARKITDOWN_ARGS"] == "-S -m _markitdown_runner"
+    assert env["ATHAR_MARKITDOWN_CMD"] == str(tmp_path / "runtime" / "python" / "python.exe")
+    assert env["ATHAR_MARKITDOWN_ARGS"] == "-S -m _markitdown_runner"
     assert env["HF_HUB_OFFLINE"] == "1"
 
 
 def test_an_address_in_settings_replaces_the_local_model(tmp_path):
-    settings = {"MESKA_LLM_BASE_URL": "https://example.test/v1", "MESKA_LLM_MODEL": "some/model",
-                "MESKA_LLM_API_KEY": "made-up-key", "MESKA_WEB_PORT": "9000"}
+    settings = {"ATHAR_LLM_BASE_URL": "https://example.test/v1", "ATHAR_LLM_MODEL": "some/model",
+                "ATHAR_LLM_API_KEY": "made-up-key", "ATHAR_WEB_PORT": "9000"}
     env = launch.child_env(tmp_path, settings, 9000, None)
-    assert env["MESKA_LLM_BASE_URL"] == "https://example.test/v1"
-    assert env["MESKA_LLM_MODEL"] == "some/model"
-    assert env["MESKA_LLM_REASONING"] == "default"   # hosted endpoints reject the local-only hint
-    assert env["MESKA_WEB_PORT"] == "9000"
+    assert env["ATHAR_LLM_BASE_URL"] == "https://example.test/v1"
+    assert env["ATHAR_LLM_MODEL"] == "some/model"
+    assert env["ATHAR_LLM_REASONING"] == "default"   # hosted endpoints reject the local-only hint
+    assert env["ATHAR_WEB_PORT"] == "9000"
 
 
-def test_the_package_has_its_own_ports_beside_an_installed_meska_brain():
+def test_the_package_has_its_own_ports_beside_an_installed_athar():
     """The earlier package may still run on 8765 and 11811 on the same computer."""
     assert launch.APP_PORT == 8780
     assert launch.RUNNER_PORT == 11812
@@ -108,18 +108,18 @@ def test_the_package_has_its_own_ports_beside_an_installed_meska_brain():
 
 
 def test_the_launcher_names_no_curriculum_pack(tmp_path, monkeypatch):
-    monkeypatch.delenv("MESKA_PACK", raising=False)
-    assert "MESKA_PACK" not in launch.child_env(tmp_path, {}, 8780, None)
+    monkeypatch.delenv("ATHAR_PACK", raising=False)
+    assert "ATHAR_PACK" not in launch.child_env(tmp_path, {}, 8780, None)
 
 
 def test_the_build_seeds_the_default_school_and_names_no_pack(tmp_path, monkeypatch):
     assert build.SEED_COMMAND[-1] == "seed"
-    monkeypatch.setenv("MESKA_PACK", "some-old-pack")
-    monkeypatch.delenv("MESKA_DEMO_PACK", raising=False)
+    monkeypatch.setenv("ATHAR_PACK", "some-old-pack")
+    monkeypatch.delenv("ATHAR_DEMO_PACK", raising=False)
     env = build.package_env(tmp_path)
-    assert "MESKA_PACK" not in env and "MESKA_DEMO_PACK" not in env
-    monkeypatch.setenv("MESKA_DEMO_PACK", "egypt-maths")
-    assert build.package_env(tmp_path)["MESKA_DEMO_PACK"] == "egypt-maths"
+    assert "ATHAR_PACK" not in env and "ATHAR_DEMO_PACK" not in env
+    monkeypatch.setenv("ATHAR_DEMO_PACK", "egypt-maths")
+    assert build.package_env(tmp_path)["ATHAR_DEMO_PACK"] == "egypt-maths"
 
 
 def test_the_source_line_survives_a_repository_with_no_commit(tmp_path):
@@ -138,9 +138,9 @@ def test_the_package_is_named_athar():
 
 
 def test_without_a_model_no_local_address_is_set(tmp_path, monkeypatch):
-    monkeypatch.delenv("MESKA_LLM_BASE_URL", raising=False)
+    monkeypatch.delenv("ATHAR_LLM_BASE_URL", raising=False)
     env = launch.child_env(tmp_path, {}, 8780, None)
-    assert "MESKA_LLM_BASE_URL" not in env
+    assert "ATHAR_LLM_BASE_URL" not in env
 
 
 def test_the_model_runner_listens_on_this_computer_only_and_stays_offline(tmp_path):
@@ -233,4 +233,4 @@ def test_the_launcher_picks_a_chat_model_from_a_local_server(tmp_path, monkeypat
     monkeypatch.setattr(launch, "LOCAL_SERVERS", (("Nothing", "http://127.0.0.1:9/v1"),))
     assert launch.find_local_server(timeout=0.3) is None
     env = launch.child_env(tmp_path, {}, 8780, "http://127.0.0.1:1234/v1", "llama-3")
-    assert env["MESKA_LLM_MODEL"] == "llama-3" and env["MESKA_LLM_BASE_URL"] == "http://127.0.0.1:1234/v1"
+    assert env["ATHAR_LLM_MODEL"] == "llama-3" and env["ATHAR_LLM_BASE_URL"] == "http://127.0.0.1:1234/v1"

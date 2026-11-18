@@ -2,8 +2,8 @@
 
 from types import SimpleNamespace
 
-from meska_brain.agent import workflow
-from meska_brain.agent.language import looks_like
+from athar.agent import workflow
+from athar.agent.language import looks_like
 
 QUIZ = """# Quiz sheet
 
@@ -302,7 +302,7 @@ def test_one_open_question_per_hole_in_the_record():
 
 def test_coverage_check_picks_clearly_low_topics():
     """At most two topics, lowest first, only with enough scored items, never one already traced."""
-    from meska_brain.agent.workflow import _clearly_low
+    from athar.agent.workflow import _clearly_low
     item = lambda concept, score: {"concept_id": concept, "score": score}
     timeline = {"periods": [{"period": "2025-T1", "items": [
         *[item("a", 0.2)] * 3, *[item("b", 0.35)] * 4, *[item("c", 0.1)] * 2, *[item("d", 0.45)] * 5,
@@ -314,10 +314,10 @@ def test_coverage_check_picks_clearly_low_topics():
 
 def test_arabic_wording_uses_the_arabic_topic_names():
     """With the school's language set to Arabic, names in the facts and the fallback wording are Arabic."""
-    from meska_brain import guard
-    from meska_brain.agent.language import looks_like
-    from meska_brain.agent.workflow import _template_question, _template_statement, in_language
-    from meska_brain.curriculum import load_pack
+    from athar import guard
+    from athar.agent.language import looks_like
+    from athar.agent.workflow import _template_question, _template_statement, in_language
+    from athar.curriculum import load_pack
     pack = load_pack("egypt-maths")
     some = next(iter(pack.concepts))
     english = pack.label(some, "en")

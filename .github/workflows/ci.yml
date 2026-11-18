@@ -54,14 +54,14 @@ jobs:
       - run: uv sync --locked
       - name: Seed, build the presenting state, and write a report (no model)
         run: |
-          uv run meska story
-          uv run meska report --all
-          uv run meska export-graph
+          uv run athar story
+          uv run athar report --all
+          uv run athar export-graph
           test -n "$(ls reports/*.html)" && test -s exports/school.graphml
       - name: The teacher app starts and answers
         run: |
-          uv run meska demo &
-          trap 'pkill -f "meska demo" || true' EXIT   # stop the app so the cache step after this job can finish
+          uv run athar demo &
+          trap 'pkill -f "athar demo" || true' EXIT   # stop the app so the cache step after this job can finish
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:8765/api/overview > /dev/null; then break; fi
             sleep 1

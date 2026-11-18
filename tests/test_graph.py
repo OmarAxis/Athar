@@ -1,6 +1,6 @@
 import pytest
 
-from meska_brain import db, graph
+from athar import db, graph
 
 
 def test_concept_mastery_groups_by_period(db_path):

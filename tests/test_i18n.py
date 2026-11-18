@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from meska_brain import i18n, report, review, tools
-from meska_brain.curriculum import current_lang
+from athar import i18n, report, review, tools
+from athar.curriculum import current_lang
 
 
 def sample_reports() -> list[dict]:
@@ -101,7 +101,7 @@ def sample_reports() -> list[dict]:
 # ---------------------------------------------------------------- reading a page the way a reader does
 
 AR_REPORT = Path(i18n.__file__).parent / "web" / "static" / "ar-report.json"
-ENGLISH_SAMPLES_SHA256 = "5574948f0fa77f83a1aecf6030ea59206d4347d595dca776f27fe2c652636b64"
+ENGLISH_SAMPLES_SHA256 = "91d2f72b574df0e1d55553cc46ddc043bb07ebada17039c695fd89308105f55f"
 LATIN = re.compile(r"[A-Za-z]{3,}")
 CODES = re.compile(r"\b\d{2,4}-T\d\b|\b[A-Z]-\d+\b")       # term codes such as 2023-T2, record codes such as A-01
 MARKS = dict.fromkeys(map(ord, "\u202b\u202c\u2066\u2069"))     # direction marks: not text
@@ -152,7 +152,7 @@ def read_page(page: str, data, also: tuple[str, ...] = ()) -> tuple[list[str], l
 
 @pytest.fixture
 def no_logo(monkeypatch):
-    monkeypatch.setattr(report, "_LOGO", Path("no-such-logo.png"))
+    monkeypatch.setattr(report, "_logo", lambda: "")      # the wordmark holds the Latin word "Athar"
 
 
 @pytest.fixture
@@ -223,8 +223,8 @@ def test_the_report_dictionary_is_well_formed():
 # ---------------------------------------------------------------- the report in English and in Arabic
 
 def test_english_report_is_exactly_what_it_was_before_arabic(no_logo):
-    """The hash was taken from the report before any Arabic work. If you change the English wording on purpose,
-    render the samples again and replace it."""
+    """The hash pins the English report. It was taken again when the colours changed to Athar's own. If you change
+    the English wording or the look on purpose, render the samples again and replace it."""
     pages = "".join(report.render_html(data) for data in sample_reports())
     assert hashlib.sha256(pages.encode("utf-8")).hexdigest() == ENGLISH_SAMPLES_SHA256
     assert "".join(report.render_html(data, lang="en") for data in sample_reports()) == pages
@@ -265,7 +265,7 @@ def test_arabic_report_is_right_to_left_and_worded_in_arabic(no_logo):
     assert len(ours) > 40 and len(facts) == 6
 
 
-def test_arabic_report_from_the_records(db_path):
+def test_arabic_report_from_the_records(db_path, no_logo):
     made = tools.propose_finding(
         learner_id="lrn_a", kind="root_cause", evidence_ids=["evd_a03", "evd_a04", "evd_a05"],
         statement="Ratio items trace back to division, first met in a term with 18 days absent.",
@@ -290,8 +290,8 @@ def test_every_arabic_dictionary_is_well_formed():
     import json
     from pathlib import Path
 
-    import meska_brain
-    static = Path(meska_brain.__file__).parent / "web" / "static"
+    import athar
+    static = Path(athar.__file__).parent / "web" / "static"
     for name in ("ar.json", "ar-server.json", "ar-report.json"):
         data = json.loads((static / name).read_text(encoding="utf-8"))
         assert set(data) <= {"exact", "patterns", "fragments"}, name

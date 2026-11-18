@@ -1,6 +1,6 @@
 # Generic school mathematics, grades 1 to 8.
 # This map is NOT tied to any one country or national syllabus. It lists widely taught topics and the
-# order in which they depend on each other. Meska Brain graphs a curriculum; it does not invent or
+# order in which they depend on each other. Athar graphs a curriculum; it does not invent or
 # change one. A school can replace this file with its own pack in the same format.
 id: generic-maths
 name: School mathematics, grades 1 to 8

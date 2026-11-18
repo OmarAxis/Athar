@@ -1,10 +1,10 @@
 """The presenting state: built by the engine and templates, logged as demo-setup, never by a model."""
 
-from meska_brain import db, story, synth
+from athar import db, story, synth
 
 
 def test_story_is_sourced_logged_and_leaves_work_for_a_teacher(tmp_path):
-    db_path = tmp_path / "meska.db"
+    db_path = tmp_path / "athar.db"
     synth.generate(db_path=db_path, out_dir=tmp_path / "out")
     out = story.build(db_path=db_path)
     assert out["proposed"] == out["approved"] + out["waiting"] and out["waiting"] >= 1 and out["approved"] >= 1

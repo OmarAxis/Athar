@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("MESKA_LANGUAGE", "en")   # the product opens in Arabic; these tests read English wording
+os.environ.setdefault("ATHAR_LANGUAGE", "en")   # the product opens in Arabic; these tests read English wording
 
-from meska_brain import db
+from athar import db
 
 FIXTURE_PACKS = Path(__file__).parent / "fixtures" / "packs"
 
@@ -127,12 +127,12 @@ def seed(path: Path) -> None:
 
 @pytest.fixture
 def db_path(tmp_path, monkeypatch) -> Path:
-    """A fresh seeded database. MESKA_DB points at it so audit rows land there too."""
-    path = tmp_path / "meska.db"
-    monkeypatch.setenv("MESKA_DB", str(path))
-    monkeypatch.setenv("MESKA_PACKS", str(FIXTURE_PACKS))
-    monkeypatch.delenv("MESKA_ACTOR", raising=False)
-    monkeypatch.delenv("MESKA_RUN_ID", raising=False)
+    """A fresh seeded database. ATHAR_DB points at it so audit rows land there too."""
+    path = tmp_path / "athar.db"
+    monkeypatch.setenv("ATHAR_DB", str(path))
+    monkeypatch.setenv("ATHAR_PACKS", str(FIXTURE_PACKS))
+    monkeypatch.delenv("ATHAR_ACTOR", raising=False)
+    monkeypatch.delenv("ATHAR_RUN_ID", raising=False)
     db.init_db(path)
     seed(path)
     return path

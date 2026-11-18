@@ -2,9 +2,9 @@
 
 import pytest
 
-from meska_brain import db, graph, story, synth
-from meska_brain.curriculum import load_pack
-from meska_brain.web import people
+from athar import db, graph, story, synth
+from athar.curriculum import load_pack
+from athar.web import people
 
 SUBJECT_PACKS = ("generic-maths", "generic-science", "generic-language", "generic-technology")
 
@@ -30,8 +30,8 @@ def test_school_pack_is_the_subject_packs_plus_cross_subject_links():
 @pytest.fixture(scope="module")
 def school_db(tmp_path_factory):
     base = tmp_path_factory.mktemp("school")
-    synth.generate(db_path=base / "meska.db", out_dir=base / "out", pack_id="generic-school")
-    return base / "meska.db"
+    synth.generate(db_path=base / "athar.db", out_dir=base / "out", pack_id="generic-school")
+    return base / "athar.db"
 
 
 def test_a_maths_difficulty_is_traced_back_to_reading(school_db):
@@ -57,6 +57,6 @@ def test_story_runs_on_the_school_pack(school_db):
 
 
 def test_the_default_cohort_has_no_cross_subject_learner(tmp_path):
-    synth.generate(db_path=tmp_path / "meska.db", out_dir=tmp_path / "out")
-    with db.connect(tmp_path / "meska.db") as conn:
+    synth.generate(db_path=tmp_path / "athar.db", out_dir=tmp_path / "out")
+    with db.connect(tmp_path / "athar.db") as conn:
         assert db.one(conn, "SELECT id FROM learners WHERE alias LIKE '%R-08'") is None

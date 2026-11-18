@@ -1,6 +1,6 @@
 import pytest
 
-from meska_brain import db, review, tools
+from athar import db, review, tools
 
 
 def _propose(db_path) -> str:
@@ -130,7 +130,7 @@ def test_a_decision_that_loses_the_race_changes_nothing(db_path):
 # ---------------------------------------------------------------- answering a record request
 
 def _ask(db_path) -> str:
-    from meska_brain.curriculum import load_pack
+    from athar.curriculum import load_pack
     with db.connect(db_path) as conn:
         pack_id = db.one(conn, "SELECT pack_id FROM learners WHERE id = 'lrn_a'")["pack_id"]
         seen = {r["concept_id"] for r in db.rows(conn, "SELECT DISTINCT concept_id FROM evidence WHERE learner_id = 'lrn_a' "

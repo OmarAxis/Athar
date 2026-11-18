@@ -18,9 +18,9 @@
 
 # Use any other provider that speaks the OpenAI protocol (OpenRouter, Groq, Together, Ollama,
 # LM Studio) in place of the model in the models folder. All three lines are needed:
-# MESKA_LLM_BASE_URL=https://openrouter.ai/api/v1
-# MESKA_LLM_MODEL=qwen/qwen3.5-9b
-# MESKA_LLM_API_KEY=
+# ATHAR_LLM_BASE_URL=https://openrouter.ai/api/v1
+# ATHAR_LLM_MODEL=qwen/qwen3.5-9b
+# ATHAR_LLM_API_KEY=
 
 # The address is normally http://127.0.0.1:8780. Change the port if something else uses it:
-# MESKA_WEB_PORT=8780
+# ATHAR_WEB_PORT=8780

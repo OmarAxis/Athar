@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from meska_brain import db, graph, imports, synth_school
-from meska_brain.curriculum import load_pack
+from athar import db, graph, imports, synth_school
+from athar.curriculum import load_pack
 
 PACKS = ["generic-maths", "egypt-maths", "egypt-science", "egypt-english", "egypt-arabic", "egypt-social", "egypt-school"]
 
@@ -16,8 +16,8 @@ PACKS = ["generic-maths", "egypt-maths", "egypt-science", "egypt-english", "egyp
 def school(request, tmp_path_factory):
     base = tmp_path_factory.mktemp("school-" + request.param)
     mp = pytest.MonkeyPatch()
-    mp.setenv("MESKA_DB", str(base / "meska.db"))
-    summary = synth_school.generate_school(db_path=base / "meska.db", pack_id=request.param, out_dir=base)
+    mp.setenv("ATHAR_DB", str(base / "athar.db"))
+    summary = synth_school.generate_school(db_path=base / "athar.db", pack_id=request.param, out_dir=base)
     truth = json.loads((base / "ground_truth.json").read_text(encoding="utf-8"))
     yield {"pack": load_pack(request.param), "summary": summary, "truth": truth, "base": base}
     mp.undo()
@@ -101,7 +101,7 @@ concepts:
 
 def test_no_pack_label_is_cut_at_a_comma(tmp_path):
     """`{en: Ratio, proportion and percent}` without quotes reads as the label "Ratio". The loader refuses it."""
-    from meska_brain.config import get_settings
+    from athar.config import get_settings
     for folder in sorted(p for p in get_settings().packs_dir.iterdir() if (p / "pack.yaml").exists()):
         load_pack(folder.name)
     assert load_pack("egypt-maths").label("ratio") == "Ratio, proportion and percent"
@@ -114,7 +114,7 @@ def test_no_pack_label_is_cut_at_a_comma(tmp_path):
 
 def test_story_and_classes_on_a_generated_school(school):
     """The presenting state is built from the planted list, and every grade has a class with a teacher."""
-    from meska_brain import classes, story
+    from athar import classes, story
     made = story.build()
     assert made["proposed"] >= 2 and made["approved"] >= 1 and len(made["learners"]) >= 3
     found = classes.list_classes()

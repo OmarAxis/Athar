@@ -45,7 +45,7 @@ class Provider:
     models_url: str | None = None
 
 
-# `local` is the default and the only one the challenge results may come from: an open-weights model on
+# `local` is the default and the only one the evaluation results come from: an open-weights model on
 # this machine. The two cloud providers are optional, for comparing. With them, documents leave the machine.
 PROVIDERS: dict[str, Provider] = {
     "local": Provider("local", "On this computer (open weights)", cloud=False),
@@ -132,7 +132,7 @@ def chat_model(which: str = "local", model: str | None = None):
     s = get_settings()
     if which == "frontier":
         if not (s.frontier_base_url and s.frontier_model):
-            raise RuntimeError("No frontier model configured (MESKA_FRONTIER_BASE_URL, MESKA_FRONTIER_MODEL).")
+            raise RuntimeError("No frontier model configured (ATHAR_FRONTIER_BASE_URL, ATHAR_FRONTIER_MODEL).")
         return ChatOpenAI(model=model or s.frontier_model, base_url=s.frontier_base_url,
                           api_key=s.frontier_api_key or "none", temperature=0, timeout=300, max_retries=1)
     if which in ("openai", "anthropic"):
@@ -150,7 +150,7 @@ def chat_model(which: str = "local", model: str | None = None):
     # Small local models spend most of their time in "thinking" mode. The agent's tasks are
     # narrow (read a document, pick a tool, word a sentence), so thinking is off by default.
     # Measured on qwen3.5-9b: about 70 s per call with thinking, under 1 s without.
-    reasoning = os.environ.get("MESKA_LLM_REASONING", "none")
+    reasoning = os.environ.get("ATHAR_LLM_REASONING", "none")
     extra = {"reasoning_effort": reasoning} if reasoning != "default" else None
     return ChatOpenAI(model=model or s.llm_model, base_url=s.llm_base_url, api_key=s.llm_api_key,
                       temperature=0, timeout=600, max_retries=1, extra_body=extra)

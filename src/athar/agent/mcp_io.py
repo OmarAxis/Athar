@@ -1,7 +1,7 @@
 """MCP connections used by the agent.
 
 Two servers:
-- `meska`: our own server (src/meska_brain/server.py), started over stdio. Every learner-data
+- `athar`: our own server (src/athar/server.py), started over stdio. Every learner-data
   action the agent takes goes through it, so every action is in the audit log.
 - `markitdown`: Microsoft's document-conversion server, which we did not write. It turns PDFs,
   Office files, images and HTML into markdown. Writing and maintaining those parsers ourselves
@@ -22,8 +22,8 @@ from mcp.client.stdio import stdio_client
 
 from ..config import get_settings
 
-MARKITDOWN_COMMAND = os.environ.get("MESKA_MARKITDOWN_CMD", "uvx")
-MARKITDOWN_ARGS = os.environ.get("MESKA_MARKITDOWN_ARGS", "markitdown-mcp").split()
+MARKITDOWN_COMMAND = os.environ.get("ATHAR_MARKITDOWN_CMD", "uvx")
+MARKITDOWN_ARGS = os.environ.get("ATHAR_MARKITDOWN_ARGS", "markitdown-mcp").split()
 
 
 class ToolError(RuntimeError):
@@ -52,22 +52,22 @@ class McpHub:
         self.db_path = Path(db_path) if db_path else get_settings().db_path
         self.with_converter = with_converter
         self._stack = AsyncExitStack()
-        self.meska: ClientSession | None = None
+        self.server: ClientSession | None = None
         self._markitdown: ClientSession | None = None
 
     async def __aenter__(self) -> Self:
         env = {
             **os.environ,
-            "MESKA_DB": str(self.db_path),
-            "MESKA_ACTOR": "agent",
-            "MESKA_RUN_ID": self.run_id,
+            "ATHAR_DB": str(self.db_path),
+            "ATHAR_ACTOR": "agent",
+            "ATHAR_RUN_ID": self.run_id,
             "FASTMCP_LOG_LEVEL": "WARNING",
             "PYTHONIOENCODING": "utf-8",
         }
-        params = StdioServerParameters(command=sys.executable, args=["-m", "meska_brain.server"], env=env)
+        params = StdioServerParameters(command=sys.executable, args=["-m", "athar.server"], env=env)
         read, write = await self._stack.enter_async_context(stdio_client(params))
-        self.meska = await self._stack.enter_async_context(ClientSession(read, write))
-        await self.meska.initialize()
+        self.server = await self._stack.enter_async_context(ClientSession(read, write))
+        await self.server.initialize()
         if self.with_converter:
             # Both servers are opened here, in the same task that will close them: anyio does
             # not allow a connection opened inside one task to be closed from another.
@@ -87,14 +87,14 @@ class McpHub:
     async def call(self, tool: str, **arguments) -> dict:
         """Call one of our own tools. Raises ToolError with the tool's message on failure."""
         arguments = {k: v for k, v in arguments.items() if v is not None}
-        result = await self.meska.call_tool(tool, arguments)
+        result = await self.server.call_tool(tool, arguments)
         if result.isError:
             raise ToolError("".join(getattr(b, "text", "") for b in result.content) or f"{tool} failed")
         return _payload(result)
 
     async def tool_specs(self, names: list[str]) -> list[dict]:
         """Tool definitions in the OpenAI function format, for the model to choose from."""
-        listed = await self.meska.list_tools()
+        listed = await self.server.list_tools()
         return [
             {"type": "function",
              "function": {"name": t.name, "description": t.description or "", "parameters": t.inputSchema}}

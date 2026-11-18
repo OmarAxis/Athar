@@ -189,7 +189,7 @@ def _agent_loop() -> asyncio.AbstractEventLoop:
     with _loop_lock:
         if _loop is None:
             _loop = asyncio.new_event_loop()
-            threading.Thread(target=_loop.run_forever, name="meska-agent", daemon=True).start()
+            threading.Thread(target=_loop.run_forever, name="athar-agent", daemon=True).start()
         return _loop
 
 
