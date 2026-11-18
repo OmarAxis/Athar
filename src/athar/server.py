@@ -1,10 +1,10 @@
-"""MCP server "meska-brain". Exposes the twelve functions in tools.py and nothing else: approving
+"""MCP server "athar". Exposes the twelve functions in tools.py and nothing else: approving
 and answering (review.py) are deliberately not reachable over MCP.
 
-Calls are attributed in the audit log to MESKA_ACTOR (default "mcp-client") and MESKA_RUN_ID, which
+Calls are attributed in the audit log to ATHAR_ACTOR (default "mcp-client") and ATHAR_RUN_ID, which
 the agent sets when it spawns this server over stdio.
 
-Run: `python -m meska_brain.server` (stdio) or `python -m meska_brain.server --http`."""
+Run: `python -m athar.server` (stdio) or `python -m athar.server --http`."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from mcp.types import ToolAnnotations
 from . import audit, tools
 from .config import get_settings
 
-mcp = FastMCP("meska-brain", instructions=(
+mcp = FastMCP("athar", instructions=(
     "A cited learning map per learner. Read tools describe patterns in the evidence; write tools only "
     "store evidence, proposed findings, summary drafts and questions about missing records. A named "
     "teacher approves and answers everything elsewhere."))
@@ -32,8 +32,8 @@ WRITE_IDEMPOTENT = ToolAnnotations(readOnlyHint=False, destructiveHint=False, id
 
 def _call(fn: Callable[..., dict], **kwargs: Any) -> dict:
     """Run a tool with the actor and run id from the environment, so the audit log names the caller."""
-    actor = audit.current_actor.set(os.environ.get("MESKA_ACTOR") or "mcp-client")
-    run_id = audit.current_run_id.set(os.environ.get("MESKA_RUN_ID") or None)
+    actor = audit.current_actor.set(os.environ.get("ATHAR_ACTOR") or "mcp-client")
+    run_id = audit.current_run_id.set(os.environ.get("ATHAR_RUN_ID") or None)
     try:
         return fn(**kwargs)
     finally:
@@ -160,8 +160,8 @@ def request_record(learner_id: str, concept_id: str, question: str, about_concep
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Run over stdio, or over streamable HTTP on 127.0.0.1:<MESKA_MCP_PORT> with --http."""
-    parser = argparse.ArgumentParser(prog="meska_brain.server", description="Meska Brain MCP server")
+    """Run over stdio, or over streamable HTTP on 127.0.0.1:<ATHAR_MCP_PORT> with --http."""
+    parser = argparse.ArgumentParser(prog="athar.server", description="Athar MCP server")
     parser.add_argument("--http", action="store_true", help="serve streamable HTTP instead of stdio")
     args = parser.parse_args(argv)
     if args.http:

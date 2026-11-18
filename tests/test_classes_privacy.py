@@ -7,7 +7,7 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from meska_brain import accounts, classes, db, privacy, tools
+from athar import accounts, classes, db, privacy, tools
 
 ADMIN = {"name": "Mona Farouk", "username": "mona", "password": "a-long-test-passphrase"}
 HANY = {"name": "Hany Adel", "username": "hany", "password": "another-long-pass"}
@@ -15,7 +15,7 @@ HANY = {"name": "Hany Adel", "username": "hany", "password": "another-long-pass"
 
 @pytest.fixture()
 def client(db_path):
-    from meska_brain.web.app import app
+    from athar.web.app import app
 
     accounts._failures.clear()
     return TestClient(app)
@@ -149,7 +149,7 @@ def test_delete_needs_the_record_code_and_leaves_nothing_behind(db_path):
     proposed = tools.propose_finding(learner_id="lrn_a", kind="struggle", evidence_ids=["evd_a09", "evd_a10"],
                                      statement="Scores on ratios stayed low over several terms.",
                                      concept_ids=["ratios"], confidence=0.6)
-    from meska_brain import review
+    from athar import review
     review.decide_finding(proposed["finding_id"], "approved", "tch_amina")
     inbox = db_path.parent / "inbox"
     inbox.mkdir(exist_ok=True)
@@ -180,7 +180,7 @@ def test_only_the_admin_deletes_exports_and_backs_up(client):
     assert client.post("/api/learners/lrn_a/delete", json={"confirm_code": "wrong"}).status_code == 400
     made = client.post("/api/admin/backups").json()["made"]
     assert client.get(f"/api/admin/backups/{made['file']}").status_code == 200
-    assert client.get("/api/admin/backups/..%2Fmeska.db").status_code in (400, 404)
+    assert client.get("/api/admin/backups/..%2Fathar.db").status_code in (400, 404)
     assert client.get("/api/learners/lrn_a/export").headers["content-disposition"].endswith('record-A-01.json"')
     assert client.post("/api/learners/lrn_a/delete", json={"confirm_code": "A-01"}).json()["deleted"] is True
     assert client.get("/api/learners/lrn_a/dashboard").status_code == 400

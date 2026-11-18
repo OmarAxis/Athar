@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Athar: learning map</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A6654'/%3E%3Ccircle cx='7' cy='16' r='2' fill='%23fff' opacity='.45'/%3E%3Ccircle cx='14' cy='16' r='3' fill='%23fff' opacity='.7'/%3E%3Ccircle cx='23' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
 <style>
-/* Meska brand tokens. Articulat CF is the brand typeface; it is used when installed on the
-   machine. It is not shipped here because it is a licensed font and this repository is public. */
+/* Athar's colours: one deep green family on a quiet paper grey. No font is shipped: the page uses the
+   fonts already on the computer, so it loads nothing from outside. */
 :root {
-  --blue: #2871F4;          /* Meska Blue: accents, selection, focus */
-  --blue-strong: #1B5BD6;   /* same hue, dark enough for white text and for text on white */
-  --blue-soft: #EAF1FE;
-  --navy: #000038;
-  --electric: #0000CE;
+  --blue: #0B7A65;          /* the brand green: accents and selection (the token keeps its old name) */
+  --blue-strong: #0A6654;   /* same hue, dark enough for white text and for text on white */
+  --blue-soft: #E6F4F0;
+  --navy: #06241F;
+  --electric: #0E6B5A;
   --bg: #F5F7FB;
   --panel: #FFFFFF;
   --ink: #0A0A0A;
@@ -27,7 +28,7 @@
   --bad: #9C2B12;
   --bad-soft: #FBEEEA;
   --warn: #7A5F00;
-  --strong-fill: #1B5BD6;
+  --strong-fill: #0A6654;
   --strong-ink: #FFFFFF;
   --shaky-fill: #F6E3A1;
   --shaky-line: #7A5F00;
@@ -36,14 +37,14 @@
   --unseen-line: #7B8498;
   --radius: 14px;
   --radius-sm: 10px;
-  --shadow: 0 1px 2px rgba(0, 0, 56, .05), 0 6px 20px rgba(0, 0, 56, .06);
+  --shadow: 0 1px 2px rgba(6, 36, 31, .05), 0 6px 20px rgba(6, 36, 31, .06);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
-  font: 15px/1.55 "Articulat CF", Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 15px/1.55 Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
   color: var(--ink); background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
@@ -56,7 +57,7 @@ button {
 }
 button:hover { background: var(--bg); border-color: var(--muted); }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-button.primary:hover { background: #154BB6; border-color: #154BB6; }
+button.primary:hover { background: #08503F; border-color: #08503F; }
 button.danger { border-color: var(--bad); color: var(--bad); }
 button.danger:hover { background: var(--bad-soft); }
 button:disabled { opacity: .55; cursor: not-allowed; }
@@ -78,7 +79,7 @@ h2 + p { margin-top: 6px; max-width: 78ch; }
 header.top {
   display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: space-between;
   padding: 14px 28px; color: #fff;
-  background: linear-gradient(135deg, #000038 0%, #000058 45%, #0000CE 100%);
+  background: linear-gradient(135deg, #06241F 0%, #0A3A32 45%, #0E6B5A 100%);
 }
 .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .brand img { height: 24px; width: auto; display: block; margin: 6px 4px 6px 0; }
@@ -99,14 +100,14 @@ header.top :focus-visible { outline-color: #fff; }
 #rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 #rail button { width: 100%; text-align: start; border: 1px solid transparent; background: transparent; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; min-height: 40px; }
 #rail button:hover { background: var(--bg); }
-#rail button[aria-current=true] { background: var(--blue-soft); border-color: var(--blue); color: #0B2E7A; font-weight: 600; }
+#rail button[aria-current=true] { background: var(--blue-soft); border-color: var(--blue); color: #0A4D40; font-weight: 600; }
 #rail .grade { color: var(--muted); font-size: 12px; white-space: nowrap; font-weight: 400; }
 
 /* Section switcher: a segmented control */
 nav.tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 20px; background: #E9EDF5; border-radius: 14px; }
 nav.tabs button { border: none; background: transparent; padding: 7px 16px; min-height: 36px; border-radius: 10px; color: var(--muted); font-weight: 500; }
 nav.tabs button:hover { color: var(--ink); background: rgba(255, 255, 255, .6); }
-nav.tabs button[aria-current=page] { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 56, .14); }
+nav.tabs button[aria-current=page] { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(6, 36, 31, .14); }
 .badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-inline-start: 7px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; text-align: center; line-height: 20px; }
 
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
@@ -179,7 +180,7 @@ svg text { font-family: inherit; }
 .node.is-root .tag.root, .node.is-unknown .tag.unk { display: block; fill: #0A0A0A; }
 .node .tag.starts { display: block; fill: #A63F00; }
 .chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin: 10px 0; }
-.chain-chip { display: flex; flex-direction: column; border: 1px solid #C5D9FC; border-radius: 12px; padding: 6px 10px; background: #fff; font-size: 13px; }
+.chain-chip { display: flex; flex-direction: column; border: 1px solid #BFE3D9; border-radius: 12px; padding: 6px 10px; background: #fff; font-size: 13px; }
 .chain-chip.start { border: 2px solid #A63F00; }
 .chain-tag { font-size: 10px; letter-spacing: .05em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
 .chain-chip.start .chain-tag { color: #A63F00; }
@@ -193,7 +194,7 @@ svg.terms { display: block; max-width: 100%; height: auto; }
 .tracing .node:not(.on-path):not(.is-unknown):not(.selected) { opacity: .4; }
 .node:focus-visible rect.body { stroke: var(--focus); stroke-width: 4; }
 
-.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid transparent; font-size: 12px; font-weight: 600; background: var(--blue-soft); color: #0B2E7A; }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid transparent; font-size: 12px; font-weight: 600; background: var(--blue-soft); color: #0A4D40; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.plain { background: var(--bg); color: var(--muted); border-color: var(--line); }
 dl.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 13px; }
@@ -236,10 +237,14 @@ details[open] > summary { margin-bottom: 6px; }
 .app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
 .side {
   position: sticky; top: 0; height: 100vh; overflow: auto; display: flex; flex-direction: column; gap: 22px;
-  padding: 22px 16px; color: #fff; background: linear-gradient(170deg, #000038 0%, #000058 55%, #0000A8 100%);
+  padding: 22px 16px; color: #fff; background: linear-gradient(170deg, #06241F 0%, #0A3A32 55%, #0C5648 100%);
 }
 .side .brand { display: block; padding: 2px 8px 0; }
-.side .brand img { height: 26px; width: auto; display: block; margin: 0 0 10px; }
+.logo { display: flex; align-items: center; gap: 10px; color: #fff; margin: 0 0 8px; direction: ltr; }
+.logo-mark { flex: none; color: #7FE0C8; }
+.logo-ar { font: 700 34px/1 "Segoe UI", "Noto Kufi Arabic", "Noto Sans Arabic", "Geeza Pro", Tahoma, sans-serif; letter-spacing: 0; }
+.logo-en { font: 600 12px/1 Inter, "Segoe UI", system-ui, sans-serif; letter-spacing: .34em !important; text-transform: uppercase; opacity: .78; padding-top: 10px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .side .brand h1 { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .02em; }
 .side .brand .sub { font-size: 12px; color: rgba(255, 255, 255, .66); margin-top: 2px; line-height: 1.4; }
 #nav { display: grid; gap: 4px; }
@@ -275,7 +280,7 @@ button.tile:hover { border-color: var(--blue); background: #fff; }
 .tile-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .tile-value { font-size: 32px; font-weight: 700; line-height: 1.15; margin-top: 6px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .tile-note { font-size: 13px; color: var(--muted); margin-top: 2px; }
-.tile.accent { background: linear-gradient(135deg, #000058 0%, #0000CE 100%); border-color: transparent; color: #fff; }
+.tile.accent { background: linear-gradient(135deg, #0A3A32 0%, #0E6B5A 100%); border-color: transparent; color: #fff; }
 .tile.accent .tile-label, .tile.accent .tile-note { color: rgba(255, 255, 255, .8); }
 button.tile.accent:hover { background: linear-gradient(135deg, #000070 0%, #1414E0 100%); }
 
@@ -297,12 +302,12 @@ svg.chart { width: 100%; height: auto; display: block; }
 .chart .axis { font-size: 11px; fill: var(--muted); }
 .chart .bar { fill: var(--blue); }
 .chart .bar:hover { fill: var(--blue-strong); }
-.chart .band { fill: #EAF1FE; opacity: .7; }
+.chart .band { fill: #E6F4F0; opacity: .7; }
 .chart .line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .chart .dot { fill: var(--blue); stroke: #fff; stroke-width: 2; }
 .chart .dot:hover { fill: var(--navy); }
 .chart .endlabel { font-size: 12px; font-weight: 600; fill: var(--ink); }
-.tip { position: fixed; z-index: 50; pointer-events: none; background: #0A0A2E; color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 8px; max-width: 320px; box-shadow: 0 6px 20px rgba(0, 0, 56, .25); }
+.tip { position: fixed; z-index: 50; pointer-events: none; background: #0A0A2E; color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 8px; max-width: 320px; box-shadow: 0 6px 20px rgba(6, 36, 31, .25); }
 
 .sparks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
 .spark { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px 6px; background: #fff; }
@@ -367,7 +372,7 @@ button.linkish:hover { text-decoration: underline; background: transparent; }
 .kg-legend { margin-bottom: 4px; }
 .kg-key { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
 .nextstep { margin: 10px 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--blue-soft); display: grid; gap: 2px; }
-.nextstep strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #0B2E7A; }
+.nextstep strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #0A4D40; }
 .qlist { display: grid; gap: 4px; margin: 8px 0 16px; }
 .qrow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .seg { display: inline-flex; gap: 3px; padding: 3px; background: #E9EDF5; border-radius: 12px; }
@@ -402,8 +407,8 @@ html[dir="rtl"] input[type="number"], html[dir="rtl"] input[type="password"] { d
 <div class="app">
   <aside class="side" aria-label="Sections and sign-in">
     <div class="brand">
-      <img src="/static/brand/meska-white.png" alt="meska.Ai" width="148" height="26">
-      <h1 id="product">Athar</h1>
+      <div class="logo" role="img" aria-label="Athar" data-raw><svg class="logo-mark" viewBox="0 0 46 20" width="46" height="20" aria-hidden="true" focusable="false"><circle cx="5" cy="10" r="2.4" fill="currentColor" opacity=".35"/><circle cx="17" cy="10" r="3.6" fill="currentColor" opacity=".6"/><circle cx="34" cy="10" r="6.5" fill="currentColor"/></svg><span class="logo-ar" lang="ar" dir="rtl">أثر</span><span class="logo-en" lang="en">Athar</span></div>
+      <h1 id="product" class="sr-only">Athar</h1>
       <div class="sub">A cited learning map. The teacher decides.</div>
     </div>
     <nav id="nav" aria-label="Sections"></nav>
@@ -727,11 +732,11 @@ async function init() {
     out.hidden = false;
     out.onclick = async () => { try { await post("/api/session/sign-out", {}); } finally { location.reload(); } };
   } else {
-    const saved = store("meska.teacher");
+    const saved = store("athar.teacher");
     if (saved && state.teachers.some((t) => t.id === saved)) sel.value = saved;
-    sel.addEventListener("change", () => store("meska.teacher", sel.value));
+    sel.addEventListener("change", () => store("athar.teacher", sel.value));
   }
-  const savedLearner = store("meska.learner");
+  const savedLearner = store("athar.learner");
   const first = state.learners.find((l) => l.learner_id === savedLearner) || state.learners[0];
   if (first) state.learnerId = first.learner_id;
   refreshPending();
@@ -740,7 +745,7 @@ async function init() {
 
 function pickLearner(id, sub) {
   state.learnerId = id;
-  store("meska.learner", id);
+  store("athar.learner", id);
   state.sel = null; state.trace = null;
   show("learner/" + (sub || state.sub));
 }
@@ -836,7 +841,7 @@ function columnChart(points, label) {
   return svg;
 }
 
-const HEAT = ["#EAF1FE", "#C5D9FC", "#94B8F9", "#5C93F6", "#1B5BD6"];
+const HEAT = ["#E6F4F0", "#BFE3D9", "#8ECDBD", "#4FAE98", "#0A6654"];
 function heatColour(mean) {
   const i = Math.max(0, Math.min(4, Math.floor((mean - 0.4) / 0.1)));
   return { bg: HEAT[i], ink: i >= 3 ? "#FFFFFF" : "#0A0A0A" };
@@ -1035,7 +1040,7 @@ async function viewProfile(root) {
 }
 
 // ---------------------------------------------------------------- knowledge graph and teaching fit
-const NODE_COLOUR = { subject: "#2871F4", strand: "#2871F4", skill: "#0E8F7E", teacher: "#8A4FD6", approach: "#C2417A" };
+const NODE_COLOUR = { subject: "#0B7A65", strand: "#0B7A65", skill: "#2F6FD6", teacher: "#8A4FD6", approach: "#C2417A" };
 const NODE_WORD = { subject: "Subject", strand: "Curriculum strand", skill: "Thinking skill", teacher: "Teacher", approach: "Teaching approach" };
 
 function knowledgeGraph(m) {
@@ -1655,7 +1660,7 @@ function termChart(series) {
   svg.append(s("line", { x1: 20, y1: base, x2: width - 6, y2: base, stroke: "#9AA4B8", "stroke-width": 1 }));
   series.forEach((p, i) => {
     const x = 30 + i * step, height = Math.max(2, (base - top) * p.mean);
-    const bar = s("rect", { x, y: base - height, width: 32, height, rx: 4, fill: heatColour(p.mean).bg, stroke: "#5C93F6", "stroke-width": 1 });
+    const bar = s("rect", { x, y: base - height, width: 32, height, rx: 4, fill: heatColour(p.mean).bg, stroke: "#4FAE98", "stroke-width": 1 });
     bar.append(s("title", { text: p.period + ": " + Math.round(p.mean * 100) + "% over " + p.records + " records" }));
     svg.append(bar,
       s("text", { x: x + 16, y: base - height - 4, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: "#0A0A0A", text: Math.round(p.mean * 100) + "%" }),
@@ -1870,7 +1875,7 @@ async function viewAgent(root) {
   const pickValue = (pid, m) => pid + "::" + m;
   const modelSel = h("select", { id: "run-model" }, providers.filter((p) => p.models.length).map((p) =>
     h("optgroup", { label: p.label }, p.models.map((m) => h("option", { value: pickValue(p.id, m), text: m + (p.id === "local" && m === offered.default ? " (default)" : "") })))));
-  const saved = store("meska.model");
+  const saved = store("athar.model");
   if (saved && [...modelSel.options].some((o) => o.value === saved)) modelSel.value = saved;
   const cloudNote = h("p", { class: "small", role: "status" });
   const chosen = () => { const [pid, ...rest] = String(modelSel.value || "local::").split("::"); return { provider: pid, model: rest.join("::") }; };
@@ -1879,7 +1884,7 @@ async function viewAgent(root) {
     clear(cloudNote);
     if (p && p.cloud) cloudNote.append(h("strong", { text: "This run uses " + p.label + ". " }), "The document and the records the agent reads are sent to that company. Use it with made-up data only. Results from it cannot go in EVALS.md.");
   };
-  modelSel.addEventListener("change", () => { store("meska.model", modelSel.value); showCloudNote(); });
+  modelSel.addEventListener("change", () => { store("athar.model", modelSel.value); showCloudNote(); });
   showCloudNote();
   // Cloud keys: typed here, kept in the app's memory until it stops, never saved and never shown again.
   const cloudBox = h("details", { class: "card", style: "margin-top:12px" }, h("summary", { text: "Cloud models (optional): OpenAI and Claude" }),
@@ -2029,7 +2034,7 @@ async function viewUpload(root) {
   clear(root);
   const cur = state.session.curriculum;
   root.append(h("h2", { text: "Add records" }),
-    h("p", { class: "muted", text: "Two ways in. A marks sheet is exact and uses no model. A document goes to the agent, which proposes rows for you to confirm." }));
+    h("p", { class: "muted", text: "Two ways in. A marks sheet is exact and uses no model. A document goes to the agent, which reads it and records what it finds." }));
 
   // ---- marks sheet
   const grade = gradeSelect("up-grade");
@@ -2126,7 +2131,7 @@ async function viewUpload(root) {
   };
   root.append(h("div", { class: "card" },
     h("h3", { text: "A document for the agent" }),
-    h("p", { class: "muted", text: "A quiz sheet or a teacher's note as text (.md, .txt or .csv), in English or Arabic. Use the learner's record code in it, not their name. The agent proposes rows from it and stops for a teacher to confirm. Sending the file adds no record by itself." }),
+    h("p", { class: "muted", text: "A quiz sheet or a teacher's note as text (.md, .txt or .csv), in English or Arabic. Use the learner's record code in it, not their name. When you start a run, the agent reads it and records the rows, each marked with the file it came from. Check them in the learner's map and withdraw any that are wrong. Sending the file adds no record by itself." }),
     h("div", { class: "row" }, field("Document", doc), docBtn), docOut));
 }
 

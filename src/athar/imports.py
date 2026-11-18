@@ -52,7 +52,17 @@ def _code(alias: str) -> str:
 
 
 def _slug(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", _norm(text)).strip("-")[:40] or "quiz"
+    """A short key made from a quiz name. Letters of any script are kept, so two quizzes named in Arabic
+    do not end up with the same key."""
+    return re.sub(r"[^\w]+", "-", _norm(text)).strip("-_")[:40] or "quiz"
+
+
+def _quiz_ref(pack: Pack, year: int, term: int, grade: int, title: str, question: dict) -> str:
+    """Where a saved mark came from. The same quiz uploaded twice gives the same key, so it is saved once.
+    The subject and the grade are part of the key: 'Quiz 1' in Mathematics and 'Quiz 1' in Science are two quizzes."""
+    topic = pack.concepts.get(question.get("topic_id") or "")
+    subject = pack.strand_subject.get(topic.strand, "") if topic else ""
+    return f"upload:{int(year)}-T{int(term)}:g{int(grade)}:{subject}:{_slug(title)}#q{question['n']}"
 
 
 # ------------------------------------------------------------------ reading a file
@@ -202,7 +212,7 @@ def check_marks(table: list[list[str]], *, title: str, year: int, term: int, gra
         learners = db.rows(conn, "SELECT id, alias, display_name, pack_id FROM learners")
         existing = {(row["learner_id"], row["source_ref"]) for row in db.rows(
             conn, "SELECT learner_id, source_ref FROM evidence WHERE source_ref LIKE ?",
-            (f"upload:{int(year)}-T{int(term)}:{_slug(title)}#%",))}
+            (f"upload:{int(year)}-T{int(term)}:g{int(grade)}:%",))}
     pack = load_pack(learners[0]["pack_id"] if learners else None)
     by_code = {_code(row["alias"]): row for row in learners}
     # A topic may be named in any language the map has: a sheet filled in Arabic is read in English mode too.
@@ -262,7 +272,7 @@ def check_marks(table: list[list[str]], *, title: str, year: int, term: int, gra
             elif mark < 0 or (q["out_of"] and mark > q["out_of"]):
                 problems.append(f"{code}, {q['name']}: {raw} is outside 0 to {_cell_text(q['out_of'])}.")
             else:
-                ref = f"upload:{int(year)}-T{int(term)}:{_slug(title)}#q{q['n']}"
+                ref = _quiz_ref(pack, year, term, grade, title, q)
                 if (learner["id"], ref) in existing:
                     already += 1
                 else:
@@ -299,7 +309,7 @@ def save_marks(table: list[list[str]], *, title: str, year: int, term: int, grad
             for q, mark in zip(checked["questions"], row["marks"], strict=True):
                 if mark is None:
                     continue
-                ref = f"upload:{quiz['year']}-T{quiz['term']}:{_slug(quiz['title'])}#q{q['n']}"
+                ref = _quiz_ref(pack, quiz["year"], quiz["term"], quiz["grade"], quiz["title"], q)
                 if db.one(conn, "SELECT 1 AS yes FROM evidence WHERE learner_id = ? AND source_ref = ?",
                           (row["learner_id"], ref)):
                     skipped += 1
@@ -364,7 +374,7 @@ def add_learner(name: str, grade: int, year: int, home_language: str = "ar", act
 
 def save_document(folder: Path, filename: str, data: bytes) -> dict[str, Any]:
     """Put a quiz sheet or a teacher's note in the inbox, where the agent can be asked to read it.
-    The agent proposes rows from it and a teacher confirms them; saving the file adds no record."""
+    The agent reads rows from it when a teacher starts a run; saving the file adds no record."""
     name = re.sub(r"[^A-Za-z0-9._-]+", "_", Path(filename or "").name).strip("._") or "document"
     if Path(name).suffix.lower() not in DOCUMENT_TYPES:
         raise ValueError("The agent reads text files: .md, .txt or .csv.")

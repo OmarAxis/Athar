@@ -1,6 +1,6 @@
 # Security and data protection
 
-Athar is a prototype built on Meska Brain. It is built to run on one machine inside a school, on synthetic data. This page
+Athar is a prototype. It is built to run on one machine inside a school, on synthetic data. This page
 says what the code enforces today, what it does not, and how to report a problem.
 
 ## What the code enforces
@@ -39,7 +39,7 @@ These are known gaps. Do not use Athar with real learners until they are closed.
   Passwords are stored as salted scrypt hashes and are never logged. A session cookie is HttpOnly and
   SameSite=Strict, and only its hash is stored. There is no password reset by email: the admin resets it.
 - **HTTPS is off unless you give it a certificate.** By default sign-in travels in the clear, which is only safe
-  on `127.0.0.1`. To serve other machines, set `MESKA_TLS_CERT` and `MESKA_TLS_KEY` to a certificate and its key:
+  on `127.0.0.1`. To serve other machines, set `ATHAR_TLS_CERT` and `ATHAR_TLS_KEY` to a certificate and its key:
   the app then serves HTTPS and marks the session cookie Secure. The app does not make a certificate for you, and
   this path has not been tested on a school network.
 - **No encryption at rest.** The database is one SQLite file. Protect the machine and its disk.
@@ -51,12 +51,12 @@ These are known gaps. Do not use Athar with real learners until they are closed.
   and can make a backup or delete a record. That mode is for made-up data only.
 - **No consent records.** The app does not record that a family agreed to their child's records being kept.
 - **Correcting a record is limited.** A wrong mark cannot be edited on the page yet. A whole learner can be
-  deleted (School page, or `meska delete-learner`) and one learner's record can be saved as a file
-  (`meska export-learner`).
+  deleted (School page, or `athar delete-learner`) and one learner's record can be saved as a file
+  (`athar export-learner`).
 - **Deleting does not reach old backups or shared files.** Backup copies made earlier still hold the record until
   they are deleted too (the page lists them). A note in the inbox that mentions the learner inside another file
   is not found. Rows blanked in the audit log are matched by the learner's id and record code.
-- **Backups are manual and stay on the same disk.** `meska backup` or the School page writes one file to
+- **Backups are manual and stay on the same disk.** `athar backup` or the School page writes one file to
   `data/backups` and keeps the newest 14. Nothing runs on a schedule and nothing is copied off the machine, so
   a lost or broken computer still loses the history unless someone saves a copy elsewhere. A backup is not
   encrypted and holds names.

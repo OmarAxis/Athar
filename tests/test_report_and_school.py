@@ -5,7 +5,7 @@ from __future__ import annotations
 import networkx as nx
 import pytest
 
-from meska_brain import db, report, review, school, tools
+from athar import db, report, review, school, tools
 
 
 def _approved_finding(db_path, kind="root_cause") -> str:
@@ -58,7 +58,7 @@ def test_report_escapes_text_and_reports_gaps_and_nothing_approved(db_path):
 
 
 def test_report_says_what_the_records_cannot_tell(db_path):
-    from meska_brain.curriculum import load_pack
+    from athar.curriculum import load_pack
     with db.connect(db_path) as conn:
         pack = load_pack(db.one(conn, "SELECT pack_id FROM learners WHERE id = 'lrn_a'")["pack_id"])
         seen = {r["concept_id"] for r in db.rows(conn, "SELECT DISTINCT concept_id FROM evidence WHERE learner_id = 'lrn_a' "

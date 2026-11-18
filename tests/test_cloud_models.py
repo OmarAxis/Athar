@@ -7,8 +7,8 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from meska_brain import synth
-from meska_brain.agent import llm
+from athar import synth
+from athar.agent import llm
 
 FAKE = "test-only-not-a-real-key-" + "x" * 24
 
@@ -24,12 +24,12 @@ def no_keys(monkeypatch):
 
 @pytest.fixture()
 def world(tmp_path, monkeypatch):
-    path = tmp_path / "meska.db"
-    monkeypatch.setenv("MESKA_DB", str(path))
+    path = tmp_path / "athar.db"
+    monkeypatch.setenv("ATHAR_DB", str(path))
     synth.generate(db_path=path, n_learners=6, out_dir=tmp_path / "out")
     monkeypatch.setattr(llm, "list_models", lambda provider="local", timeout=3.0: {
         "local": ["qwen3.5-9b"], "openai": ["gpt-test"], "anthropic": ["claude-test"]}[provider])
-    from meska_brain.web.app import app
+    from athar.web.app import app
     return TestClient(app), path
 
 
@@ -76,7 +76,7 @@ def test_a_key_from_the_environment_is_used_and_named_without_being_shown(world,
 
 def test_a_cloud_run_needs_a_key_and_a_model(world, monkeypatch):
     client, _ = world
-    from meska_brain.web import app as web
+    from athar.web import app as web
     started = []
 
     class Runner:
@@ -96,7 +96,7 @@ def test_a_cloud_run_needs_a_key_and_a_model(world, monkeypatch):
 
 
 def test_run_record_refuses_an_unknown_provider_or_a_cloud_run_without_a_model(world):
-    from meska_brain.agent import runner
+    from athar.agent import runner
     client, _ = world
     lid = client.get("/api/learners").json()["learners"][0]["learner_id"]
     with pytest.raises(ValueError, match="Unknown model provider"):

@@ -7,14 +7,14 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 
-from meska_brain import accounts, db, imports, tools
+from athar import accounts, db, imports, tools
 
 ADMIN = {"name": "Mona Farouk", "username": "mona", "password": "a-long-test-passphrase"}
 
 
 @pytest.fixture()
 def client(db_path):
-    from meska_brain.web.app import app
+    from athar.web.app import app
 
     accounts._failures.clear()
     return TestClient(app)
@@ -213,10 +213,10 @@ def test_csv_template_and_document_upload(client, tmp_path):
 
 def test_a_marks_sheet_in_arabic_is_read_in_either_language(tmp_path, monkeypatch):
     """The Arabic template has Arabic row names and Arabic topic names. It is read whatever the reader's language."""
-    from meska_brain import synth_school
-    from meska_brain.curriculum import current_lang
-    monkeypatch.setenv("MESKA_DB", str(tmp_path / "meska.db"))
-    made = synth_school.generate_school(db_path=tmp_path / "meska.db", pack_id="egypt-maths", out_dir=tmp_path, lang="ar")
+    from athar import synth_school
+    from athar.curriculum import current_lang
+    monkeypatch.setenv("ATHAR_DB", str(tmp_path / "athar.db"))
+    made = synth_school.generate_school(db_path=tmp_path / "athar.db", pack_id="egypt-maths", out_dir=tmp_path, lang="ar")
     with open(made["sample_marks_sheet"], "rb") as fh:
         table = imports.read_table("sample.csv", fh.read())
     assert table[0][0] == "كود التلميذ" and table[1][0] == "الموضوع" and table[2][0] == "الدرجة من"
@@ -230,4 +230,20 @@ def test_a_marks_sheet_in_arabic_is_read_in_either_language(tmp_path, monkeypatc
             current_lang.reset(token)
         assert checked["ok"], checked["problems"]
         assert rows[0][0] == ("كود التلميذ" if lang == "ar" else "Learner code")
-    assert len(imports.template_xlsx(imports.template_rows([], 2, "ar"), imports.topics(__import__("meska_brain").curriculum.load_pack("egypt-maths"), 4, 1), "ar")) > 2000
+    assert len(imports.template_xlsx(imports.template_rows([], 2, "ar"), imports.topics(__import__("athar").curriculum.load_pack("egypt-maths"), 4, 1), "ar")) > 2000
+
+
+def test_quizzes_named_in_arabic_or_in_two_subjects_do_not_collide():
+    """Two different quizzes must never share a key, or the second is skipped as already saved."""
+    from athar.curriculum import load_pack
+    assert imports._slug("اختبار الكسور") != imports._slug("اختبار الهندسة")
+    assert imports._slug("اختبار الكسور") == imports._slug("  اختبار   الكسور ")
+    assert imports._slug("Fractions quiz, week 6") == "fractions-quiz-week-6" and imports._slug("!!!") == "quiz"
+    pack = load_pack("egypt-school")
+    maths = {"n": 1, "topic_id": "g4-place-value"}
+    science = {"n": 1, "topic_id": next(c for c in pack.concepts if c.startswith("sci-g4-"))}
+    one = imports._quiz_ref(pack, 2026, 1, 4, "Quiz 1", maths)
+    assert one == imports._quiz_ref(pack, 2026, 1, 4, "Quiz 1", maths)              # the same quiz again
+    assert one != imports._quiz_ref(pack, 2026, 1, 4, "Quiz 1", science)            # another subject
+    assert one != imports._quiz_ref(pack, 2026, 1, 5, "Quiz 1", maths)              # another grade
+    assert one != imports._quiz_ref(pack, 2026, 2, 4, "Quiz 1", maths)              # another term

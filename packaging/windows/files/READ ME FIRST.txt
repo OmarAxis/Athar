@@ -4,7 +4,7 @@ ATHAR
 Athar follows one learner across years and shows a teacher where that learner is strong,
 where they struggle, and where a struggle may have started. A named teacher approves everything.
 
-Athar is the school product built on Meska Brain. It starts with Egypt and covers grades 4 to 8
+Athar starts with Egypt and covers grades 4 to 8
 (Primary 4 to Preparatory 2).
 
 This folder holds the whole thing: the app, its own copy of Python, and a program that runs an
@@ -26,7 +26,7 @@ HOW TO START
 
 To remove Athar, delete the folder. Nothing else was changed on the computer.
 
-Athar uses its own address, so it can sit on the same computer as an earlier Meska Brain
+Athar uses its own address, so it can sit on the same computer as an earlier Athar
 package. If the port is taken, Athar picks the next free one and the black window shows it.
 
 
@@ -111,6 +111,5 @@ WHAT TO KNOW
 - A backup made on the School page is a file on this computer. Copy it somewhere else as well.
 - The model does not reach conclusions. Plain code does, and a teacher approves each one.
 
-Athar's own source code is not published yet. It is built on Meska Brain, whose source code,
-tests and documents are at https://github.com/OmarAxis/meska-brain
+Source code, tests and documents come with the project this package was built from. See VERSION.txt.
 Licences of everything in this folder: see the LICENSES folder.

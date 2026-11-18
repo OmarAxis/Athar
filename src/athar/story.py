@@ -1,6 +1,6 @@
 """A ready state for presenting, built without a model.
 
-`meska story` runs the same audited tools the agent uses (find_patterns, trace_root, what_worked,
+`athar story` runs the same audited tools the agent uses (find_patterns, trace_root, what_worked,
 propose_finding) for three synthetic learners, words each finding with the fixed templates, and
 records a few decisions by a synthetic teacher. Every step lands in the audit log with the actor
 `demo-setup`, so nobody can mistake it for the agent's work or for a real teacher's decision.
@@ -27,7 +27,7 @@ SCHOOL_PLAN: dict[str, tuple[str, ...]] = {"root_gap": (), "strand_strength": ("
 
 
 def _plan(learners: list[dict], db_path) -> dict[str, tuple[str, ...]]:
-    """Which learners to prepare. The challenge cohort has fixed codes. A generated school is read from the
+    """Which learners to prepare. The reference cohort has fixed codes. A generated school is read from the
     list of planted patterns written beside its database."""
     if any(row["alias"].endswith(tuple(PLAN)) for row in learners):
         return PLAN
@@ -74,7 +74,7 @@ def build(db_path=None) -> dict[str, Any]:
         teacher = db.one(conn, "SELECT id, name FROM teachers ORDER BY name")
         already = db.one(conn, "SELECT COUNT(*) AS n FROM findings")["n"]
     if already:
-        return {"skipped": "There are findings already. Run `meska seed` first for a clean start.", "findings": already}
+        return {"skipped": "There are findings already. Run `athar seed` first for a clean start.", "findings": already}
 
     token = audit.current_actor.set(ACTOR)
     out: dict[str, Any] = {"proposed": 0, "approved": 0, "waiting": 0, "open_questions": 0, "learners": []}

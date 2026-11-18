@@ -7,17 +7,17 @@ import re
 import pytest
 from fastapi.testclient import TestClient
 
-from meska_brain import db, synth, tools
+from athar import db, synth, tools
 
 
 @pytest.fixture(scope="module")
 def client(tmp_path_factory):
     base = tmp_path_factory.mktemp("web")
-    db_path = base / "meska.db"
+    db_path = base / "athar.db"
     mp = pytest.MonkeyPatch()
-    mp.setenv("MESKA_DB", str(db_path))
+    mp.setenv("ATHAR_DB", str(db_path))
     synth.generate(db_path=db_path, n_learners=6, out_dir=base / "out")
-    from meska_brain.web.app import app
+    from athar.web.app import app
 
     yield TestClient(app)
     mp.undo()
@@ -123,10 +123,9 @@ def test_index_served_without_external_hosts(client):
 def test_page_and_logo_are_served(client):
     page = client.get("/")
     assert page.status_code == 200
-    assert "/static/brand/meska-white.png" in page.text
-    logo = client.get("/static/brand/meska-white.png")
-    assert logo.status_code == 200
-    assert logo.headers["content-type"] == "image/png"
+    # The logo is type, not an image file: the Arabic word, the Latin word, and three dots.
+    assert 'class="logo"' in page.text and "أثر" in page.text and 'lang="en">Athar<' in page.text
+    assert ".png" not in page.text and "meska" not in page.text.lower()
 
 
 def test_overview_describes_topics_and_records_not_learner_scores(client):
@@ -198,7 +197,7 @@ def test_unknown_finding_status_is_400(client):
 
 
 def test_a_teacher_answers_a_record_request(client):
-    from meska_brain.curriculum import load_pack
+    from athar.curriculum import load_pack
     with db.connect() as conn:
         learner = db.one(conn, "SELECT id, pack_id FROM learners ORDER BY id LIMIT 1")
         seen = {r["concept_id"] for r in db.rows(conn, "SELECT DISTINCT concept_id FROM evidence WHERE learner_id = ? "
@@ -237,7 +236,7 @@ def test_school_graph_and_printable_report_are_served(client):
 
 
 def test_a_run_uses_a_model_the_local_program_really_offers():
-    from meska_brain.web.app import _usable_model
+    from athar.web.app import _usable_model
     assert _usable_model(["qwen3.5-9b", "llama-3"], "qwen3.5-9b") == "qwen3.5-9b"
     assert _usable_model(["text-embedding-x", "llama-3", "qwen/qwen3.8-27b"], "qwen3.5-9b") == "qwen/qwen3.8-27b"
     assert _usable_model(["text-embedding-x", "llama-3"], "qwen3.5-9b") == "llama-3"

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from meska_brain import audit, db, review, tools
+from athar import audit, db, review, tools
 
 
 def _audit_rows(db_path) -> list[dict]:
@@ -171,7 +171,7 @@ def test_failed_call_is_audited(db_path):
     assert "Unknown learner" in json.loads(row["output"])["error"]
 
 
-def test_tools_use_meska_db_env(db_path):
+def test_tools_use_the_db_setting(db_path):
     assert len(tools.list_learners()["learners"]) == 5
 
 
@@ -226,7 +226,7 @@ def test_get_summaries_shows_the_teacher_decision(db_path):
 def test_audit_row_follows_db_path(db_path, tmp_path, monkeypatch):
     other = tmp_path / "other.db"
     db.init_db(other)
-    monkeypatch.setenv("MESKA_DB", str(other))
+    monkeypatch.setenv("ATHAR_DB", str(other))
     tools.list_learners(db_path=db_path)
     assert _audit_rows(db_path)[-1]["tool"] == "list_learners"
     assert _audit_rows(other) == []
@@ -254,7 +254,7 @@ def test_timeline_refuses_an_unbounded_limit(db_path, limit):
 
 def _unrecorded_concept(db_path, learner_id="lrn_a") -> str:
     """A topic in the learner's curriculum with no scored evidence."""
-    from meska_brain.curriculum import load_pack
+    from athar.curriculum import load_pack
     with db.connect(db_path) as conn:
         pack_id = db.one(conn, "SELECT pack_id FROM learners WHERE id = ?", (learner_id,))["pack_id"]
         seen = {r["concept_id"] for r in db.rows(conn, "SELECT DISTINCT concept_id FROM evidence WHERE learner_id = ? "

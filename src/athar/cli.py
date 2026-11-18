@@ -1,4 +1,4 @@
-"""Command line. `uv run meska demo` is the one command a stranger needs."""
+"""Command line. `uv run athar demo` is the one command a stranger needs."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _ensure_seeded() -> None:
 def _generate(pack: str | None, seed: int | None = None, learners: int | None = None, years: int = 4,
               school: bool = False) -> dict:
     """A pack that says `generator: school` gets a whole synthetic school built from its own graph.
-    Any other pack gets the original cohort."""
+    Any other pack gets the small reference cohort."""
     from . import synth, synth_school
     from .curriculum import read_pack_data
     settings = get_settings()
@@ -52,7 +52,7 @@ def _resolve_learner(text: str) -> str:
     with db.connect() as conn:
         row = db.one(conn, "SELECT id FROM learners WHERE id=? OR alias=? OR alias LIKE ?", (text, text, f"%{text}"))
     if not row:
-        raise typer.BadParameter(f"No learner matches '{text}'. Try `meska learners`.")
+        raise typer.BadParameter(f"No learner matches '{text}'. Try `athar learners`.")
     return row["id"]
 
 
@@ -95,7 +95,7 @@ def serve() -> None:
 
 @app.command()
 def mcp(http: bool = typer.Option(False, help="Serve streamable HTTP instead of stdio.")) -> None:
-    """Run the Meska Brain MCP server (stdio by default) for any MCP host."""
+    """Run the Athar MCP server (stdio by default) for any MCP host."""
     _ensure_seeded()
     from . import server
     if http:
@@ -119,7 +119,7 @@ def learners() -> None:
 
 @app.command()
 def teachers() -> None:
-    """List teachers and their ids (needed for `meska decide`)."""
+    """List teachers and their ids (needed for `athar decide`)."""
     _ensure_seeded()
     with db.connect() as conn:
         found = db.rows(conn, "SELECT id, name FROM teachers ORDER BY name")
@@ -200,12 +200,12 @@ def export_graph(out: Path = typer.Option(Path("exports") / "school.graphml", he
 
 
 @app.command()
-def answer(request_id: str, teacher: str = typer.Option(..., help="Teacher id. See `meska teachers`."),
+def answer(request_id: str, teacher: str = typer.Option(..., help="Teacher id. See `athar teachers`."),
            text: str | None = typer.Option(None, help="The record in the teacher's own words."),
            file: str | None = typer.Option(None, help="Name of a file in the inbox."),
            year: int | None = typer.Option(None), term: int | None = typer.Option(None),
            none: bool = typer.Option(False, "--none", help="Answer that no record exists.")) -> None:
-    """Answer the agent's question about a missing record, as a named teacher. Then `meska resume`."""
+    """Answer the agent's question about a missing record, as a named teacher. Then `athar resume`."""
     from . import review
     result = review.answer_request(request_id, "no_record" if none else "provided", teacher, text, file, year, term)
     console.print(f"Request {result['id']} is now '{result['status']}'.", highlight=False)

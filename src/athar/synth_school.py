@@ -1,7 +1,7 @@
 # ruff: noqa: C408, B023  (dict() keeps row builders readable; closures are called inside their loop)
 """A synthetic school on any curriculum pack. Everything here is made up: no real learners, no real school.
 
-`synth.py` builds the challenge cohort and is tied to the generic pack. This generator reads whatever
+`synth.py` builds the small reference cohort and is tied to the generic packs. This generator reads whatever
 pack it is given (its grades, its terms, its prerequisite links) and plants patterns by walking the
 pack's own graph, so it works for a national curriculum without naming any topic in code.
 
@@ -483,7 +483,7 @@ def generate_school(db_path: Path | str | None = None, seed: int = 11, pack_id: 
         encoding="utf-8")
     files.append("teacher_note_ar.txt")
     (inbox / "README.md").write_text(
-        "# Inbox (synthetic)\n\nEvery file here is made up by `meska_brain.synth_school`. The learners are record codes, "
+        "# Inbox (synthetic)\n\nEvery file here is made up by `athar.synth_school`. The learners are record codes, "
         "the teachers are fictional, and nothing refers to a real child or school.\n\n"
         f"Each file is about the term in progress, {CURRENT_YEAR}-T1.\n", encoding="utf-8")
 

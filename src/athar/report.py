@@ -8,11 +8,9 @@ parent's "why?". The report never ranks, never compares with classmates and neve
 
 from __future__ import annotations
 
-import base64
 import math
 import re
 from html import escape
-from pathlib import Path
 from typing import Any
 
 from . import db, review
@@ -27,7 +25,6 @@ EVIDENCE_KIND = {"quiz_item": "Quiz item", "assignment": "Assignment", "project"
 AUDIENCE = {"guardian": "Note for the family", "teacher_handover": "Note for the next teacher"}
 MAX_RECORDS_SHOWN = 12
 RTL = {"ar", "fa", "ur", "he"}
-_LOGO = Path(__file__).parent / "web" / "static" / "brand" / "meska-white.png"
 
 
 # ---------------------------------------------------------------- the reader's language
@@ -130,7 +127,7 @@ def build(learner_id: str, *, db_path=None) -> dict[str, Any]:
 
 # ---------------------------------------------------------------- the picture
 
-RAMP = ("#EAF1FE", "#C5D9FC", "#94B8F9", "#5C93F6", "#1B5BD6")   # one hue, light to dark: lower to higher average
+RAMP = ("#E6F4F0", "#BFE3D9", "#8ECDBD", "#4FAE98", "#0A6654")   # one hue, light to dark: lower to higher average
 CX, CY, R_SUBJECT, R_STRAND = 430, 300, 118, 232
 
 
@@ -175,7 +172,7 @@ def graph_svg(data: dict[str, Any]) -> str:
             mine = [angle[st["id"]] for st in strands if st["subject"] == subject]
             hubs[subject] = point(R_SUBJECT, sum(mine) / len(mine))
             x, y = hubs[subject]
-            lines.append(f'<line x1="{CX}" y1="{CY}" x2="{x:.1f}" y2="{y:.1f}" stroke="#2871F4" stroke-width="2.5"/>')
+            lines.append(f'<line x1="{CX}" y1="{CY}" x2="{x:.1f}" y2="{y:.1f}" stroke="#0B7A65" stroke-width="2.5"/>')
     for st in strands:
         a = angle[st["id"]]
         x, y = point(R_STRAND if two_rings else R_STRAND - 50, a)
@@ -204,19 +201,19 @@ def graph_svg(data: dict[str, Any]) -> str:
     for subject, (x, y) in hubs.items():
         label = next(st["subject_label"] for st in strands if st["subject"] == subject)
         width = 16 + 7.2 * len(label)
-        nodes.append(f'<rect x="{x - width / 2:.1f}" y="{y - 13:.1f}" width="{width:.1f}" height="26" rx="13" fill="#FFFFFF" stroke="#2871F4" stroke-width="2"/>'
+        nodes.append(f'<rect x="{x - width / 2:.1f}" y="{y - 13:.1f}" width="{width:.1f}" height="26" rx="13" fill="#FFFFFF" stroke="#0B7A65" stroke-width="2"/>'
                      f'<text x="{x:.1f}" y="{y + 4:.1f}" text-anchor="middle" font-size="12" font-weight="700" fill="#0A0A0A">{_svg(escape(label))}</text>')
     learner = data["learner"]
     named = learner.get("name") and learner["name"] != learner["alias"]
     alias = escape(learner["name"].split()[0] if named else learner["alias"].split()[-1])
-    centre = (f'<circle cx="{CX}" cy="{CY}" r="44" fill="#000038"/><circle cx="{CX}" cy="{CY}" r="50" fill="none" stroke="#2871F4" stroke-width="2"/>'
+    centre = (f'<circle cx="{CX}" cy="{CY}" r="44" fill="#06241F"/><circle cx="{CX}" cy="{CY}" r="50" fill="none" stroke="#0B7A65" stroke-width="2"/>'
               f'<text x="{CX}" y="{CY - 3}" text-anchor="middle" font-size="11" fill="#FFFFFF" opacity=".85">{_svg(_t("Learner"))}</text>'
               f'<text x="{CX}" y="{CY + 15}" text-anchor="middle" font-size="18" font-weight="700" fill="#FFFFFF">{alias}</text>')
     key = "".join(f'<rect x="{24 + i * 26}" y="608" width="26" height="12" fill="{c}"/>' for i, c in enumerate(RAMP))
     legend = (f'{key}<text x="24" y="602" font-size="11" fill="#5B6478">{_svg(_t("Average on record"))}</text>'
               f'<text x="24" y="634" font-size="10.5" fill="#5B6478">{_svg(_t("lower"))}</text>'
               f'<text x="154" y="634" text-anchor="end" font-size="10.5" fill="#5B6478">{_svg(_t("higher"))}</text>'
-              f'<circle cx="196" cy="614" r="6" fill="#C5D9FC"/><circle cx="218" cy="614" r="11" fill="#C5D9FC"/>'
+              f'<circle cx="196" cy="614" r="6" fill="#BFE3D9"/><circle cx="218" cy="614" r="11" fill="#BFE3D9"/>'
               f'<text x="236" y="618" font-size="11" fill="#5B6478">{_svg(_t("A bigger circle means more records"))}</text>'
               f'<circle cx="462" cy="614" r="8" fill="#FFFFFF" stroke="#9AA4B8" stroke-width="1.5" stroke-dasharray="4 4"/>'
               f'<text x="478" y="618" font-size="11" fill="#5B6478">{_svg(_t("No scored records yet (not the same as struggling)"))}</text>')
@@ -240,7 +237,7 @@ def term_chart_svg(series: list[dict]) -> str:
         x = 30 + i * step
         height = max(2.0, (base - top) * point["mean"])
         fill, _ = _shade(point["mean"])
-        parts.append(f'<rect x="{x}" y="{base - height:.1f}" width="32" height="{height:.1f}" rx="4" fill="{fill}" stroke="#5C93F6" stroke-width="1"/>'
+        parts.append(f'<rect x="{x}" y="{base - height:.1f}" width="32" height="{height:.1f}" rx="4" fill="{fill}" stroke="#4FAE98" stroke-width="1"/>'
                      f'<text x="{x + 16}" y="{base - height - 4:.1f}" text-anchor="middle" font-size="11" font-weight="700" fill="#0A0A0A">{round(point["mean"] * 100)}%</text>'
                      f'<text x="{x + 16}" y="{base + 14}" text-anchor="middle" font-size="10" fill="#5B6478">{escape(point["period"][2:])}</text>')
     label = tr("Results term by term:") + " " + ("، " if _arabic() else ", ").join(
@@ -281,20 +278,20 @@ _CSS = """
 *{box-sizing:border-box}
 body{margin:0;font-family:'Articulat CF',Inter,system-ui,-apple-system,'Segoe UI',sans-serif;color:#0A0A0A;background:#F5F7FB;line-height:1.5}
 .page{max-width:820px;margin:0 auto;background:#fff}
-header{background:linear-gradient(135deg,#000038 0%,#000058 45%,#0000CE 100%);color:#fff;padding:26px 36px;
+header{background:linear-gradient(135deg,#06241F 0%,#0A3A32 45%,#0E6B5A 100%);color:#fff;padding:26px 36px;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
-header img{height:24px;width:auto;display:block;margin-bottom:18px}
+.logo{display:flex;align-items:center;gap:10px;color:#fff;margin-bottom:16px;direction:ltr}.logo-mark{flex:none;color:#7FE0C8}.logo-ar{font:700 32px/1 'Segoe UI','Noto Kufi Arabic','Noto Sans Arabic',Tahoma,sans-serif;letter-spacing:0}.logo-en{font:600 12px/1 'Segoe UI',system-ui,sans-serif;letter-spacing:.34em;text-transform:uppercase;opacity:.78;padding-top:9px}
 header h1{margin:0;font-size:28px;line-height:1.2}
 header p{margin:6px 0 0;opacity:.9;font-size:14px}
 main{padding:24px 36px 36px}
-h2{font-size:17px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #2871F4}
+h2{font-size:17px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid #0B7A65}
 .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0}
 .facts div{background:#F5F7FB;border-radius:12px;padding:10px 12px}
 .facts dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#5B6478}
 .facts dd{margin:2px 0 0;font-size:18px;font-weight:700}
 .graph{display:block;width:100%;height:auto;break-inside:avoid}
 .chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:10px 0}
-.chip{border:1px solid #C5D9FC;border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;font-size:12px;background:#fff}
+.chip{border:1px solid #BFE3D9;border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;font-size:12px;background:#fff}
 .chip.start{border:2px solid #A63F00}
 .chip .tag{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#5B6478;font-weight:700}
 .chip.start .tag{color:#A63F00}
@@ -304,7 +301,7 @@ h2{font-size:17px;margin:28px 0 10px;padding-bottom:6px;border-bottom:2px solid 
 .why ul{margin:4px 0;padding-left:18px;font-size:13px;max-width:430px}
 .terms{display:block;max-width:100%;height:auto}
 .finding{border:1px solid #E3E8F2;border-radius:14px;padding:14px 16px;margin:0 0 12px;break-inside:avoid}
-.kind{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#1B5BD6;font-weight:700}
+.kind{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#0A6654;font-weight:700}
 .statement{font-size:16px;margin:4px 0 6px}
 .by{font-size:12.5px;color:#5B6478;margin:0}
 table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
@@ -312,13 +309,13 @@ th{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercas
 td{border-bottom:1px solid #EEF1F7;padding:4px 6px;vertical-align:top}
 td:nth-child(1),td:nth-child(2),td:nth-child(4){white-space:nowrap}
 td.id{color:#5B6478;font-family:ui-monospace,Consolas,monospace;font-size:11px;white-space:nowrap}
-.note{background:#EAF1FE;border-radius:14px;padding:14px 16px;margin:0 0 12px;break-inside:avoid;
+.note{background:#E6F4F0;border-radius:14px;padding:14px 16px;margin:0 0 12px;break-inside:avoid;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .note p{margin:6px 0 0;font-size:15px}
 .small{font-size:12.5px;color:#5B6478}
 .empty{color:#5B6478;font-style:italic}
 footer{border-top:1px solid #E3E8F2;margin-top:28px;padding-top:12px;font-size:12px;color:#5B6478}
-.print{position:fixed;right:18px;top:18px;background:#2871F4;color:#fff;border:0;border-radius:12px;padding:10px 18px;
+.print{position:fixed;right:18px;top:18px;background:#0B7A65;color:#fff;border:0;border-radius:12px;padding:10px 18px;
   font:inherit;font-weight:600;cursor:pointer}
 @media (max-width:640px){.facts{grid-template-columns:repeat(2,1fr)}header,main{padding-left:18px;padding-right:18px}}
 @media print{body{background:#fff}.print{display:none}.page{max-width:none}@page{margin:14mm}}
@@ -341,10 +338,8 @@ _CSS_ARABIC = """[dir=rtl] body{font-family:'Segoe UI',Tahoma,'Noto Sans Arabic'
 
 
 def _logo() -> str:
-    if not _LOGO.is_file():
-        return ""
-    data = base64.b64encode(_LOGO.read_bytes()).decode("ascii")
-    return f'<img src="data:image/png;base64,{data}" alt="meska.Ai">'
+    """The wordmark, drawn with type and three dots. No image file."""
+    return '<div class="logo" role="img" aria-label="Athar"><svg class="logo-mark" viewBox="0 0 46 20" width="46" height="20" aria-hidden="true" focusable="false"><circle cx="5" cy="10" r="2.4" fill="currentColor" opacity=".35"/><circle cx="17" cy="10" r="3.6" fill="currentColor" opacity=".6"/><circle cx="34" cy="10" r="6.5" fill="currentColor"/></svg><span class="logo-ar" lang="ar" dir="rtl">أثر</span><span class="logo-en" lang="en">Athar</span></div>'
 
 
 def _when(iso: str | None) -> str:
@@ -419,7 +414,7 @@ def render_html(data: dict[str, Any], lang: str | None = None) -> str:
     count = data["waiting"]
     waiting = (" " + _p(f'{count} {"item is" if count == 1 else "items are"} still waiting for a teacher and not in this report.')
                if count else "")
-    generated = _p(f'Generated {data["generated_at"][:16].replace("T", " ")} UTC by Meska Brain.')
+    generated = _p(f'Generated {data["generated_at"][:16].replace("T", " ")} UTC by Athar.')
     page = f"""<!doctype html>
 <html lang="{'ar" dir="rtl' if arabic else 'en'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title><style>{_CSS}{_CSS_ARABIC if arabic else ""}</style></head>

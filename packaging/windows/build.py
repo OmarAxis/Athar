@@ -142,7 +142,7 @@ def copy_app(stage: Path) -> None:
     say("copying the app")
     app = stage / "app"
     skip = shutil.ignore_patterns("__pycache__", "*.pyc")
-    shutil.copytree(REPO / "src" / "meska_brain", app / "src" / "meska_brain", ignore=skip)
+    shutil.copytree(REPO / "src" / "athar", app / "src" / "athar", ignore=skip)
     shutil.copytree(REPO / "packs", app / "packs", ignore=skip)
     for name in ("launch.py", "download_model.py"):
         shutil.copy2(HERE / name, app / name)
@@ -160,18 +160,18 @@ def copy_app(stage: Path) -> None:
 
 
 def package_env(stage: Path) -> dict[str, str]:
-    env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("PYTHON", "VIRTUAL_ENV", "MESKA_", "UV_"))}
+    env = {k: v for k, v in os.environ.items() if not k.upper().startswith(("PYTHON", "VIRTUAL_ENV", "ATHAR_", "UV_"))}
     env.update({"PYTHONPATH": str(stage / "app" / "src"), "PYTHONNOUSERSITE": "1", "PYTHONUTF8": "1",
-                "MESKA_DB": str(stage / "app" / "data" / "meska.db"), "MESKA_PACKS": str(stage / "app" / "packs")})
+                "ATHAR_DB": str(stage / "app" / "data" / "athar.db"), "ATHAR_PACKS": str(stage / "app" / "packs")})
     # The one project setting that is let through: which curriculum the synthetic school is built on.
-    if os.environ.get("MESKA_DEMO_PACK"):
-        env["MESKA_DEMO_PACK"] = os.environ["MESKA_DEMO_PACK"]
+    if os.environ.get("ATHAR_DEMO_PACK"):
+        env["ATHAR_DEMO_PACK"] = os.environ["ATHAR_DEMO_PACK"]
     return env
 
 
-# `meska seed` with no pack named: the project's own default (the setting MESKA_DEMO_PACK) decides.
-SEED_COMMAND = ("-s", "-m", "meska_brain.cli", "seed")
-STORY_COMMAND = ("-s", "-m", "meska_brain.cli", "story")
+# `athar seed` with no pack named: the project's own default (the setting ATHAR_DEMO_PACK) decides.
+SEED_COMMAND = ("-s", "-m", "athar.cli", "seed")
+STORY_COMMAND = ("-s", "-m", "athar.cli", "story")
 
 
 def seed_school(stage: Path, python: Path) -> None:
@@ -185,8 +185,8 @@ def seed_school(stage: Path, python: Path) -> None:
     tidy = ("import sqlite3, sys; c = sqlite3.connect(sys.argv[1]); "
             "c.execute('PRAGMA wal_checkpoint(TRUNCATE)'); c.execute('PRAGMA journal_mode=DELETE'); "
             "print(c.execute('SELECT COUNT(*) FROM learners').fetchone()[0], 'learners'); c.close()")
-    run([python, "-s", "-c", tidy, app / "data" / "meska.db"], env=env)
-    for leftover in ("meska.db-wal", "meska.db-shm", "runs", "checkpoints.db"):
+    run([python, "-s", "-c", tidy, app / "data" / "athar.db"], env=env)
+    for leftover in ("athar.db-wal", "athar.db-shm", "runs", "checkpoints.db"):
         path = app / "data" / leftover
         shutil.rmtree(path, ignore_errors=True) if path.is_dir() else path.unlink(missing_ok=True)
 
@@ -253,8 +253,7 @@ def source_state(repo: Path = REPO) -> str:
 def version_file(stage: Path, model: Path | None) -> None:
     (stage / "VERSION.txt").write_text(
         f"Athar offline package for Windows\r\nBuilt: {time.strftime('%Y-%m-%d')}\r\n"
-        f"Source: Athar, {source_state()}. Its repository is not published yet.\r\n"
-        "Built on Meska Brain: https://github.com/OmarAxis/meska-brain\r\n"
+        f"Source: Athar, {source_state()}.\r\n"
         f"Model runner: llama.cpp {LLAMA_BUILD}\r\nDocument reader: {MARKITDOWN_MCP}\r\n"
         f"Model: {model.name if model else 'not included'}\r\n", encoding="utf-8", newline="")
 

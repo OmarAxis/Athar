@@ -322,7 +322,6 @@
   "approved": "اعتماد",
   "edited": "تعديل واعتماد",
   "rejected": "رفض",
-  "Two ways in. A marks sheet is exact and uses no model. A document goes to the agent, which proposes rows for you to confirm.": "فيه طريقتين. كشف الدرجات دقيق ومش بيستخدم أي نموذج. المستند بيروح للمساعد الآلي، وهو بيقترح سجلات وانت تأكدها.",
   "Everyone in the grade": "كل تلاميذ الصف",
   "e.g. Fractions quiz, week 6": "مثلا: اختبار الكسور، الأسبوع 6",
   "Choose the filled marks sheet first.": "اختار كشف الدرجات المليان الأول.",
@@ -342,7 +341,6 @@
   "Choose a file first.": "اختار ملف الأول.",
   "Open the Agent page to have it read": "افتح صفحة المساعد الآلي عشان يقراه",
   "A document for the agent": "مستند للمساعد الآلي",
-  "A quiz sheet or a teacher's note as text (.md, .txt or .csv), in English or Arabic. Use the learner's record code in it, not their name. The agent proposes rows from it and stops for a teacher to confirm. Sending the file adds no record by itself.": "ورقة اختبار قصير أو ملاحظة مدرس في ملف نصي (.md أو .txt أو .csv)، بالإنجليزي أو بالعربي. اكتب فيه كود التلميذ، مش اسمه. المساعد الآلي بيقترح منه سجلات ويقف لحد ما مدرس يأكد. إرسال الملف لوحده مش بيضيف أي سجل.",
   "Document": "المستند",
   "Made-up data, no sign-in yet. Everything here is open to whoever is at this machine.": "بيانات تجريبية مش حقيقية، ومفيش تسجيل دخول لسه. كل حاجة هنا مفتوحة لأي حد قاعد على الجهاز ده.",
   "You are the school admin: you set up classes, accounts and look after the records.": "انت مسؤول المدرسة: بتجهز الفصول والحسابات وبتحافظ على السجلات.",
@@ -427,7 +425,9 @@
   "Results across the class are mostly secure": "نتائج الفصل مطمئنة في الغالب",
   "Results across the class are mixed": "نتائج الفصل متفاوتة",
   "Results across the class are low": "نتائج الفصل منخفضة",
-  "No records yet (not the same as struggling)": "مفيش سجلات لسه (وده مش معناه إن فيه صعوبة)"
+  "No records yet (not the same as struggling)": "مفيش سجلات لسه (وده مش معناه إن فيه صعوبة)",
+  "Two ways in. A marks sheet is exact and uses no model. A document goes to the agent, which reads it and records what it finds.": "فيه طريقتين. كشف الدرجات دقيق ومش بيستخدم أي نموذج. والمستند بيروح للمساعد الآلي، وهو بيقراه ويسجل اللي لقاه فيه.",
+  "A quiz sheet or a teacher's note as text (.md, .txt or .csv), in English or Arabic. Use the learner's record code in it, not their name. When you start a run, the agent reads it and records the rows, each marked with the file it came from. Check them in the learner's map and withdraw any that are wrong. Sending the file adds no record by itself.": "كشف اختبار قصير أو ملاحظة مدرس كنص (.md أو .txt أو .csv)، بالعربي أو بالإنجليزي. اكتب فيه كود التلميذ مش اسمه. لما تبدأ تشغيل، المساعد الآلي بيقرا المستند ويسجل السجلات، وكل سجل مكتوب عليه الملف اللي جه منه. راجعها في خريطة التلميذ واسحب أي سجل غلط. إرسال الملف لوحده مش بيضيف أي سجل."
  },
  "patterns": [
   {

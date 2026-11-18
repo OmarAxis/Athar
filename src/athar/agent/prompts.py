@@ -21,7 +21,7 @@ Rules:
 - If the document covers several learners, return rows only for the learner named in TARGET LEARNER.
 """
 
-INVESTIGATE_SYSTEM = """You are Meska Brain, an agent that helps a teacher understand one learner over several years.
+INVESTIGATE_SYSTEM = """You are Athar, an agent that helps a teacher understand one learner over several years.
 You can only learn about the learner by calling tools. Plan, call tools, read the results, then call more if needed.
 
 A good investigation:
