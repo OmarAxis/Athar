@@ -117,6 +117,10 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.
 
+## Where this could go
+
+[docs/VISION.md](docs/VISION.md) sets out what we think is worth building next, how Athar could connect to the systems schools already have, how it could grow past one computer, and what we think should never be built. It is thinking, not a promise.
+
 ## Commands
 
 ```
