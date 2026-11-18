@@ -1,0 +1,2285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Athar: learning map</title>
+<style>
+/* Meska brand tokens. Articulat CF is the brand typeface; it is used when installed on the
+   machine. It is not shipped here because it is a licensed font and this repository is public. */
+:root {
+  --blue: #2871F4;          /* Meska Blue: accents, selection, focus */
+  --blue-strong: #1B5BD6;   /* same hue, dark enough for white text and for text on white */
+  --blue-soft: #EAF1FE;
+  --navy: #000038;
+  --electric: #0000CE;
+  --bg: #F5F7FB;
+  --panel: #FFFFFF;
+  --ink: #0A0A0A;
+  --muted: #5B6478;
+  --line: #E3E8F2;
+  --line-strong: #C5CEDF;
+  --accent: var(--blue-strong);
+  --accent-ink: #FFFFFF;
+  --focus: #B34700;
+  --ok: #17643A;
+  --ok-soft: #E6F4EC;
+  --bad: #9C2B12;
+  --bad-soft: #FBEEEA;
+  --warn: #7A5F00;
+  --strong-fill: #1B5BD6;
+  --strong-ink: #FFFFFF;
+  --shaky-fill: #F6E3A1;
+  --shaky-line: #7A5F00;
+  --gap-fill: #F5C9AE;
+  --gap-line: #A63F00;
+  --unseen-line: #7B8498;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(0, 0, 56, .05), 0 6px 20px rgba(0, 0, 56, .06);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  font: 15px/1.55 "Articulat CF", Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink); background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button, select, input, textarea { font: inherit; color: inherit; }
+button {
+  cursor: pointer; border: 1px solid var(--line-strong); background: #fff; border-radius: var(--radius-sm);
+  padding: 7px 14px; min-height: 38px; font-weight: 500;
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+button:hover { background: var(--bg); border-color: var(--muted); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.primary:hover { background: #154BB6; border-color: #154BB6; }
+button.danger { border-color: var(--bad); color: var(--bad); }
+button.danger:hover { background: var(--bad-soft); }
+button:disabled { opacity: .55; cursor: not-allowed; }
+select, input[type=text], textarea {
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 7px 10px; background: #fff; min-height: 38px;
+}
+select:hover, input[type=text]:hover, textarea:hover { border-color: var(--muted); }
+textarea { width: 100%; min-height: 76px; resize: vertical; }
+label { font-weight: 600; font-size: 12px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; display: inline-block; margin-bottom: 3px; }
+h1, h2, h3 { line-height: 1.2; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: 24px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 600; }
+h2 + p { margin-top: 6px; max-width: 78ch; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Top bar: the brand gradient, white logo */
+header.top {
+  display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; justify-content: space-between;
+  padding: 14px 28px; color: #fff;
+  background: linear-gradient(135deg, #000038 0%, #000058 45%, #0000CE 100%);
+}
+.brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.brand img { height: 24px; width: auto; display: block; margin: 6px 4px 6px 0; }
+.brand .product { padding-left: 16px; border-left: 1px solid rgba(255, 255, 255, .28); }
+.brand h1 { font-size: 18px; font-weight: 700; color: #fff; }
+.brand .sub { font-size: 13px; color: rgba(255, 255, 255, .78); }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.who label { color: rgba(255, 255, 255, .78); margin: 0; }
+.who select { background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .35); min-width: 190px; }
+.who select:hover { border-color: #fff; }
+.who select option { color: var(--ink); background: #fff; }
+.who .note { font-size: 12px; color: rgba(255, 255, 255, .7); max-width: 250px; line-height: 1.35; }
+header.top :focus-visible { outline-color: #fff; }
+
+.layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 24px; padding: 24px 28px 40px; align-items: start; max-width: 1680px; margin: 0 auto; }
+#rail { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px; position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
+#rail h2 { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; padding: 4px 8px 10px; }
+#rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+#rail button { width: 100%; text-align: left; border: 1px solid transparent; background: transparent; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; min-height: 40px; }
+#rail button:hover { background: var(--bg); }
+#rail button[aria-current=true] { background: var(--blue-soft); border-color: var(--blue); color: #0B2E7A; font-weight: 600; }
+#rail .grade { color: var(--muted); font-size: 12px; white-space: nowrap; font-weight: 400; }
+
+/* Section switcher: a segmented control */
+nav.tabs { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 20px; background: #E9EDF5; border-radius: 14px; }
+nav.tabs button { border: none; background: transparent; padding: 7px 16px; min-height: 36px; border-radius: 10px; color: var(--muted); font-weight: 500; }
+nav.tabs button:hover { color: var(--ink); background: rgba(255, 255, 255, .6); }
+nav.tabs button[aria-current=page] { background: #fff; color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 56, .14); }
+.badge { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 7px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; text-align: center; line-height: 20px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
+.card + .card { margin-top: 14px; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: 13px; color: var(--muted); margin: 0; }
+.signin { max-width: 420px; margin: 8vh auto 0; display: grid; gap: 12px; }
+.signin input { width: 100%; }
+button.danger { background: #fff; color: var(--bad, #B42318); border-color: var(--bad, #B42318); }
+button.danger:hover { background: var(--bad, #B42318); color: #fff; }
+button.linkish { border: none; background: none; padding: 0; min-height: 0; color: var(--muted); text-decoration: underline; font-size: 12px; cursor: pointer; }
+button.linkish:hover { color: var(--bad); }
+.classrow { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 14px; background: var(--bg); }
+.classrow + .classrow { margin-top: 8px; }
+.classrow summary { cursor: pointer; min-height: 28px; }
+.classrow[open] summary { margin-bottom: 10px; }
+.classbody p { margin: 0 0 6px; }
+.pill button.x { border: none; background: none; padding: 0 2px; min-height: 0; font-size: 14px; line-height: 1; color: var(--muted); cursor: pointer; }
+.pill button.x:hover { color: var(--bad, #B42318); }
+.app.signed-out nav#nav { visibility: hidden; }
+.side .who strong { color: #fff; font-size: 15px; }
+.side .who button { background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .3); }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.stack > * + * { margin-top: 10px; }
+.err { color: var(--bad); font-weight: 600; }
+.okmsg { display: inline-block; color: var(--ok); background: var(--ok-soft); font-weight: 600; padding: 6px 12px; border-radius: var(--radius-sm); margin-top: 8px; }
+.empty { padding: 28px; color: var(--muted); text-align: center; }
+.foot { margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--line); max-width: 90ch; }
+
+/* Map */
+.map-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; align-items: flex-end; margin-bottom: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.map-cols { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+.mapbox { overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); max-height: 72vh; }
+.replay { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 14px; }
+.replay input[type=range] { flex: 1 1 220px; min-width: 160px; min-height: 28px; accent-color: var(--blue); }
+#detail { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
+
+svg text { font-family: inherit; }
+.lane-bg { fill: #F8FAFD; }
+.lane-bg.alt { fill: #FFFFFF; }
+.lane-label { font-size: 12px; font-weight: 700; fill: #1C2333; }
+.grade-label { font-size: 11px; font-weight: 700; fill: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.edge { fill: none; stroke: #9AA4B8; stroke-width: 1; opacity: .5; }
+.edge.hl { stroke: #0A0A0A; stroke-width: 2; opacity: 1; }
+.edge.tp { stroke: #A63F00; stroke-width: 3.5; opacity: 1; }
+.tracing .edge:not(.tp) { opacity: .15; }
+.node { cursor: pointer; }
+.node rect.body { stroke-width: 1.5; }
+.node text { font-size: 11px; pointer-events: none; }
+.s-strong rect.body { fill: var(--strong-fill); stroke: #103C92; stroke-width: 2; }
+.s-strong text { fill: var(--strong-ink); }
+.s-shaky rect.body { fill: var(--shaky-fill); stroke: var(--shaky-line); stroke-width: 1.5; }
+.s-shaky text { fill: #2F2500; }
+.s-gap rect.body { fill: url(#hatch); stroke: var(--gap-line); stroke-width: 3; }
+.s-gap text { fill: #3A1600; font-weight: 600; }
+.s-unseen rect.body { fill: #fff; stroke: var(--unseen-line); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.s-unseen text { fill: var(--muted); }
+.node:not(.s-strong) .m-strong, .node:not(.s-shaky) .m-shaky, .node:not(.s-gap) .m-gap, .node:not(.s-unseen) .m-unseen { display: none; }
+.m-strong { fill: #fff; }
+.m-shaky { fill: #7A5F00; }
+.m-gap { fill: #A63F00; }
+.m-unseen { fill: none; stroke: var(--unseen-line); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.ring { display: none; fill: none; }
+.node.selected .ring.sel { display: block; stroke: #0A0A0A; stroke-width: 3; }
+.node.on-path .ring.path { display: block; stroke: #A63F00; stroke-width: 3; }
+.node.is-root .ring.path { stroke-width: 5; }
+.node .tag { display: none; font-size: 10px; font-weight: 700; }
+.node.is-root .tag.root, .node.is-unknown .tag.unk { display: block; fill: #0A0A0A; }
+.node .tag.starts { display: block; fill: #A63F00; }
+.chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; margin: 10px 0; }
+.chain-chip { display: flex; flex-direction: column; border: 1px solid #C5D9FC; border-radius: 12px; padding: 6px 10px; background: #fff; font-size: 13px; }
+.chain-chip.start { border: 2px solid #A63F00; }
+.chain-tag { font-size: 10px; letter-spacing: .05em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.chain-chip.start .chain-tag { color: #A63F00; }
+.chain-arrow { align-self: center; font-size: 12px; color: var(--muted); }
+.why { display: flex; flex-wrap: wrap; gap: 8px 28px; align-items: flex-start; margin: 6px 0 10px; }
+.why ul { margin: 4px 0; padding-left: 18px; font-size: 14px; max-width: 470px; }
+svg.terms { display: block; max-width: 100%; height: auto; }
+.btnlink { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); font-weight: 600; text-decoration: none; }
+.btnlink:hover { border-color: var(--blue); }
+#detail h4 { margin: 14px 0 2px; font-size: 13px; }
+.tracing .node:not(.on-path):not(.is-unknown):not(.selected) { opacity: .4; }
+.node:focus-visible rect.body { stroke: var(--focus); stroke-width: 4; }
+
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid transparent; font-size: 12px; font-weight: 600; background: var(--blue-soft); color: #0B2E7A; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.plain { background: var(--bg); color: var(--muted); border-color: var(--line); }
+dl.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 13px; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; background: #F8FAFD; white-space: nowrap; }
+tbody tr:hover td { background: #FAFBFE; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+.tablewrap tr:last-child td { border-bottom: none; }
+td.words { min-width: 160px; }
+pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace; background: #F5F7FB; border: 1px solid var(--line); padding: 10px; border-radius: var(--radius-sm); max-height: 240px; overflow: auto; }
+details > summary { cursor: pointer; padding: 6px 0; font-weight: 600; color: var(--accent); }
+details[open] > summary { margin-bottom: 6px; }
+.finding .statement, .note-text { font-size: 17px; line-height: 1.5; margin: 10px 0; max-width: 80ch; }
+.finding .controls { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.rtl { direction: rtl; text-align: right; }
+.steps li { margin: 3px 0; }
+.status-running { color: var(--warn); font-weight: 700; }
+.status-waiting_for_teacher { color: var(--accent); font-weight: 700; }
+.status-done { color: var(--ok); font-weight: 700; }
+.status-failed { color: var(--bad); font-weight: 700; }
+.section-title { margin: 22px 0 10px; }
+
+@media (max-width: 1100px) {
+  .map-cols { grid-template-columns: 1fr; }
+  #detail { position: static; max-height: none; }
+}
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+  #rail { position: static; max-height: 220px; }
+  header.top { padding: 12px 16px; }
+  .brand .sub { display: none; }
+  h2 { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* ---- App shell: side navigation in the brand gradient ---- */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.side {
+  position: sticky; top: 0; height: 100vh; overflow: auto; display: flex; flex-direction: column; gap: 22px;
+  padding: 22px 16px; color: #fff; background: linear-gradient(170deg, #000038 0%, #000058 55%, #0000A8 100%);
+}
+.side .brand { display: block; padding: 2px 8px 0; }
+.side .brand img { height: 26px; width: auto; display: block; margin: 0 0 10px; }
+.side .brand h1 { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: .02em; }
+.side .brand .sub { font-size: 12px; color: rgba(255, 255, 255, .66); margin-top: 2px; line-height: 1.4; }
+#nav { display: grid; gap: 4px; }
+#nav button {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; min-height: 42px; padding: 8px 12px;
+  border: 1px solid transparent; border-radius: 12px; background: transparent; color: rgba(255, 255, 255, .78); font-weight: 500;
+}
+#nav button svg { flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#nav button:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+#nav button[aria-current=page] { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .2); color: #fff; font-weight: 600; }
+#nav .badge { margin-left: auto; background: #fff; color: var(--blue-strong); }
+.side .who { margin-top: auto; display: grid; gap: 6px; padding: 14px 12px; border-radius: 14px; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .12); }
+.side .who label { color: rgba(255, 255, 255, .7); margin: 0; }
+.side .who select { width: 100%; min-width: 0; background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .3); }
+.side .who select option { color: var(--ink); background: #fff; }
+.side .who .note { font-size: 12px; color: rgba(255, 255, 255, .62); line-height: 1.4; max-width: none; }
+.side :focus-visible { outline-color: #fff; }
+main.content { padding: 28px 36px 48px; min-width: 0; max-width: 1500px; }
+
+.learnerbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 20px; margin-bottom: 22px; }
+.learnerbar nav.tabs { margin-bottom: 0; }
+.pickwrap { display: grid; }
+.pickwrap select { min-width: 230px; font-weight: 600; }
+.learner-view h2 { font-size: 22px; }
+
+.pagehead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 24px; margin-bottom: 20px; }
+.pagehead h2 { font-size: 28px; }
+.pagehead p { margin: 6px 0 0; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.tile { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; min-height: 0; display: block; font-weight: 400; }
+button.tile:hover { border-color: var(--blue); background: #fff; }
+.tile-label { font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.tile-value { font-size: 32px; font-weight: 700; line-height: 1.15; margin-top: 6px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tile-note { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.tile.accent { background: linear-gradient(135deg, #000058 0%, #0000CE 100%); border-color: transparent; color: #fff; }
+.tile.accent .tile-label, .tile.accent .tile-note { color: rgba(255, 255, 255, .8); }
+button.tile.accent:hover { background: linear-gradient(135deg, #000070 0%, #1414E0 100%); }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; align-items: start; }
+.grid2.wide-left { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
+.grid2 > .card + .card { margin-top: 0; }
+main.content > #view > .card { margin-bottom: 16px; }
+.card-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; margin-bottom: 4px; }
+.card-head button { min-height: 32px; padding: 4px 12px; font-size: 13px; }
+.card-head + p { margin: 0 0 12px; }
+
+.waitlist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.waitlist li { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #FAFBFE; }
+.wait-text { margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+svg.chart { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .base { stroke: var(--line-strong); stroke-width: 1; }
+.chart .axis { font-size: 11px; fill: var(--muted); }
+.chart .bar { fill: var(--blue); }
+.chart .bar:hover { fill: var(--blue-strong); }
+.chart .band { fill: #EAF1FE; opacity: .7; }
+.chart .line { fill: none; stroke: var(--blue); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .dot { fill: var(--blue); stroke: #fff; stroke-width: 2; }
+.chart .dot:hover { fill: var(--navy); }
+.chart .endlabel { font-size: 12px; font-weight: 600; fill: var(--ink); }
+.tip { position: fixed; z-index: 50; pointer-events: none; background: #0A0A2E; color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 8px; max-width: 320px; box-shadow: 0 6px 20px rgba(0, 0, 56, .25); }
+
+.sparks { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.spark { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px 6px; background: #fff; }
+.spark-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.spark-subject, .heat-subject { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+table.heat { font-size: 13px; }
+table.heat th, table.heat td { border-bottom: none; padding: 3px 4px; background: transparent; }
+table.heat thead th { text-align: center; }
+table.heat tbody th { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink); font-weight: 500; white-space: normal; min-width: 150px; }
+.heat-cell { display: block; text-align: center; padding: 9px 4px; border-radius: 8px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 58px; }
+.heat-cell.none { background: transparent; border: 1px dashed var(--line-strong); color: var(--muted); font-weight: 400; font-size: 11px; padding: 10px 2px; }
+.heat-key { display: flex; align-items: center; gap: 4px; margin-top: 10px; }
+.heat-key span:first-child { margin-right: 4px; }
+.heat-key span:last-child { margin-left: 4px; }
+.heat-swatch { width: 22px; height: 10px; border-radius: 3px; }
+.tablewrap.plain { border: none; }
+table.heat tbody tr:hover td { background: transparent; }
+
+.hbars { display: grid; gap: 8px; margin-top: 8px; }
+.hbar { display: grid; grid-template-columns: minmax(120px, 42%) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.hbar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar-track { height: 10px; border-radius: 5px; background: #EEF2F8; overflow: hidden; display: flex; gap: 2px; }
+.hbar-fill { display: block; height: 100%; background: var(--blue); border-radius: 5px; }
+.hbar-fill.rest { background: #B9C2D4; }
+.hbar-num { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.keyline { display: flex; align-items: center; gap: 6px; margin-top: 12px; }
+.key { width: 12px; height: 10px; border-radius: 3px; display: inline-block; }
+.key.a { background: var(--blue); }
+.key.b { background: #B9C2D4; margin-left: 12px; }
+
+.numcol { font-variant-numeric: tabular-nums; }
+button.linkish { border: none; background: transparent; padding: 0; min-height: 0; color: var(--accent); font-weight: 600; white-space: nowrap; text-align: left; }
+button.linkish:hover { text-decoration: underline; background: transparent; }
+
+.feed { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
+.feed li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.feed li:last-child { border-bottom: none; }
+.feed code { font: 12px ui-monospace, "Cascadia Mono", Consolas, monospace; background: var(--bg); padding: 2px 7px; border-radius: 6px; }
+.feed-time { margin-left: auto; }
+.dotmark { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.dotmark.bad { background: var(--bad); }
+
+.patlist { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.patlist li { padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #FAFBFE; }
+
+.terms { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 12px; }
+.term { flex: 0 0 200px; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; background: #fff; }
+.term-head { display: flex; justify-content: space-between; align-items: baseline; }
+.term-abs { font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+.term-abs.high { display: inline-block; color: #7A2E00; background: #FBE6D8; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+.term ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.term li { display: grid; line-height: 1.3; }
+
+.kg-edge { fill: none; opacity: .35; stroke-linecap: round; }
+.kg-node circle { stroke: #fff; stroke-width: 2.5; }
+.kg-node:hover circle { stroke: var(--ink); }
+.kg-label { font-size: 13px; font-weight: 600; fill: var(--ink); }
+.kg-sub { font-size: 11.5px; fill: var(--muted); }
+.kg-centre { fill: var(--navy); stroke: #fff; stroke-width: 4; }
+.kg-centre-text { fill: #fff; font-size: 20px; font-weight: 700; }
+.kg-legend { margin-bottom: 4px; }
+.kg-key { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.nextstep { margin: 10px 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--blue-soft); display: grid; gap: 2px; }
+.nextstep strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #0B2E7A; }
+.qlist { display: grid; gap: 4px; margin: 8px 0 16px; }
+.qrow { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.seg { display: inline-flex; gap: 3px; padding: 3px; background: #E9EDF5; border-radius: 12px; }
+.seg button { border: none; background: transparent; min-height: 32px; padding: 4px 14px; border-radius: 9px; color: var(--muted); }
+.seg button[aria-checked=true] { background: var(--accent); color: #fff; font-weight: 600; }
+.qfields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.qfields input, .card textarea { width: 100%; }
+@media (max-width: 1100px) { .grid2, .grid2.wide-left { grid-template-columns: 1fr; } }
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; padding: 14px 16px; gap: 12px; }
+  #nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  #nav button { width: auto; min-height: 38px; padding: 6px 10px; gap: 8px; }
+  #nav .badge { margin-left: 2px; }
+  .app > *, main.content > *, .grid2 > *, .card, .card > * { min-width: 0; }
+  #nav button span:not(.badge) { white-space: nowrap; }
+  main.content { padding: 18px 16px 36px; }
+  .pagehead h2 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Sections and sign-in">
+    <div class="brand">
+      <img src="/static/brand/meska-white.png" alt="meska.Ai" width="148" height="26">
+      <h1 id="product">Athar</h1>
+      <div class="sub">A cited learning map. The teacher decides.</div>
+    </div>
+    <nav id="nav" aria-label="Sections"></nav>
+    <div class="who" id="who">
+      <label for="teacher">Signed in as</label>
+      <select id="teacher"><option value="">Choose your name</option></select>
+      <strong id="who-name" hidden></strong>
+      <span class="note" id="who-note">Demonstration data, so there is no password yet. It records who made each decision.</span>
+      <button type="button" id="sign-out" hidden>Sign out</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="learnerbar" id="tabs" hidden></div>
+    <div id="view"></div>
+    <p class="small muted foot">
+      The learners' names are invented. Documents, the agent and the model only ever see a record code such as A-17. Nothing on this page ranks or compares learners. Every finding shows the records it rests on.
+    </p>
+  </main>
+</div>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------- helpers
+const SVGNS = "http://www.w3.org/2000/svg";
+
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  fill(el, props, kids);
+  return el;
+}
+function s(tag, props, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  fill(el, props, kids);
+  return el;
+}
+function fill(el, props, kids) {
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.setAttribute("class", v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+}
+function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); return el; }
+
+async function api(path, opts) {
+  let res;
+  try {
+    res = await fetch(path, opts);
+  } catch (e) {
+    throw new Error("Could not reach the " + PRODUCT + " server. Is it still running?");
+  }
+  let body = null;
+  try { body = await res.json(); } catch (e) { /* not json */ }
+  if (res.status === 401 && !String(path).startsWith("/api/session")) {
+    showSignIn("Your sign-in has ended. Sign in again to carry on.");
+    throw new Error("Sign in first.");
+  }
+  if (!res.ok) {
+    const msg = body && (body.error || (body.detail && JSON.stringify(body.detail))) || ("Request failed (" + res.status + ")");
+    const err = new Error(msg);
+    err.status = res.status;
+    throw err;
+  }
+  return body;
+}
+let PRODUCT = "Athar";
+function postForm(path, form) { return api(path, { method: "POST", body: form }); }
+function post(path, data) {
+  return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+}
+function store(key, value) {
+  try { if (value === undefined) return localStorage.getItem(key); localStorage.setItem(key, value); } catch (e) { return null; }
+  return null;
+}
+
+const LANGS = { en: "English", ar: "Arabic", sw: "Swahili", fr: "French", am: "Amharic", ha: "Hausa", yo: "Yoruba", so: "Somali", fa: "Persian", ur: "Urdu", he: "Hebrew" };
+const RTL = new Set(["ar", "fa", "ur", "he"]);
+const langName = (c) => LANGS[c] || c;
+const pct = (x) => (x === null || x === undefined ? "n/a" : Math.round(x * 100) + "%");
+function confWords(c) {
+  if (c === null || c === undefined) return "Confidence not stated";
+  if (c < 0.35) return "Low confidence: treat as a question to check";
+  if (c < 0.65) return "Medium confidence";
+  return "Higher confidence";
+}
+const KIND = { root_cause: "Where it may have started", strength: "A strength pattern", struggle: "A struggle pattern", what_worked: "What seems to have helped" };
+const KIND_EV = { quiz_item: "Quiz item", assignment: "Assignment", project: "Project", observation: "Teacher note", attendance: "Attendance" };
+const STATE_WORDS = {
+  strong: "Scores mostly secure so far",
+  shaky: "Still forming: mixed scores",
+  gap: "Low scores so far",
+  unseen: "No records yet"
+};
+
+const state = {
+  session: null, learners: [], teachers: [], learnerId: null, view: "overview", sub: "profile",
+  graphs: {}, labels: {}, pendingCount: 0,
+  sel: null, trace: null, periodIdx: 0, timer: null, runTimer: null, runId: null,
+};
+// A learner is shown by name. The record code (A-17) is what documents and the agent use.
+const learnerOf = (id) => state.learners.find((l) => l.learner_id === id) || {};
+const aliasOf = (id) => learnerOf(id).name || learnerOf(id).alias || id;
+const codeOf = (id) => String(learnerOf(id).alias || "").replace("Learner ", "");
+const labelOf = (id) => state.labels[id] || (id || "").replace(/-/g, " ");
+
+async function getGraph(lid) {
+  if (!state.graphs[lid]) {
+    state.graphs[lid] = await api("/api/learners/" + encodeURIComponent(lid) + "/graph");
+    for (const n of state.graphs[lid].nodes) state.labels[n.id] = n.label;
+  }
+  return state.graphs[lid];
+}
+function teacherId() { return document.getElementById("teacher").value; }
+function stopTimers() {
+  if (state.timer) { clearInterval(state.timer); state.timer = null; }
+  if (state.runTimer) { clearInterval(state.runTimer); state.runTimer = null; }
+}
+
+// ---------------------------------------------------------------- evidence table
+const EVIDENCE_FIRST = 12;
+function evidenceTable(rows, onWithdraw) {
+  if (!rows || !rows.length) return h("p", { class: "muted", text: "No records." });
+  const row = (r) => {
+    const words = r.raw_text
+      ? h("span", { lang: r.language || "en", dir: "auto", text: r.raw_text })
+      : h("span", { class: "muted", text: r.kind === "attendance" ? (r.absent_days + " day(s) absent") : "no words recorded" });
+    return h("tr", {},
+      h("td", { text: db_period(r) }),
+      h("td", { text: KIND_EV[r.kind] || r.kind }),
+      h("td", { text: r.concept_id ? labelOf(r.concept_id) : "" }),
+      h("td", { text: r.score === null || r.score === undefined ? "" : pct(r.score) }),
+      h("td", { class: "words" }, words, r.language && r.language !== "en" ? h("span", { class: "muted small", text: " (" + langName(r.language) + ")" }) : null),
+      h("td", { text: r.source_ref }),
+      h("td", { class: "small muted", text: r.id + (r.status === "needs_review" ? " (needs review)" : "") }),
+      onWithdraw ? h("td", {}, h("button", { type: "button", class: "linkish", "aria-label": "Withdraw record " + r.id, onclick: async () => {
+        const reason = window.prompt("Why is this record wrong? It will be taken out of the analysis. The row and your reason are kept in the audit log.");
+        if (!reason) return;
+        try {
+          const done = await post("/api/evidence/" + encodeURIComponent(r.id) + "/withdraw", { reason, teacher_id: teacherId() });
+          onWithdraw(done);
+        } catch (e) { window.alert(e.message); }
+      } }, "Withdraw")) : null);
+  };
+  // Long lists start short, so the decision buttons under them stay within reach.
+  const tbody = h("tbody", {}, rows.slice(0, EVIDENCE_FIRST).map(row));
+  const wrap = h("div", { class: "tablewrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, ["Period", "Type", "Concept", "Score", "Teacher's words", "Source", "Record"].map((t) => h("th", { scope: "col", text: t })))),
+    tbody));
+  if (rows.length <= EVIDENCE_FIRST) return wrap;
+  const more = h("button", { type: "button", text: "Show all " + rows.length + " records" });
+  more.onclick = () => { tbody.append(...rows.slice(EVIDENCE_FIRST).map(row)); more.remove(); };
+  return h("div", {}, wrap, h("p", { class: "small muted", text: "Showing the first " + EVIDENCE_FIRST + " of " + rows.length + " records." }), more);
+}
+function db_period(r) { return r.year + "-T" + r.term; }
+
+// ---------------------------------------------------------------- navigation
+const NAV = [
+  ["overview", "Class overview", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"],
+  ["school", "School map", "M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"],
+  ["learner", "Learners", "M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
+  ["teaching", "My teaching", "M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"],
+  ["review", "Review queue", "M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"],
+  ["agent", "Agent", "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"],
+  ["upload", "Add records", "M12 16V4M7 9l5-5 5 5M5 20h14"],
+  ["people", "School", "M4 20V9l8-5 8 5v11M9 20v-6h6v6"],
+  ["audit", "Audit log", "M6 3h9l4 4v14H6zM9 12h7M9 16h7M9 8h3"],
+];
+const SUB = [["profile", "Profile"], ["map", "Learning map"], ["patterns", "Patterns"], ["approved", "Approved"]];
+
+function field(label, control) {
+  return h("div", { class: "field" }, h("label", { for: control.id, text: label }), control);
+}
+function showSignIn(note) {
+  stopTimers();
+  document.querySelector(".app").classList.add("signed-out");
+  const root = clear(document.getElementById("view"));
+  root.className = "";
+  document.getElementById("tabs").hidden = true;
+  const user = h("input", { type: "text", id: "si-user", autocomplete: "username", required: true });
+  const pass = h("input", { type: "password", id: "si-pass", autocomplete: "current-password", required: true });
+  const msg = h("p", { class: "err", role: "alert" });
+  const form = h("form", { class: "card signin" },
+    h("h2", { text: "Sign in to " + PRODUCT }),
+    note ? h("p", { class: "muted", text: note }) : h("p", { class: "muted", text: "Use the username your school admin gave you." }),
+    field("Username", user), field("Password", pass),
+    h("div", { class: "row" }, h("button", { type: "submit", class: "primary" }, "Sign in")), msg);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "";
+    try {
+      await post("/api/session/sign-in", { username: user.value, password: pass.value });
+      location.reload();
+    } catch (err) { msg.textContent = err.message; pass.value = ""; }
+  });
+  root.append(form);
+  user.focus();
+}
+
+async function init() {
+  try {
+    state.session = await api("/api/session");
+  } catch (e) {
+    document.getElementById("view").append(h("p", { class: "err", text: e.message }));
+    return;
+  }
+  PRODUCT = state.session.product || PRODUCT;
+  document.title = PRODUCT + ": learning map";
+  document.getElementById("product").textContent = PRODUCT;
+  if (state.session.sign_in && !state.session.teacher) { showSignIn(); return; }
+  try {
+    const [l, t] = await Promise.all([api("/api/learners"), api("/api/teachers")]);
+    state.learners = l.learners;
+    state.teachers = t.teachers;
+  } catch (e) {
+    document.getElementById("view").append(h("p", { class: "err", text: e.message }));
+    return;
+  }
+  const sel = document.getElementById("teacher");
+  for (const t of state.teachers) sel.append(h("option", { value: t.id, text: t.name }));
+  const me = state.session.teacher;
+  if (me) {
+    // Signed in: the server records every action under this teacher, whatever the page sends.
+    sel.value = me.id;
+    sel.hidden = true;
+    const name = document.getElementById("who-name");
+    name.textContent = me.name;
+    name.hidden = false;
+    document.getElementById("who-note").textContent = me.role === "admin" ? "School admin" : "Teacher";
+    const out = document.getElementById("sign-out");
+    out.hidden = false;
+    out.onclick = async () => { try { await post("/api/session/sign-out", {}); } finally { location.reload(); } };
+  } else {
+    const saved = store("meska.teacher");
+    if (saved && state.teachers.some((t) => t.id === saved)) sel.value = saved;
+    sel.addEventListener("change", () => store("meska.teacher", sel.value));
+  }
+  const savedLearner = store("meska.learner");
+  const first = state.learners.find((l) => l.learner_id === savedLearner) || state.learners[0];
+  if (first) state.learnerId = first.learner_id;
+  refreshPending();
+  show(location.hash.slice(1) || "overview");
+}
+
+function pickLearner(id, sub) {
+  state.learnerId = id;
+  store("meska.learner", id);
+  state.sel = null; state.trace = null;
+  show("learner/" + (sub || state.sub));
+}
+
+function drawTabs() {
+  const nav = clear(document.getElementById("nav"));
+  for (const [id, name, icon] of NAV) {
+    nav.append(h("button", { type: "button", "aria-current": id === state.view ? "page" : "false", onclick: () => show(id) },
+      s("svg", { viewBox: "0 0 24 24", width: 18, height: 18, "aria-hidden": "true" }, s("path", { d: icon })),
+      h("span", { text: name }),
+      id === "review" && state.pendingCount ? h("span", { class: "badge", text: state.pendingCount, "aria-label": state.pendingCount + " waiting" }) : null));
+  }
+  const bar = clear(document.getElementById("tabs"));
+  bar.hidden = state.view !== "learner";
+  if (bar.hidden) return;
+  const pick = h("select", { id: "learner-pick", "aria-label": "Learner" },
+    state.learners.map((l) => h("option", { value: l.learner_id, selected: l.learner_id === state.learnerId, text: l.name + "  ·  " + codeOf(l.learner_id) + "  ·  Grade " + l.grade_now })));
+  pick.addEventListener("change", () => pickLearner(pick.value));
+  const tabs = h("nav", { class: "tabs", "aria-label": "Learner sections" },
+    SUB.map(([id, name]) => h("button", { type: "button", "aria-current": id === state.sub ? "page" : "false", onclick: () => show("learner/" + id) }, name)));
+  bar.append(h("div", { class: "pickwrap" }, h("label", { for: "learner-pick", text: "Learner" }), pick), tabs);
+}
+async function refreshPending() {
+  try {
+    const p = await api("/api/review/pending");
+    state.pendingCount = p.findings.length + p.summaries.length + (p.requests || []).length;
+    drawTabs();
+  } catch (e) { /* the badge is a convenience */ }
+}
+function show(view) {
+  stopTimers();
+  let [v, sub] = String(view || "").split("/");
+  if (SUB.some((t) => t[0] === v)) { sub = v; v = "learner"; }          // old links such as #map
+  state.view = NAV.some((t) => t[0] === v) ? v : "overview";
+  if (state.view === "learner") state.sub = SUB.some((t) => t[0] === sub) ? sub : (state.sub || "profile");
+  history.replaceState(null, "", "#" + (state.view === "learner" ? "learner/" + state.sub : state.view));
+  drawTabs();
+  const root = clear(document.getElementById("view"));
+  root.className = state.view === "learner" ? "learner-view" : "";
+  const fn = state.view === "learner"
+    ? { profile: viewProfile, map: viewMap, patterns: viewPatterns, approved: viewApproved }[state.sub]
+    : { overview: viewOverview, school: viewSchool, teaching: viewTeaching, review: viewReview, agent: viewAgent, audit: viewAudit, upload: viewUpload, people: viewPeople }[state.view];
+  Promise.resolve(fn(root)).catch((e) => root.append(h("p", { class: "err", role: "alert", text: e.message })));
+  window.scrollTo(0, 0);
+}
+
+// ---------------------------------------------------------------- small chart helpers
+function tip(el, text) {
+  const box = document.getElementById("tip");
+  el.addEventListener("mousemove", (e) => {
+    box.textContent = text; box.hidden = false;
+    const w = box.offsetWidth, x = Math.min(window.innerWidth - w - 12, e.clientX + 14);
+    box.style.left = Math.max(8, x) + "px"; box.style.top = (e.clientY + 16) + "px";
+  });
+  el.addEventListener("mouseleave", () => { box.hidden = true; });
+  el.append(s("title", { text }));
+}
+function tile(label, value, note, opts) {
+  const o = opts || {};
+  const el = h(o.onclick ? "button" : "div", { class: "tile" + (o.accent ? " accent" : ""), type: o.onclick ? "button" : null, onclick: o.onclick },
+    h("div", { class: "tile-label", text: label }), h("div", { class: "tile-value", text: value }),
+    note ? h("div", { class: "tile-note", text: note }) : null);
+  return el;
+}
+const num = (n) => Number(n || 0).toLocaleString("en");
+const KIND_PLURAL = { quiz_item: "Quiz items", assignment: "Assignments", project: "Projects", observation: "Teacher notes", attendance: "Attendance records" };
+
+function barRows(items, total) {
+  const max = Math.max(1, ...items.map((i) => i.n));
+  return h("div", { class: "hbars" }, items.map((i) => h("div", { class: "hbar" },
+    h("span", { class: "hbar-label", text: i.label }),
+    h("span", { class: "hbar-track" }, h("span", { class: "hbar-fill", style: "width:" + Math.max(1.5, (i.n / max) * 100) + "%" })),
+    h("span", { class: "hbar-num", text: num(i.n) + (total ? "  (" + Math.round((i.n / total) * 100) + "%)" : "") }))));
+}
+
+function columnChart(points, label) {
+  const W = 620, H = 210, L = 40, R = 8, T = 10, B = 28;
+  const max = Math.max(1, ...points.map((p) => p.n));
+  const top = Math.ceil(max / 50) * 50 || 50;
+  const svg = s("svg", { viewBox: "0 0 " + W + " " + H, class: "chart", role: "img", "aria-label": label });
+  for (const f of [0, 0.5, 1]) {
+    const y = T + (H - T - B) * (1 - f);
+    svg.append(s("line", { class: "grid", x1: L, x2: W - R, y1: y, y2: y }), s("text", { class: "axis", x: L - 6, y: y + 4, "text-anchor": "end", text: Math.round(top * f) }));
+  }
+  const step = (W - L - R) / Math.max(1, points.length), bw = Math.min(34, step - 4);
+  points.forEach((p, i) => {
+    const bh = (H - T - B) * (p.n / top), x = L + i * step + (step - bw) / 2, y = H - B - bh;
+    const bar = s("path", { class: "bar", d: "M" + x + "," + (H - B) + " v" + (-(bh - 4)) + " q0,-4 4,-4 h" + (bw - 8) + " q4,0 4,4 v" + (bh - 4) + " z" });
+    tip(bar, p.period + ": " + num(p.n) + " records");
+    svg.append(bar);
+    if (p.period.endsWith("T1")) svg.append(s("text", { class: "axis", x: x + bw / 2, y: H - 9, "text-anchor": "middle", text: p.period.slice(0, 4) }));
+  });
+  return svg;
+}
+
+const HEAT = ["#EAF1FE", "#C5D9FC", "#94B8F9", "#5C93F6", "#1B5BD6"];
+function heatColour(mean) {
+  const i = Math.max(0, Math.min(4, Math.floor((mean - 0.4) / 0.1)));
+  return { bg: HEAT[i], ink: i >= 3 ? "#FFFFFF" : "#0A0A0A" };
+}
+function heatGrid(cov) {
+  const multi = new Set(cov.strands.map((st) => st.subject)).size > 1;
+  const table = h("table", { class: "heat" },
+    h("thead", {}, h("tr", {}, h("th", { scope: "col", text: "Strand" }), cov.grades.map((g) => h("th", { scope: "col", text: "Grade " + g })))),
+    h("tbody", {}, cov.strands.map((st) => h("tr", {}, h("th", { scope: "row" }, multi ? h("span", { class: "heat-subject", text: st.subject }) : null, h("span", { text: st.label })),
+      st.cells.map((c) => {
+        if (c.mean === null) return h("td", {}, h("span", { class: "heat-cell none", text: "no records" }));
+        const col = heatColour(c.mean);
+        const cellEl = h("span", { class: "heat-cell", style: "background:" + col.bg + ";color:" + col.ink, text: pct(c.mean) });
+        tip(cellEl, st.label + ", grade " + c.grade + ": average " + pct(c.mean) + " over " + num(c.n) + " scored items");
+        return h("td", {}, cellEl);
+      })))));
+  const key = h("div", { class: "heat-key small muted" }, h("span", { text: "Lower" }),
+    HEAT.map((c) => h("span", { class: "heat-swatch", style: "background:" + c })), h("span", { text: "Higher average score" }));
+  return h("div", {}, h("div", { class: "tablewrap plain" }, table), key);
+}
+
+function spark(strand, periods, th) {
+  const W = 280, H = 118, L = 8, R = 40, T = 12, B = 20;
+  const x = (p) => L + (periods.length < 2 ? 0 : (periods.indexOf(p) / (periods.length - 1)) * (W - L - R));
+  const y = (m) => T + (1 - m) * (H - T - B);
+  const svg = s("svg", { viewBox: "0 0 " + W + " " + H, class: "chart", role: "img", "aria-label": strand.label + " results by term" });
+  svg.append(s("rect", { class: "band", x: L, y: y(1), width: W - L - R, height: y(th.strong_above) - y(1) }),
+    s("line", { class: "grid", x1: L, x2: W - R, y1: y(th.strong_above), y2: y(th.strong_above) }),
+    s("line", { class: "grid", x1: L, x2: W - R, y1: y(th.gap_below), y2: y(th.gap_below) }),
+    s("line", { class: "base", x1: L, x2: W - R, y1: y(0), y2: y(0) }),
+    s("text", { class: "axis", x: L, y: H - 5, text: periods[0].slice(0, 4) }),
+    s("text", { class: "axis", x: W - R, y: H - 5, "text-anchor": "end", text: periods[periods.length - 1].slice(0, 4) }));
+  const pts = strand.points;
+  if (pts.length > 1) svg.append(s("path", { class: "line", d: pts.map((p, i) => (i ? "L" : "M") + x(p.period).toFixed(1) + "," + y(p.mean).toFixed(1)).join(" ") }));
+  for (const p of pts) {
+    const dot = s("circle", { class: "dot", cx: x(p.period), cy: y(p.mean), r: 4.5 });
+    tip(dot, p.period + ": " + pct(p.mean) + " over " + p.n + " scored items");
+    svg.append(dot);
+  }
+  const last = pts[pts.length - 1];
+  svg.append(s("text", { class: "endlabel", x: Math.min(W - 4, x(last.period) + 9), y: y(last.mean) + 4, text: pct(last.mean) }));
+  return h("div", { class: "spark" }, strand.subject ? h("div", { class: "spark-subject", text: strand.subject }) : null,
+    h("div", { class: "spark-title", text: strand.label }), svg);
+}
+
+// ---------------------------------------------------------------- class overview
+async function viewOverview(root) {
+  root.append(h("p", { class: "muted", text: "Loading..." }));
+  const [o, p] = await Promise.all([api("/api/overview"), api("/api/review/pending")]);
+  await Promise.all([...new Set(p.findings.map((f) => f.learner_id))].slice(0, 6).map((id) => getGraph(id).catch(() => null)));
+  const t = o.totals;
+  clear(root);
+  root.append(h("div", { class: "pagehead" },
+    h("div", {}, h("h2", { text: "Class overview" }),
+      h("p", { class: "muted", text: (o.curriculum ? o.curriculum.name + ". " : "") + (state.session.sign_in ? "You see the learners of your own classes." : "Made-up data, for trying things out. Nothing here is a real learner.") })),
+    h("button", { type: "button", class: "primary", onclick: () => show("agent") }, "Run the agent on a document")));
+
+  root.append(h("div", { class: "tiles" },
+    tile("Learners followed", num(t.learners), "by " + t.teachers + " teachers over the years"),
+    tile("Records on file", num(t.records), "quiz items, notes, attendance"),
+    tile("Curriculum covered", t.concepts_with_records + " of " + t.concepts_in_curriculum, "topics with at least one record"),
+    tile("Waiting for a teacher", num(t.waiting), t.waiting ? "open the review queue" : "nothing to decide", { accent: t.waiting > 0, onclick: () => show("review") }),
+    tile("Approved by teachers", num(t.approved), num(t.decisions) + " decisions recorded"),
+    tile("Tool calls logged", num(t.tool_calls), num(t.refused_calls) + " refused by the server", { onclick: () => show("audit") })));
+
+  // waiting for a decision
+  const waitCard = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Waiting for your decision" }),
+    h("button", { type: "button", onclick: () => show("review") }, "Open review queue")));
+  for (const q of (p.requests || []).slice(0, 2)) waitCard.append(h("p", { class: "small" }, h("span", { class: "pill", text: "Missing record" }), " ", h("strong", { text: q.learner_name || q.learner_alias }), " ", q.question));
+  if (!p.findings.length && !p.summaries.length && !(p.requests || []).length) waitCard.append(h("p", { class: "empty", text: "Nothing is waiting. When the agent proposes a finding, it stops here until a named teacher decides." }));
+  const list = h("ul", { class: "waitlist" });
+  for (const f of p.findings.slice(0, 5)) list.append(h("li", {},
+    h("div", { class: "row" }, h("span", { class: "pill", text: KIND[f.kind] || f.kind }), h("strong", { text: aliasOf(f.learner_id) }), h("span", { class: "small muted", text: f.evidence.length + " records behind it" })),
+    h("div", { class: "wait-text", text: f.statement })));
+  for (const sm of p.summaries.slice(0, Math.max(0, 5 - p.findings.length))) list.append(h("li", {},
+    h("div", { class: "row" }, h("span", { class: "pill plain", text: "Drafted note, " + langName(sm.language) }), h("strong", { text: aliasOf(sm.learner_id) })),
+    h("div", { class: "wait-text", text: sm.text })));
+  if (list.children.length) waitCard.append(list);
+  const more = p.findings.length + p.summaries.length - list.children.length;
+  if (more > 0) waitCard.append(h("p", { class: "small muted", text: "and " + more + " more in the review queue." }));
+
+  const flowCard = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Records on file, term by term" })),
+    h("p", { class: "small muted", text: "Every bar is one school term. The record goes back " + o.records_by_period.length + " terms." }),
+    columnChart(o.records_by_period, "Records per term"));
+  root.append(h("div", { class: "grid2" }, waitCard, flowCard));
+
+  // curriculum picture + record mix
+  const heatCard = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Curriculum picture across the class" })),
+    h("p", { class: "small muted", text: "Average score on all records, by strand and by the grade the topic belongs to. This describes topics, not learners." }),
+    heatGrid(o.coverage));
+  const mixCard = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "What the records are" })),
+    barRows(o.records_by_kind.map((k) => ({ label: KIND_PLURAL[k.kind] || k.kind, n: k.n })), t.records),
+    h("h3", { class: "section-title", text: "Languages teachers wrote in" }),
+    barRows(o.records_by_language.filter((l) => l.language !== "en").map((l) => ({ label: langName(l.language), n: l.n }))),
+    h("p", { class: "small muted", text: "Notes are kept in the teacher's own words and language." }));
+  root.append(h("div", { class: "grid2 wide-left" }, heatCard, mixCard));
+
+  // roster + activity
+  const rows = o.roster.map((r) => h("tr", {},
+    h("td", {}, h("button", { type: "button", class: "linkish", onclick: () => pickLearner(r.learner_id, "profile") }, r.name || r.alias), " ", h("span", { class: "small muted", text: codeOf(r.learner_id) })),
+    h("td", { text: langName(r.home_language) }), h("td", { class: "numcol", text: num(r.records) }), h("td", { class: "numcol", text: r.terms }),
+    h("td", { text: r.last_period || "none" }),
+    h("td", {}, r.waiting ? h("span", { class: "pill", text: r.waiting + " waiting" }) : h("span", { class: "muted", text: "none" })),
+    h("td", {}, r.approved ? h("span", { class: "pill ok", text: r.approved + " approved" }) : h("span", { class: "muted", text: "none" }))));
+  const rosterCard = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Learners" })),
+    h("p", { class: "small muted", text: "In alphabetical order. This table shows how complete each record is and what is waiting, never a score or a rank." }),
+    h("div", { class: "tablewrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Learner", "Home language", "Records", "Terms followed", "Latest record", "Waiting for a teacher", "Approved"].map((x) => h("th", { scope: "col", text: x })))),
+      h("tbody", {}, rows))));
+  const feed = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Every action is logged" }),
+    h("button", { type: "button", onclick: () => show("audit") }, "Open audit log")));
+  if (!o.recent_calls.length) feed.append(h("p", { class: "empty", text: "No tool calls yet. Run the agent and each call appears here with its inputs, outputs and time." }));
+  else feed.append(h("ul", { class: "feed" }, o.recent_calls.map((c) => h("li", {},
+    h("span", { class: "dotmark" + (c.ok ? "" : " bad") }), h("code", { text: c.tool }),
+    h("span", { class: "small muted", text: c.actor.replace(/^teacher:.*/, "a teacher") + (c.ok ? "" : ", refused") }),
+    h("span", { class: "small muted feed-time", text: new Date(c.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })))));
+  if (o.calls_by_tool.length) feed.append(h("h3", { class: "section-title", text: "Calls by tool" }), barRows(o.calls_by_tool.slice(0, 6).map((c) => ({ label: c.tool, n: c.n }))));
+  root.append(h("div", { class: "grid2 wide-left" }, rosterCard, feed));
+}
+
+// ---------------------------------------------------------------- learner profile
+async function viewProfile(root) {
+  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  root.append(h("p", { class: "muted", text: "Loading..." }));
+  const lid = encodeURIComponent(state.learnerId);
+  await getGraph(state.learnerId).catch(() => null);
+  const [d, pat, ww, mind, fitEl] = await Promise.all([api("/api/learners/" + lid + "/dashboard"), api("/api/learners/" + lid + "/patterns"), api("/api/learners/" + lid + "/what-worked"), api("/api/learners/" + lid + "/mind"), fitCard(lid)]);
+  const t = d.totals;
+  clear(root);
+  root.append(h("div", { class: "pagehead" },
+    h("div", {}, h("h2", { text: d.learner.name || d.learner.alias }),
+      h("p", { class: "muted", text: "Grade " + d.learner.grade_now + ". Home language: " + langName(d.learner.home_language) + ". Followed from " + (t.first_period || "?") + " to " + (t.last_period || "?") + "." })),
+    h("div", { class: "row" }, reportLink(state.learnerId),
+      h("button", { type: "button", class: "primary", onclick: () => show("learner/map") }, "Open the learning map"))));
+
+  root.append(h("div", { class: "tiles" },
+    tile("Records on file", num(t.records), d.records_by_kind.slice(0, 2).map((k) => num(k.n) + " " + (KIND_PLURAL[k.kind] || k.kind).toLowerCase()).join(", ")),
+    tile("Terms followed", t.terms, (t.first_period || "") + " to " + (t.last_period || "")),
+    tile("Days absent on record", num(t.days_absent), "across all terms"),
+    tile("Waiting for a teacher", num(t.waiting), t.waiting ? "open the review queue" : "nothing to decide", { accent: t.waiting > 0, onclick: () => show("review") }),
+    tile("Approved by teachers", num(t.approved), "findings and notes", { onclick: () => show("learner/approved") })));
+
+  // knowledge graph and thinking skills
+  root.append(h("div", { class: "grid2 wide-left" },
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Knowledge graph: everything connected to this learner" })),
+      h("p", { class: "small muted", text: "Strands and thinking skills show the average result on record. Approaches show how often scores rose afterwards. Bigger means more records. Hover for the numbers." }),
+      knowledgeGraph(mind)),
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Thinking skills on record" })),
+      h("p", { class: "small muted", text: "Average result on items that call for each skill. A description of results so far, not a label for the child." }),
+      mind.skills.length ? skillBars(mind.skills) : h("p", { class: "muted", text: "No skill-tagged records yet." }),
+      (mind.subjects || []).length > 1 ? [h("h3", { class: "section-title", text: "By subject" }), skillBars(mind.subjects)] : null,
+      h("h3", { class: "section-title", text: "By curriculum strand" }), skillBars(mind.strands))));
+
+  // the long view
+  const long = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "The long view: results by strand, term by term" })),
+    h("p", { class: "small muted", text: "Each dot is the average of that term's scored items in one strand. The shaded band is " + pct(d.thresholds.strong_above) + " and above; the lower line is " + pct(d.thresholds.gap_below) + ". Hover a dot for the numbers." }));
+  if (!d.strands.length) long.append(h("p", { class: "empty", text: "No scored records yet." }));
+  else long.append(h("div", { class: "sparks" }, d.strands.map((st) => spark(st, d.periods, d.thresholds))));
+  root.append(long);
+
+  // what the records show
+  const strengths = pat.patterns.filter((x) => x.kind === "strength"), struggles = pat.patterns.filter((x) => x.kind !== "strength");
+  const patList = (items, none) => items.length ? h("ul", { class: "patlist" }, items.map((x) => h("li", {},
+    h("strong", { text: x.label }),
+    h("span", { class: "small muted", text: " " + (x.kind === "strength" ? "stayed high" : "stayed low") + " for " + x.periods.length + " terms: average " + pct(x.mean) + " over " + x.n_items + " items" })))) : h("p", { class: "muted", text: none });
+  const seeAll = () => h("button", { type: "button", onclick: () => show("learner/patterns") }, "See the evidence");
+  root.append(h("div", { class: "grid2" },
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Where this learner could excel" }), seeAll()),
+      h("p", { class: "small muted", text: "Results that stayed high for three terms or more." }), patList(strengths, "No strength has held for three terms yet.")),
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Worth a closer look" }), seeAll()),
+      h("p", { class: "small muted", text: "Results that stayed low for three terms or more. A pattern to check, not a label." }), patList(struggles, "Nothing has stayed low for three terms."))));
+
+  // what helped
+  const helped = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Teaching approaches and what followed" })), h("p", { class: "small muted", text: ww.note }));
+  if (!ww.approaches.length) helped.append(h("p", { class: "muted", text: "Not enough before-and-after records yet." }));
+  else {
+    const max = Math.max(1, ...ww.approaches.map((a) => a.improved + a.not_improved));
+    helped.append(h("div", { class: "hbars" }, ww.approaches.map((a) => h("div", { class: "hbar" },
+      h("span", { class: "hbar-label", text: a.label }),
+      h("span", { class: "hbar-track split" },
+        h("span", { class: "hbar-fill", style: "width:" + (a.improved / max) * 100 + "%" }),
+        h("span", { class: "hbar-fill rest", style: "width:" + (a.not_improved / max) * 100 + "%" })),
+      h("span", { class: "hbar-num", text: "scores rose " + a.improved + " of " + (a.improved + a.not_improved) + " times" })))),
+      h("div", { class: "small muted keyline" }, h("span", { class: "key a" }), "scores rose afterwards", h("span", { class: "key b" }), "did not rise"));
+  }
+  root.append(h("div", { class: "grid2" }, helped, fitEl));
+
+  // year by year
+  const years = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "Year by year" })),
+    h("p", { class: "small muted", text: "What was taught each term, how it was taught, and days absent. Scroll sideways to move through the years." }),
+    h("div", { class: "terms", tabindex: 0, role: "region", "aria-label": "Term by term timeline" }, d.timeline.map((term) => h("div", { class: "term" },
+      h("div", { class: "term-head" }, h("strong", { text: term.period }), h("span", { class: "small muted", text: "Grade " + term.grade })),
+      h("div", { class: "term-abs" + (term.absent_days >= 10 ? " high" : ""), text: term.absent_days + " days absent" }),
+      h("ul", {}, term.taught.map((u) => h("li", {}, h("span", { text: u.concept }), h("span", { class: "small muted", text: u.approach }))))))));
+  root.append(years);
+}
+
+// ---------------------------------------------------------------- knowledge graph and teaching fit
+const NODE_COLOUR = { subject: "#2871F4", strand: "#2871F4", skill: "#0E8F7E", teacher: "#8A4FD6", approach: "#C2417A" };
+const NODE_WORD = { subject: "Subject", strand: "Curriculum strand", skill: "Thinking skill", teacher: "Teacher", approach: "Teaching approach" };
+
+function knowledgeGraph(m) {
+  const W = 900, H = 640, cx = W / 2, cy = H / 2, RX = 250, RY = 240;
+  const many = (m.subjects || []).length > 1;
+  const nodes = [
+    ...(many ? m.subjects : []).map((x) => ({ type: "subject", label: x.label, sub: pct(x.mean), weight: x.n, tip: x.label + ": average " + pct(x.mean) + " over " + x.n + " scored items" })),
+    ...(many ? [] : m.strands).map((x) => ({ type: "strand", label: x.label, sub: pct(x.mean), weight: x.n, tip: x.label + ": average " + pct(x.mean) + " over " + x.n + " scored items" })),
+    ...m.skills.map((x) => ({ type: "skill", label: x.label, sub: pct(x.mean), weight: x.n, tip: x.label + ": average " + pct(x.mean) + " over " + x.n + " scored items" })),
+    ...m.approaches.map((x) => ({ type: "approach", label: x.label, sub: x.improved + " of " + (x.improved + x.not_improved), weight: (x.improved + x.not_improved) * 6, tip: x.label + ": scores rose afterwards " + x.improved + " of " + (x.improved + x.not_improved) + " times" })),
+    ...m.teachers.map((x) => ({ type: "teacher", label: x.name, sub: x.units + " units", weight: x.units * 6, tip: x.name + " taught this learner " + x.units + " units" })),
+  ];
+  const svg = s("svg", { viewBox: "0 0 " + W + " " + H, class: "chart kg", role: "img", "aria-label": "Knowledge graph for " + (m.learner.name || m.learner.alias) });
+  const edges = s("g", {}), dots = s("g", {});
+  const maxW = Math.max(1, ...nodes.map((n) => n.weight));
+  nodes.forEach((n, i) => {
+    const a = -Math.PI / 2 + (i / nodes.length) * Math.PI * 2;
+    const x = cx + Math.cos(a) * RX, y = cy + Math.sin(a) * RY;
+    const r = 9 + 11 * Math.sqrt(n.weight / maxW);
+    edges.append(s("path", { class: "kg-edge", stroke: NODE_COLOUR[n.type], "stroke-width": 1 + 3 * (n.weight / maxW),
+      d: "M" + cx + "," + cy + " Q" + (cx + Math.cos(a) * RX * 0.45).toFixed(1) + "," + (cy + Math.sin(a) * RY * 0.2).toFixed(1) + " " + x.toFixed(1) + "," + y.toFixed(1) }));
+    const g = s("g", { class: "kg-node" });
+    g.append(s("circle", { cx: x, cy: y, r, fill: NODE_COLOUR[n.type] }));
+    const side = Math.abs(Math.cos(a)) > 0.12, right = Math.cos(a) >= 0, below = Math.sin(a) > 0;
+    const lx = side ? x + (right ? r + 8 : -(r + 8)) : x, anchor = side ? (right ? "start" : "end") : "middle";
+    const ly = side ? y - 1 : (below ? y + r + 16 : y - r - 20);
+    g.append(s("text", { class: "kg-label", x: lx, y: ly, "text-anchor": anchor, text: n.label }),
+      s("text", { class: "kg-sub", x: lx, y: ly + 14, "text-anchor": anchor, text: n.sub }));
+    tip(g, n.tip);
+    dots.append(g);
+  });
+  svg.append(edges, dots,
+    s("circle", { cx, cy, r: 46, class: "kg-centre" }),
+    s("text", { class: "kg-centre-text", x: cx, y: cy + 7, "text-anchor": "middle", text: (m.learner.name || m.learner.alias.replace("Learner ", "")).split(" ")[0] }));
+  const present = [...new Set(nodes.map((n) => n.type))];
+  const legend = h("ul", { class: "legend kg-legend", "aria-label": "Legend" }, present.map((t) => h("li", {}, h("span", { class: "kg-key", style: "background:" + NODE_COLOUR[t] }), h("span", { text: NODE_WORD[t] }))));
+  return h("div", {}, legend, svg);
+}
+
+function skillBars(items) {
+  return h("div", { class: "hbars" }, items.map((i) => h("div", { class: "hbar" },
+    h("span", { class: "hbar-label", text: i.label }),
+    h("span", { class: "hbar-track" }, h("span", { class: "hbar-fill", style: "width:" + Math.round(i.mean * 100) + "%" })),
+    h("span", { class: "hbar-num", text: pct(i.mean) + " over " + i.n + " items" }))));
+}
+
+async function fitCard(lid) {
+  const card = h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "You and this learner" }),
+    h("button", { type: "button", onclick: () => show("teaching") }, "My teaching style")));
+  if (!teacherId()) { card.append(h("p", { class: "muted", text: "Choose your name in the side panel to see how your way of teaching sits next to what has helped this learner." })); return card; }
+  const f = await api("/api/learners/" + lid + "/fit?teacher_id=" + encodeURIComponent(teacherId()));
+  if (!f.has_profile) {
+    card.append(h("p", { class: "muted", text: "Tell " + PRODUCT + " how you teach (it takes a minute), and this card will set it beside what has been followed by gains for this learner." }),
+      h("button", { type: "button", class: "primary", onclick: () => show("teaching") }, "Describe my teaching"));
+    return card;
+  }
+  card.append(h("p", { class: "small muted", text: "For " + f.teacher.name + ". Two facts side by side: what was followed by gains for this learner, and how often you say you teach that way." }));
+  if (f.notes.length) card.append(h("ul", { class: "patlist" }, f.notes.map((n) => h("li", { text: n }))));
+  card.append(h("div", { class: "tablewrap", style: "margin-top:12px" }, h("table", {},
+    h("thead", {}, h("tr", {}, ["Approach", "For this learner", "You said you use it", "Units you taught this way"].map((x) => h("th", { scope: "col", text: x })))),
+    h("tbody", {}, f.rows.map((r) => h("tr", {}, h("td", { text: r.label }),
+      h("td", {}, r.followed_by_gains ? h("span", { class: "pill ok", text: "scores rose " + r.improved + " of " + r.times }) : h("span", { class: "muted", text: "rose " + r.improved + " of " + r.times })),
+      h("td", { text: r.you_said || "not answered" }), h("td", { class: "numcol", text: r.your_recorded_units })))))),
+    h("p", { class: "small muted", text: f.caution }));
+  return card;
+}
+
+// ---------------------------------------------------------------- my teaching
+async function viewTeaching(root) {
+  root.append(h("div", { class: "pagehead" }, h("div", {}, h("h2", { text: "My teaching style" }),
+    h("p", { class: "muted", text: "Your own description of how you teach. " + PRODUCT + " uses it to set your way of teaching beside what has helped each learner. It is never a score, and nobody is ranked." }))));
+  if (!teacherId()) { root.append(h("p", { class: "empty card", text: "Choose your name in the side panel first." })); return; }
+  const p = await api("/api/teachers/" + encodeURIComponent(teacherId()) + "/profile");
+  const a = p.answers || {}, chosen = Object.assign({}, a.approaches || {});
+  const msg = h("div", { "aria-live": "polite" });
+  const rows = p.questions.approaches.map((q) => {
+    const group = h("div", { class: "seg", role: "radiogroup", "aria-label": q.label });
+    const paint = () => [...group.children].forEach((b) => b.setAttribute("aria-checked", String(b.dataset.v === chosen[q.id])));
+    for (const f of p.questions.frequencies) group.append(h("button", { type: "button", role: "radio", "data-v": f, onclick: () => { chosen[q.id] = f; paint(); } }, f[0].toUpperCase() + f.slice(1)));
+    paint();
+    return h("div", { class: "qrow" }, h("span", { text: q.label }), group);
+  });
+  const field = (id, label, value, long) => {
+    const el = long ? h("textarea", { id }) : h("input", { type: "text", id });
+    el.value = value || "";
+    return [h("div", {}, h("label", { for: id, text: label }), el), el];
+  };
+  const [langBox, lang] = field("t-lang", "Languages you teach in", a.languages);
+  const [sizeBox, size] = field("t-size", "Usual class size", a.class_size);
+  const [worksBox, works] = field("t-works", "What tends to work in your classroom", a.what_works, true);
+  const [helpBox, help] = field("t-help", "Where you would like help", a.wants_help_with, true);
+  const save = h("button", { type: "button", class: "primary", onclick: async () => {
+    save.disabled = true;
+    try {
+      await post("/api/teachers/" + encodeURIComponent(teacherId()) + "/profile", { approaches: chosen, languages: lang.value, class_size: size.value, what_works: works.value, wants_help_with: help.value });
+      clear(msg).append(h("span", { class: "okmsg", text: "Saved. Open any learner profile to see it used." }));
+    } catch (e) { decisionError(msg, e.message); }
+    save.disabled = false;
+  } }, "Save my teaching style");
+  const max = Math.max(1, ...p.recorded_units.map((u) => u.n));
+  root.append(h("div", { class: "grid2 wide-left" },
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: p.teacher.name + ": how often do you teach this way?" })),
+      h("div", { class: "qlist" }, rows),
+      h("div", { class: "qfields" }, langBox, sizeBox), worksBox, helpBox,
+      h("div", { class: "row", style: "margin-top:14px" }, save), msg),
+    h("section", { class: "card" }, h("div", { class: "card-head" }, h("h3", { text: "What the record shows you taught" })),
+      h("p", { class: "small muted", text: "Units on file for you, by approach. This comes from lesson records, not from your answers." }),
+      h("div", { class: "hbars" }, p.recorded_units.map((u) => h("div", { class: "hbar" }, h("span", { class: "hbar-label", text: u.label }),
+        h("span", { class: "hbar-track" }, h("span", { class: "hbar-fill", style: "width:" + (u.n / max) * 100 + "%" })), h("span", { class: "hbar-num", text: u.n + " units" })))))));
+}
+
+// ---------------------------------------------------------------- the map
+const NODE_W = 138, NODE_H = 40, PITCH_X = 176, PITCH_Y = 56, LEFT = 128, TOP = 34, LANE_PAD = 10;
+
+function wrap(text, max) {
+  const words = text.split(/\s+/), lines = [];
+  let cur = "";
+  for (const w of words) {
+    if ((cur + " " + w).trim().length <= max) cur = (cur + " " + w).trim();
+    else { if (cur) lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > 2) {
+    lines.length = 2;
+    lines[1] = lines[1].slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+  }
+  return lines;
+}
+
+function layout(g) {
+  const concepts = g.nodes.filter((n) => n.type === "concept");
+  const grades = [...new Set(concepts.map((n) => n.grade))].sort((a, b) => a - b);
+  const strandNodes = g.nodes.filter((n) => n.type === "strand");
+  const strands = strandNodes.map((n) => n.id).filter((sid) => concepts.some((c) => c.strand === sid));
+  for (const c of concepts) if (!strands.includes(c.strand)) strands.push(c.strand);
+  const cell = {};
+  for (const c of concepts) {
+    const k = c.strand + "|" + c.grade;
+    (cell[k] = cell[k] || []).push(c);
+  }
+  const pos = {}, lanes = [];
+  let y = TOP;
+  for (const sid of strands) {
+    let rows = 1;
+    for (const gr of grades) rows = Math.max(rows, (cell[sid + "|" + gr] || []).length);
+    const height = rows * PITCH_Y + LANE_PAD * 2;
+    lanes.push({ id: sid, y, height, label: labelOf(sid) });
+    for (const [gi, gr] of grades.entries()) {
+      (cell[sid + "|" + gr] || []).forEach((c, ri) => {
+        pos[c.id] = { x: LEFT + gi * PITCH_X, y: y + LANE_PAD + ri * PITCH_Y, col: gi };
+      });
+    }
+    y += height;
+  }
+  return { grades, lanes, pos, width: LEFT + grades.length * PITCH_X, height: y + 8 };
+}
+
+function stateFor(g, cid) {
+  const last = g.periods.length - 1;
+  const node = g.byId[cid];
+  if (state.periodIdx >= last || last < 0) return node.state;
+  const m = (g.timeline[g.periods[state.periodIdx]] || {})[cid];
+  if (m === undefined || m === null) return "unseen";
+  if (m > g.thresholds.strong_above) return "strong";
+  if (m < g.thresholds.gap_below) return "gap";
+  return "shaky";
+}
+
+// The curriculum drawn as columns of grades and rows of strands. Shared by the learner map and the school map.
+function mapSvg(g, L, label, onSelect) {
+  const concepts = g.nodes.filter((n) => n.type === "concept");
+  const reqEdges = g.edges.filter((e) => e.type === "requires" && L.pos[e.source] && L.pos[e.target]);
+  const svg = s("svg", { id: "mapsvg", role: "group", "aria-label": label, width: L.width, height: L.height, viewBox: "0 0 " + L.width + " " + L.height });
+  svg.append(s("defs", {},
+    s("pattern", { id: "hatch", width: 8, height: 8, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
+      s("rect", { width: 8, height: 8, fill: "#f9dcc8" }), s("rect", { width: 3, height: 8, fill: "#eeb08a" })),
+    s("marker", { id: "arrow", viewBox: "0 0 8 8", refX: 7, refY: 4, markerWidth: 6, markerHeight: 6, orient: "auto" },
+      s("path", { d: "M0,0 L8,4 L0,8 z", fill: "#59636b" }))));
+  L.lanes.forEach((ln, i) => {
+    svg.append(s("rect", { class: "lane-bg" + (i % 2 ? " alt" : ""), x: 0, y: ln.y, width: L.width, height: ln.height }));
+    const lines = wrap(ln.label, 16);
+    const t = s("text", { class: "lane-label", x: 8, y: ln.y + LANE_PAD + 16 });
+    lines.forEach((ln2, k) => t.append(s("tspan", { x: 8, dy: k ? 15 : 0, text: ln2 })));
+    svg.append(t);
+  });
+  L.grades.forEach((gr, gi) => svg.append(s("text", { class: "grade-label", x: LEFT + gi * PITCH_X + NODE_W / 2, y: 20, "text-anchor": "middle", text: "Grade " + gr })));
+
+  const edgeEls = [];
+  const edgeLayer = s("g", { id: "edges" });
+  for (const e of reqEdges) {
+    const a = L.pos[e.source], b = L.pos[e.target];
+    let d;
+    if (a.col === b.col) {
+      const x = a.x, y1 = a.y + NODE_H / 2, y2 = b.y + NODE_H / 2;
+      d = "M" + x + "," + y1 + " C" + (x - 34) + "," + y1 + " " + (x - 34) + "," + y2 + " " + (x - 2) + "," + y2;
+    } else {
+      const x1 = a.x + NODE_W, y1 = a.y + NODE_H / 2, x2 = b.x - 2, y2 = b.y + NODE_H / 2;
+      const dx = Math.max(30, (x2 - x1) / 2);
+      d = "M" + x1 + "," + y1 + " C" + (x1 + dx) + "," + y1 + " " + (x2 - dx) + "," + y2 + " " + x2 + "," + y2;
+    }
+    const p = s("path", { class: "edge", d, "marker-end": "url(#arrow)" });
+    edgeLayer.append(p);
+    edgeEls.push({ el: p, source: e.source, target: e.target });
+  }
+  svg.append(edgeLayer);
+
+  const nodeEls = {};
+  for (const c of concepts) {
+    const p = L.pos[c.id];
+    if (!p) continue;
+    const grp = s("g", { class: "node", transform: "translate(" + p.x + "," + p.y + ")", tabindex: 0, role: "button", "data-id": c.id });
+    grp.append(s("title", { text: c.label }));
+    grp.append(s("rect", { class: "body", width: NODE_W, height: NODE_H, rx: 8 }));
+    grp.append(s("rect", { class: "ring sel", x: -4, y: -4, width: NODE_W + 8, height: NODE_H + 8, rx: 11 }));
+    grp.append(s("rect", { class: "ring path", x: -3, y: -3, width: NODE_W + 6, height: NODE_H + 6, rx: 10 }));
+    grp.append(s("circle", { class: "m-strong", cx: 13, cy: NODE_H / 2, r: 5.5 }));
+    grp.append(s("path", { class: "m-shaky", d: "M13,14 a6,6 0 0 1 0,12 z" }));
+    grp.append(s("path", { class: "m-gap", d: "M13,14 l6,12 h-12 z" }));
+    grp.append(s("circle", { class: "m-unseen", cx: 13, cy: NODE_H / 2, r: 5.5 }));
+    const lines = wrap(c.label, 19);
+    const t = s("text", { x: 25, y: lines.length > 1 ? 16 : 24 });
+    lines.forEach((ln, k) => t.append(s("tspan", { x: 25, dy: k ? 13 : 0, text: ln })));
+    grp.append(t);
+    grp.append(s("text", { class: "tag root", x: 0, y: -4, text: "START POINT TO CHECK" }));
+    grp.append(s("text", { class: "tag unk", x: NODE_W - 4, y: -4, "text-anchor": "end", text: "no records" }));
+    grp.addEventListener("click", () => onSelect(c.id));
+    grp.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect(c.id); } });
+    svg.append(grp);
+    nodeEls[c.id] = grp;
+  }
+  return { svg, nodeEls, edgeEls };
+}
+
+async function viewMap(root) {
+  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  root.append(h("p", { class: "muted", text: "Loading the map..." }));
+  let g = await getGraph(state.learnerId);
+  const subjects = g.subjects || [];
+  if (!state.subject || (state.subject !== "all" && !subjects.some((x) => x.id === state.subject))) state.subject = "all";
+  if (subjects.length > 1 && state.subject !== "all") {
+    const keep = (n) => n.type !== "concept" ? (n.type !== "strand" || g.strand_subject[n.id] === state.subject) : g.strand_subject[n.strand] === state.subject;
+    const nodes = g.nodes.filter(keep), ids = new Set(nodes.map((n) => n.id));
+    g = Object.assign({}, g, { nodes, edges: g.edges.filter((e) => ids.has(e.source) && ids.has(e.target)) });
+  }
+  g.byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
+  const lastIdx = g.periods.length - 1;
+  state.periodIdx = Math.max(0, lastIdx);
+  const L = layout(g);
+  const concepts = g.nodes.filter((n) => n.type === "concept");
+
+  // legend
+  const legendItem = (st, text) => h("li", {}, legendSwatch(st), h("span", { text }));
+  const legend = h("ul", { class: "legend", "aria-label": "Legend" },
+    legendItem("strong", "Scores mostly secure so far"),
+    legendItem("shaky", "Still forming: mixed scores"),
+    legendItem("gap", "Low scores so far"),
+    legendItem("unseen", "No records yet (not the same as struggling)"));
+
+  const { svg, nodeEls, edgeEls } = mapSvg(g, L, "Curriculum map for " + (g.learner.display_name || g.learner.alias) + ". Columns are grades, rows are strands.", (cid) => selectNode(cid));
+
+  const detail = h("aside", { id: "detail", class: "card", "aria-live": "polite", "aria-label": "Concept details" });
+  const rangeId = "term-range";
+  const slider = h("input", { type: "range", id: rangeId, min: 0, max: Math.max(0, lastIdx), step: 1, value: state.periodIdx, disabled: lastIdx < 1 });
+  const periodLabel = h("span", { class: "small", id: "period-label" });
+  const playBtn = h("button", { type: "button", "aria-pressed": "false", disabled: lastIdx < 1 }, "Play");
+
+  function paint() {
+    const tracing = !!state.trace;
+    svg.classList.toggle("tracing", tracing);
+    const onPath = new Set(tracing ? state.trace.path : []);
+    const unknown = new Set(tracing ? state.trace.unknowns : []);
+    const rootId = tracing && state.trace.root ? state.trace.root.concept_id : null;
+    for (const c of concepts) {
+      const el = nodeEls[c.id];
+      if (!el) continue;
+      const st = stateFor(g, c.id);
+      el.setAttribute("class", "node s-" + st + (state.sel === c.id ? " selected" : "") + (onPath.has(c.id) ? " on-path" : "") + (c.id === rootId ? " is-root" : "") + (unknown.has(c.id) ? " is-unknown" : ""));
+      el.setAttribute("aria-label", c.label + ", grade " + c.grade + ". " + STATE_WORDS[st] + (c.id === rootId ? ". Possible starting point." : "") + (unknown.has(c.id) ? ". No records." : ""));
+      el.setAttribute("aria-pressed", state.sel === c.id ? "true" : "false");
+    }
+    const pathPairs = new Set();
+    if (tracing) for (let i = 0; i + 1 < state.trace.path.length; i++) pathPairs.add(state.trace.path[i + 1] + ">" + state.trace.path[i]);
+    for (const e of edgeEls) {
+      const tp = pathPairs.has(e.source + ">" + e.target);
+      const hl = !tracing && state.sel && (e.source === state.sel || e.target === state.sel);
+      e.el.setAttribute("class", "edge" + (tp ? " tp" : "") + (hl ? " hl" : ""));
+    }
+    const per = g.periods[state.periodIdx];
+    periodLabel.textContent = lastIdx < 0 ? "No dated records yet" : (state.periodIdx >= lastIdx ? "All records up to " + per : "Records up to " + per);
+    slider.value = state.periodIdx;
+    slider.setAttribute("aria-valuetext", periodLabel.textContent);
+  }
+
+  function selectNode(cid) {
+    if (state.sel !== cid) state.trace = null;
+    state.sel = cid;
+    paint();
+    drawDetail(detail, g, cid, paint);
+  }
+
+  slider.addEventListener("input", () => { state.periodIdx = Number(slider.value); paint(); });
+  playBtn.addEventListener("click", () => {
+    if (state.timer) { clearInterval(state.timer); state.timer = null; playBtn.textContent = "Play"; playBtn.setAttribute("aria-pressed", "false"); return; }
+    if (state.periodIdx >= lastIdx) state.periodIdx = 0;
+    playBtn.textContent = "Pause"; playBtn.setAttribute("aria-pressed", "true");
+    paint();
+    state.timer = setInterval(() => {
+      if (state.periodIdx >= lastIdx) { clearInterval(state.timer); state.timer = null; playBtn.textContent = "Play"; playBtn.setAttribute("aria-pressed", "false"); return; }
+      state.periodIdx += 1; paint();
+    }, 900);
+  });
+
+  clear(root);
+  root.append(
+    h("div", { class: "map-top" },
+      h("div", {}, h("h2", { text: g.learner.display_name || g.learner.alias }),
+        subjects.length > 1 ? h("div", { class: "row", style: "margin:8px 0" }, h("label", { for: "subject-pick", text: "Subject" }),
+          (() => { const pick = h("select", { id: "subject-pick" }, [{ id: "all", label: "All subjects" }, ...subjects].map((x) => h("option", { value: x.id, selected: x.id === state.subject, text: x.label })));
+            pick.addEventListener("change", () => { state.subject = pick.value; state.sel = null; state.trace = null; show("learner/map"); }); return pick; })()) : null,
+        h("div", { class: "small muted", text: "Home language: " + langName(g.learner.home_language) + ". Columns are grades; rows are strands; a line means “needs this first”." })),
+      legend),
+    h("div", { class: "replay card" },
+      h("label", { for: rangeId, text: "Term" }), slider, periodLabel, playBtn,
+      h("span", { class: "small muted", text: "Replay shows what the records had shown by each term." })),
+    h("div", { class: "map-cols" },
+      h("div", { class: "mapbox", tabindex: 0, role: "region", "aria-label": "Scrollable curriculum map" }, svg),
+      detail));
+  paint();
+  if (state.sel && g.byId[state.sel]) drawDetail(detail, g, state.sel, paint);
+  else clear(detail).append(h("h3", { text: "Select a concept" }), h("p", { class: "muted", text: "Click or press Enter on any box to see this learner's records for it and to trace where a difficulty may have started." }));
+}
+
+function legendSwatch(st) {
+  const svg = s("svg", { width: 30, height: 20, "aria-hidden": "true" });
+  const g = s("g", { class: "node s-" + st });
+  g.append(s("rect", { class: "body", x: 1, y: 1, width: 28, height: 18, rx: 5 }));
+  if (st === "strong") g.append(s("circle", { class: "m-strong", cx: 15, cy: 10, r: 4.5 }));
+  if (st === "shaky") g.append(s("path", { class: "m-shaky", d: "M15,5 a5,5 0 0 1 0,10 z" }));
+  if (st === "gap") g.append(s("path", { class: "m-gap", d: "M15,4.5 l5,10 h-10 z" }));
+  if (st === "unseen") g.append(s("circle", { class: "m-unseen", cx: 15, cy: 10, r: 4.5 }));
+  svg.append(g);
+  return svg;
+}
+
+async function drawDetail(panel, g, cid, repaint) {
+  const n = g.byId[cid];
+  const stNow = n.state;
+  clear(panel);
+  const needs = g.edges.filter((e) => e.type === "requires" && e.target === cid).map((e) => e.source);
+  const leads = g.edges.filter((e) => e.type === "requires" && e.source === cid).map((e) => e.target);
+  const linkList = (ids) => ids.length
+    ? h("ul", { style: "margin:4px 0 0;padding-left:18px" }, ids.map((id) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.trace = null; state.sel = id; repaint(); drawDetail(panel, g, id, repaint); document.querySelector('[data-id="' + id + '"]').scrollIntoView({ block: "nearest", inline: "nearest" }); } }, labelOf(id) + " (grade " + (g.byId[id] ? g.byId[id].grade : "?") + ")"))))
+    : h("p", { class: "muted small", text: "None in this curriculum." });
+  const traceBox = h("div", { class: "stack" });
+  const evBox = h("div", {}, h("p", { class: "muted", text: "Loading records..." }));
+  panel.append(
+    h("h3", { text: n.label }),
+    h("p", { class: "small muted", text: "Grade " + n.grade + ", " + labelOf(n.strand) }),
+    h("p", {}, h("strong", { text: STATE_WORDS[stNow] }),
+      n.n ? h("span", { class: "muted", text: ". Average score " + pct(n.mastery) + " over " + n.n + " scored item" + (n.n === 1 ? "" : "s") + "." })
+          : h("span", { class: "muted", text: ". No scored records for this learner. That means nothing has been recorded, not that the learner is struggling." })),
+    h("div", { class: "row" }, h("button", { type: "button", class: "primary", onclick: () => doTrace(traceBox, g, cid, repaint) }, "Trace back"),
+      state.trace ? h("button", { type: "button", onclick: () => { state.trace = null; clear(traceBox); repaint(); } }, "Clear trace") : null),
+    traceBox,
+    h("h3", { style: "margin-top:14px", text: "Needs this first" }), linkList(needs),
+    h("h3", { style: "margin-top:10px", text: "Leads to" }), linkList(leads),
+    h("h3", { style: "margin-top:14px", text: "Records for this concept" }), evBox);
+  if (state.trace && state.trace.target.concept_id === cid) renderTrace(traceBox, g, state.trace);
+  try {
+    const tl = await api("/api/learners/" + encodeURIComponent(state.learnerId) + "/timeline?concept_id=" + encodeURIComponent(cid));
+    const rows = tl.periods.flatMap((p) => p.items);
+    clear(evBox).append(rows.length ? evidenceTable(rows, (done) => {
+      delete state.graphs[state.learnerId];
+      clear(evBox).append(h("p", { class: "okmsg", text: "Record withdrawn." + (done.findings_that_cite_it.length ? " " + done.findings_that_cite_it.length + " finding(s) cite it: look at them again in the review queue." : "") + " Open the topic again to see the map without it." }));
+    }) : h("p", { class: "muted", text: "No records for this concept." }));
+  } catch (e) { clear(evBox).append(h("p", { class: "err", text: e.message })); }
+}
+
+async function doTrace(box, g, cid, repaint) {
+  clear(box).append(h("p", { class: "muted", text: "Tracing..." }));
+  try {
+    const t = await api("/api/learners/" + encodeURIComponent(state.learnerId) + "/trace/" + encodeURIComponent(cid));
+    state.trace = t;
+    repaint();
+    drawDetail(document.getElementById("detail"), g, cid, repaint);
+  } catch (e) { clear(box).append(h("p", { class: "err", role: "alert", text: e.message })); }
+}
+
+function renderTrace(box, g, t) {
+  clear(box);
+  const evBox = h("div");
+  const parts = [];
+  parts.push(h("h3", { text: "Where this may have started" }));
+  parts.push(h("p", { text: t.reason }));
+  parts.push(h("p", { class: "small", text: confWords(t.confidence) + (t.confidence !== undefined ? " (" + pct(t.confidence) + ")" : "") + ". This is a pattern to check against what you know, not a conclusion about the learner." }));
+  if (t.root) {
+    parts.push(h("dl", { class: "kv" },
+      h("dt", { text: "Possible start" }), h("dd", { text: t.root.label + " (grade " + t.root.grade + ")" }),
+      h("dt", { text: "First seen" }), h("dd", { text: t.root.period }),
+      h("dt", { text: "Average" }), h("dd", { text: pct(t.root.mean) + " over " + t.root.n + " items" })));
+  } else {
+    parts.push(h("p", { class: "muted", text: "No clear starting point was found in the records." }));
+  }
+  if (t.path && t.path.length > 1) {
+    parts.push(h("p", { class: "small" }, h("strong", { text: "Path: " }), t.path.map((id) => labelOf(id)).join("  → needs →  ")));
+  }
+  if (t.context && t.context.length) {
+    parts.push(h("div", {}, h("strong", { text: "Absences around that time" }),
+      h("ul", { style: "margin:4px 0;padding-left:18px" }, t.context.map((c) => h("li", { text: c.absent_days + " day(s) absent in " + c.period + " (record " + c.evidence_id + ")" })))));
+  }
+  if (t.unknowns && t.unknowns.length) {
+    parts.push(h("div", {}, h("strong", { text: "No records for these concepts (not guessed)" }),
+      h("ul", { style: "margin:4px 0;padding-left:18px" }, t.unknowns.map((id) => h("li", { text: labelOf(id) })))));
+  }
+  if (t.alternatives && t.alternatives.length) {
+    parts.push(h("p", { class: "small", text: "Other possible starting points: " + t.alternatives.map((a) => a.label).join(", ") + "." }));
+  }
+  parts.push(h("details", {}, h("summary", { text: "Show the " + (t.evidence_ids || []).length + " records behind this" }),
+    h("div", { "data-lazy": "1" }, "")));
+  box.append(h("div", { class: "card stack", style: "background:#fbf6f1" }, parts));
+  const det = box.querySelector("details");
+  det.addEventListener("toggle", async () => {
+    const holder = det.querySelector("[data-lazy]");
+    if (!det.open || holder.dataset.done) return;
+    holder.dataset.done = "1";
+    clear(holder).append(h("p", { class: "muted", text: "Loading..." }));
+    try {
+      const r = await api("/api/evidence?ids=" + (t.evidence_ids || []).join(","));
+      clear(holder).append(evidenceTable(r.evidence));
+    } catch (e) { clear(holder).append(h("p", { class: "err", text: e.message })); }
+  });
+}
+
+// ---------------------------------------------------------------- patterns
+async function viewPatterns(root) {
+  if (!state.learnerId) return;
+  const lid = encodeURIComponent(state.learnerId);
+  await getGraph(state.learnerId);
+  const [pat, ww] = await Promise.all([api("/api/learners/" + lid + "/patterns"), api("/api/learners/" + lid + "/what-worked")]);
+  clear(root);
+  root.append(h("h2", { text: "Patterns for " + aliasOf(state.learnerId) }),
+    h("p", { class: "muted", text: "These are patterns the records show over several terms. They are things to check, not labels. Nothing here is a decision until you approve it in the Review queue." }));
+  const list = h("div");
+  if (!pat.patterns.length) list.append(h("p", { class: "empty", text: "No pattern has held for long enough yet." }));
+  for (const p of pat.patterns) {
+    const card = h("div", { class: "card" },
+      h("div", { class: "row" }, h("span", { class: "pill", text: p.kind === "strength" ? "Strength pattern" : "Struggle pattern" }),
+        h("strong", { text: p.label }), h("span", { class: "muted small", text: "(" + p.scope + ")" })),
+      h("p", { text: (p.kind === "strength" ? "Scores stayed high" : "Scores stayed low") + " in " + p.periods.join(", ") + ": average " + pct(p.mean) + " over " + p.n_items + " items. " + confWords(p.confidence) + "." }));
+    const det = h("details", {}, h("summary", { text: "Show the " + p.evidence_ids.length + " records" }), h("div", {}));
+    let done = false;
+    det.addEventListener("toggle", async () => {
+      if (!det.open || done) return;
+      done = true;
+      try { const r = await api("/api/evidence?ids=" + p.evidence_ids.join(",")); det.lastChild.append(evidenceTable(r.evidence)); }
+      catch (e) { det.lastChild.append(h("p", { class: "err", text: e.message })); }
+    });
+    card.append(det);
+    list.append(card);
+  }
+  root.append(list);
+  if (pat.data_gaps && pat.data_gaps.length) {
+    root.append(h("div", { class: "card" }, h("h3", { text: "Gaps in the records" }),
+      h("ul", {}, pat.data_gaps.map((d) => h("li", { text: d.period + ": " + d.reason })))));
+  }
+  const wwBox = h("div", { class: "card" }, h("h3", { text: "What seems to have helped this learner" }), h("p", { class: "small muted", text: ww.note }));
+  if (!ww.approaches.length) wwBox.append(h("p", { class: "muted", text: "Not enough before-and-after records yet." }));
+  for (const a of ww.approaches) {
+    wwBox.append(h("div", { class: "stack", style: "margin-top:8px" },
+      h("strong", { text: a.label }),
+      h("div", { class: "small", text: "Scores rose after " + a.improved + " time(s) and did not rise after " + a.not_improved + ". Average change " + (a.mean_gain >= 0 ? "+" : "") + Math.round(a.mean_gain * 100) + " points." }),
+      h("ul", { class: "small", style: "margin:0;padding-left:18px" }, a.instances.map((i) => h("li", { text: labelOf(i.concept_id) + ", " + i.period + ": " + pct(i.before) + " before, " + pct(i.after) + " after" })))));
+  }
+  root.append(wwBox);
+}
+
+// ---------------------------------------------------------------- printable report
+function reportLink(lid) {
+  return h("a", { class: "btnlink", href: "/learners/" + encodeURIComponent(lid) + "/report", target: "_blank", rel: "noopener" }, "Printable report");
+}
+
+// ---------------------------------------------------------------- school map
+const CLASS_WORDS = { strong: "Results across the class are mostly secure", shaky: "Results across the class are mixed", gap: "Results across the class are low", unseen: "No records yet (not the same as struggling)" };
+
+async function viewSchool(root) {
+  root.append(h("p", { class: "muted", text: "Loading the school map..." }));
+  const full = await api("/api/school/graph");
+  for (const n of full.nodes) state.labels[n.id] = n.label;
+  const subjects = full.subjects || [];
+  if (!state.schoolSubject || (state.schoolSubject !== "all" && !subjects.some((x) => x.id === state.schoolSubject))) state.schoolSubject = "all";
+  let g = full;
+  if (subjects.length > 1 && state.schoolSubject !== "all") {
+    const keep = (n) => full.strand_subject[n.type === "strand" ? n.id : n.strand] === state.schoolSubject;
+    const nodes = full.nodes.filter(keep), ids = new Set(nodes.map((n) => n.id));
+    g = Object.assign({}, full, { nodes, edges: full.edges.filter((e) => ids.has(e.source) && ids.has(e.target)) });
+  }
+  g.byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
+  const concepts = g.nodes.filter((n) => n.type === "concept");
+  clear(root);
+  if (!concepts.length) { root.append(h("h2", { text: "School map" }), h("p", { class: "empty card", text: "No curriculum or records yet." })); return; }
+  const L = layout(g);
+  const detail = h("aside", { id: "detail", class: "card", "aria-live": "polite", "aria-label": "Topic details" });
+  const { svg, nodeEls, edgeEls } = mapSvg(g, L, "School map. Columns are grades, rows are strands.", (cid) => select(cid));
+  for (const c of concepts) {
+    const n = c.findings.root_cause;
+    if (n && nodeEls[c.id]) nodeEls[c.id].append(s("text", { class: "tag starts", x: 0, y: -4, text: "STARTS HERE: " + n }));
+  }
+
+  function paint() {
+    for (const c of concepts) {
+      const el = nodeEls[c.id];
+      if (!el) continue;
+      const taught = state.schoolTeacher && c.taught.some((t) => t.teacher_id === state.schoolTeacher);
+      el.setAttribute("class", "node s-" + c.state + (state.schoolSel === c.id ? " selected" : "") + (taught ? " on-path" : ""));
+      el.setAttribute("aria-label", c.label + ", grade " + c.grade + ". " + CLASS_WORDS[c.state] + (c.findings.root_cause ? ". " + c.findings.root_cause + " approved findings say a difficulty began here." : ""));
+      el.setAttribute("aria-pressed", state.schoolSel === c.id ? "true" : "false");
+    }
+    for (const e of edgeEls) e.el.setAttribute("class", "edge" + (state.schoolSel && (e.source === state.schoolSel || e.target === state.schoolSel) ? " hl" : ""));
+  }
+
+  function drawTopic(cid) {
+    const c = g.byId[cid];
+    const needs = g.edges.filter((e) => e.type === "requires" && e.target === cid).map((e) => e.source);
+    const leads = g.edges.filter((e) => e.type === "requires" && e.source === cid).map((e) => e.target);
+    const jump = (id) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => select(id) }, labelOf(id)));
+    clear(detail).append(
+      h("h3", { text: c.label }),
+      h("p", { class: "small muted", text: "Grade " + c.grade + ", " + labelOf(c.strand) }),
+      h("dl", { class: "kv" },
+        h("dt", { text: "Records" }), h("dd", { text: num(c.records) }),
+        h("dt", { text: "Learners with records" }), h("dd", { text: c.learners + " of " + full.totals.learners }),
+        h("dt", { text: "Across the class" }), h("dd", { text: c.mean === null ? "No scored records" : Math.round(c.mean * 100) + "% on average. " + CLASS_WORDS[c.state] + "." })),
+      h("h4", { text: "Taught by" }),
+      c.taught.length ? h("ul", { style: "margin:4px 0;padding-left:18px" }, c.taught.map((t) => h("li", { text: t.teacher + ", " + t.approach }))) : h("p", { class: "small muted", text: "No teaching unit is recorded for this topic." }),
+      h("h4", { text: "Approved findings about this topic" }),
+      c.approved_for.length
+        ? h("ul", { style: "margin:4px 0;padding-left:18px" }, c.approved_for.map((a) => h("li", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { state.sel = cid; state.trace = null; pickLearner(a.learner_id, "map"); } }, a.name || a.alias), ": " + (KIND[a.kind] || a.kind))))
+        : h("p", { class: "small muted", text: "None yet. A learner is named here only after a teacher approves a finding." }),
+      needs.length ? h("div", {}, h("h4", { text: "Needs first" }), h("ul", { style: "margin:4px 0;padding-left:18px" }, needs.map(jump))) : null,
+      leads.length ? h("div", {}, h("h4", { text: "Is needed for" }), h("ul", { style: "margin:4px 0;padding-left:18px" }, leads.map(jump))) : null);
+  }
+
+  function select(cid) {
+    state.schoolSel = cid;
+    paint();
+    drawTopic(cid);
+    const el = nodeEls[cid];
+    if (el) el.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
+  const legendItem = (st) => h("li", {}, legendSwatch(st), h("span", { text: CLASS_WORDS[st] }));
+  const subjectPick = h("select", { id: "school-subject" }, [{ id: "all", label: "All subjects" }, ...subjects].map((x) => h("option", { value: x.id, selected: x.id === state.schoolSubject, text: x.label })));
+  subjectPick.addEventListener("change", () => { state.schoolSubject = subjectPick.value; state.schoolSel = null; show("school"); });
+  const teacherPick = h("select", { id: "school-teacher" }, h("option", { value: "", text: "Nobody" }), full.teachers.filter((t) => t.topics).map((t) => h("option", { value: t.id, selected: t.id === state.schoolTeacher, text: t.name + " (" + t.topics + " topics)" })));
+  teacherPick.addEventListener("change", () => { state.schoolTeacher = teacherPick.value || null; paint(); });
+
+  const starts = full.nodes.filter((n) => n.type === "concept" && n.findings.root_cause).sort((a, b) => b.findings.root_cause - a.findings.root_cause || a.grade - b.grade).slice(0, 6);
+  const startsCard = h("section", { class: "card" }, h("h3", { text: "Where teachers have agreed difficulties begin" }),
+    h("p", { class: "muted", text: "Topics named as a starting point in findings a teacher approved. This counts findings by topic. It does not rank learners." }),
+    starts.length
+      ? h("table", {}, h("thead", {}, h("tr", {}, h("th", { text: "Topic" }), h("th", { text: "Grade" }), h("th", { text: "Approved findings" }), h("th", { text: "Across the class" }))),
+          h("tbody", {}, starts.map((n) => h("tr", {},
+            h("td", {}, h("button", { type: "button", class: "linkbtn", style: "border:none;background:none;padding:0;min-height:0;color:#1f5f99;text-decoration:underline", onclick: () => { if (!g.byId[n.id]) { state.schoolSubject = "all"; state.schoolSel = n.id; show("school"); } else select(n.id); } }, n.label)),
+            h("td", { text: n.grade }), h("td", { text: n.findings.root_cause }), h("td", { text: n.mean === null ? "No scored records" : Math.round(n.mean * 100) + "%" })))))
+      : h("p", { class: "empty", text: "No root-cause finding has been approved yet." }));
+
+  const t = full.totals;
+  root.append(
+    h("div", { class: "map-top" },
+      h("div", {}, h("h2", { text: "School map" }),
+        h("p", { class: "muted", text: t.learners + " learners, " + t.topics_with_records + " of " + t.topics + " topics have records, " + t.approved_findings + " findings approved by teachers. Records are added up by topic. Learners are never ranked, and a learner is named only where a teacher approved a finding." }),
+        h("div", { class: "row", style: "margin:8px 0" },
+          subjects.length > 1 ? h("div", {}, h("label", { for: "school-subject", text: "Subject" }), subjectPick) : null,
+          h("div", {}, h("label", { for: "school-teacher", text: "Outline what this teacher taught" }), teacherPick))),
+      h("ul", { class: "legend", "aria-label": "Legend" }, legendItem("strong"), legendItem("shaky"), legendItem("gap"), legendItem("unseen"))),
+    h("div", { class: "map-cols" },
+      h("div", { class: "mapbox", tabindex: 0, role: "region", "aria-label": "Scrollable school map" }, svg),
+      detail),
+    startsCard);
+  paint();
+  if (state.schoolSel && g.byId[state.schoolSel]) drawTopic(state.schoolSel);
+  else clear(detail).append(h("h3", { text: "Select a topic" }), h("p", { class: "muted", text: "Click or press Enter on any box to see how the class is doing on it, who taught it and how, and which approved findings point to it." }));
+}
+
+// ---------------------------------------------------------------- review queue
+async function viewReview(root) {
+  const p = await api("/api/review/pending");
+  state.pendingCount = p.findings.length + p.summaries.length + (p.requests || []).length;
+  drawTabs();
+  const requests = p.requests || [];
+  const lids = [...new Set([...p.findings.map((f) => f.learner_id), ...p.summaries.map((x) => x.learner_id)])];
+  await Promise.all(lids.map((id) => getGraph(id).catch(() => null)));
+  clear(root);
+  root.append(h("h2", { text: "Review queue" }),
+    h("p", { class: "muted", text: "Proposals wait here until a named teacher decides. " + (state.session.sign_in ? "" : "Choose your name in the side panel first. ") + "Approving, editing or rejecting is recorded with your name." }));
+  if (!p.findings.length && !p.summaries.length && !requests.length) root.append(h("p", { class: "empty card", text: "Nothing is waiting for review." }));
+  if (requests.length) {
+    const inbox = await api("/api/inbox").catch(() => ({ files: [] }));
+    root.append(h("h3", { class: "section-title", text: "Records the agent is asking for (" + requests.length + ")" }));
+    for (const q of requests) root.append(requestCard(q, inbox.files || []));
+  }
+  if (p.findings.length) root.append(h("h3", { class: "section-title", text: "Proposed findings (" + p.findings.length + ")" }));
+  for (const f of p.findings) root.append(findingCard(f));
+  if (p.summaries.length) root.append(h("h3", { class: "section-title", text: "Drafted summaries (" + p.summaries.length + ")" }));
+  for (const sm of p.summaries) root.append(summaryCard(sm));
+}
+
+// Why a finding says what it says: the chain of topics, the plain facts and the results term by term.
+// All three come from the server, computed from the records the finding cites. No model wrote them.
+function termChart(series) {
+  if (!series || !series.length) return null;
+  const step = 54, base = 96, top = 16, width = 34 + step * series.length;
+  const svg = s("svg", { class: "chart terms", viewBox: "0 0 " + width + " 116", width, height: 116, role: "img",
+    "aria-label": "Results term by term: " + series.map((p) => p.period + " " + Math.round(p.mean * 100) + "%").join(", ") });
+  svg.append(s("line", { x1: 20, y1: base, x2: width - 6, y2: base, stroke: "#9AA4B8", "stroke-width": 1 }));
+  series.forEach((p, i) => {
+    const x = 30 + i * step, height = Math.max(2, (base - top) * p.mean);
+    const bar = s("rect", { x, y: base - height, width: 32, height, rx: 4, fill: heatColour(p.mean).bg, stroke: "#5C93F6", "stroke-width": 1 });
+    bar.append(s("title", { text: p.period + ": " + Math.round(p.mean * 100) + "% over " + p.records + " records" }));
+    svg.append(bar,
+      s("text", { x: x + 16, y: base - height - 4, "text-anchor": "middle", "font-size": 11, "font-weight": 700, fill: "#0A0A0A", text: Math.round(p.mean * 100) + "%" }),
+      s("text", { x: x + 16, y: base + 14, "text-anchor": "middle", "font-size": 10, fill: "#5B6478", text: p.period.slice(2) }));
+  });
+  return svg;
+}
+
+function chainStrip(chain) {
+  if (!chain || !chain.length) return null;
+  const strip = h("div", { class: "chain", role: "img", "aria-label": chain.map((t) => t.label).join(" then ") });
+  chain.forEach((t, i) => {
+    if (i) strip.append(h("span", { class: "chain-arrow", "aria-hidden": "true", text: "is needed for →" }));
+    strip.append(h("div", { class: "chain-chip" + (i === 0 ? " start" : "") },
+      h("span", { class: "chain-tag", text: i === 0 ? "Began here" : i === chain.length - 1 ? "Shows up here now" : "On the way" }),
+      h("strong", { text: t.label }),
+      h("span", { class: "small muted", text: "Grade " + t.grade + ", " + (t.mean === null ? "no records cited" : Math.round(t.mean * 100) + "% on record") })));
+  });
+  return strip;
+}
+
+function whyBlock(f) {
+  const e = f.explain;
+  if (!e) return null;
+  const chart = termChart(e.series);
+  return h("div", { class: "whybox" },
+    chainStrip(e.chain),
+    h("div", { class: "why" },
+      h("div", {}, h("div", { class: "small" }, h("strong", { text: "Why this is suggested" })), h("ul", {}, e.facts.map((fact) => h("li", { text: fact })))),
+      chart ? h("div", {}, h("div", { class: "small muted", text: "Results on the cited records, term by term" }), chart) : null));
+}
+
+function decisionError(box, msg) { clear(box).append(h("span", { class: "err", role: "alert", text: msg })); }
+
+function requestCard(q, files) {
+  const msg = h("div", { "aria-live": "polite" });
+  const text = h("textarea", { id: "ans-" + q.id, placeholder: "For example: Division test, Q1 1 out of 2, Q2 0 out of 2." });
+  const year = h("input", { type: "number", id: "ansy-" + q.id, min: "2000", max: "2100", style: "width:110px" });
+  const term = h("select", { id: "anst-" + q.id }, h("option", { value: "", text: "Not sure" }), [1, 2, 3].map((t) => h("option", { value: String(t), text: "Term " + t })));
+  const file = h("select", { id: "ansf-" + q.id }, h("option", { value: "", text: "No file" }), files.map((f) => h("option", { value: f.name, text: f.name })));
+  const buttons = [];
+  async function send(answer) {
+    if (!teacherId()) return decisionError(msg, "Choose your name in “Signed in as” in the side panel first.");
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      const body = { answer, teacher_id: teacherId() };
+      if (answer === "provided") Object.assign(body, { text: text.value || null, inbox_file: file.value || null, year: year.value ? Number(year.value) : null, term: term.value ? Number(term.value) : null });
+      const r = await post("/api/requests/" + encodeURIComponent(q.id) + "/answer", body);
+      const who = state.teachers.find((t) => t.id === teacherId());
+      clear(msg).append(h("span", { class: "okmsg", text: (answer === "provided" ? "Record supplied" : "Answered that no record exists") + " by " + (who ? who.name : "you") + "." + (r.resumed_runs && r.resumed_runs.length ? " The waiting agent run was resumed and will read it now." : "") }));
+      card.querySelector(".controls").hidden = true;
+      refreshPending();
+    } catch (e) { decisionError(msg, e.message); buttons.forEach((b) => (b.disabled = false)); }
+  }
+  const give = h("button", { type: "button", class: "primary", onclick: () => send("provided") }, "Add this record");
+  const none = h("button", { type: "button", onclick: () => send("no_record") }, "No record exists");
+  buttons.push(give, none);
+  const card = h("article", { class: "card", "aria-label": "Record request for " + (q.learner_name || q.learner_alias) },
+    h("div", { class: "row" }, h("span", { class: "pill", text: "Missing record" }), h("strong", { text: q.learner_name || q.learner_alias }),
+      h("span", { class: "small muted", text: (q.concept_label || q.concept_id) + (q.grade ? ", grade " + q.grade : "") })),
+    h("p", { class: "statement", style: "font-size:16px;margin:8px 0", text: q.question }),
+    h("p", { class: "small muted", text: "The agent stopped instead of guessing. If you add a record, it reads it, files it as your answer, and looks again before it proposes anything. If you say none exists, it will not ask again." }),
+    h("div", { class: "controls", style: "display:grid;gap:8px;margin-top:10px" },
+      h("div", {}, h("label", { for: "ans-" + q.id, text: "What you have, in your own words (marks as “2 out of 5”)" }), text),
+      h("div", { class: "row" },
+        h("div", {}, h("label", { for: "ansy-" + q.id, text: "Year" }), year),
+        h("div", {}, h("label", { for: "anst-" + q.id, text: "Term" }), term),
+        h("div", {}, h("label", { for: "ansf-" + q.id, text: "Or a file from the inbox" }), file)),
+      h("div", { class: "row" }, give, none)),
+    msg);
+  return card;
+}
+
+function findingCard(f) {
+  const msg = h("div", { "aria-live": "polite" });
+  const note = h("input", { type: "text", id: "note-" + f.id, placeholder: "Optional" });
+  const editor = h("textarea", { id: "edit-" + f.id }); editor.value = f.statement;
+  const editWrap = h("div", { hidden: true }, h("label", { for: "edit-" + f.id, text: "Edit the statement" }), editor,
+    h("button", { type: "button", class: "primary", onclick: () => send("edited") }, "Save edit and approve"));
+  const buttons = [];
+  async function send(decision) {
+    if (!teacherId()) return decisionError(msg, "Choose your name in “Signed in as” in the side panel first.");
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      const body = { decision, teacher_id: teacherId(), note: note.value || null };
+      if (decision === "edited") body.edited_statement = editor.value;
+      const r = await post("/api/findings/" + encodeURIComponent(f.id) + "/decision", body);
+      const who = state.teachers.find((t) => t.id === teacherId());
+      clear(msg).append(h("span", { class: "okmsg", text: { approved: "Approved", edited: "Edited and approved", rejected: "Rejected" }[decision] + " by " + (who ? who.name : "you") + "." + (r.resumed_runs && r.resumed_runs.length ? " The waiting agent run was resumed." : "") }));
+      card.querySelector(".controls").hidden = true;
+      refreshPending();
+    } catch (e) { decisionError(msg, e.message); buttons.forEach((b) => (b.disabled = false)); }
+  }
+  const approve = h("button", { type: "button", class: "primary", onclick: () => send("approved") }, "Approve");
+  const edit = h("button", { type: "button", onclick: () => { editWrap.hidden = !editWrap.hidden; if (!editWrap.hidden) editor.focus(); } }, "Edit");
+  const reject = h("button", { type: "button", class: "danger", onclick: () => send("rejected") }, "Reject");
+  buttons.push(approve, edit, reject);
+  const card = h("article", { class: "card finding", "aria-label": "Proposed finding for " + aliasOf(f.learner_id) },
+    h("div", { class: "row" }, h("span", { class: "pill", text: KIND[f.kind] || f.kind }), h("strong", { text: aliasOf(f.learner_id) }),
+      h("span", { class: "muted small", text: confWords(f.confidence) })),
+    h("p", { class: "statement", text: f.statement }),
+    whyBlock(f),
+    f.next_step ? h("div", { class: "nextstep" }, h("strong", { text: "A possible next step, for you to decide" }), h("div", { text: f.next_step })) : null,
+    h("details", { open: true }, h("summary", { text: "Evidence behind this (" + f.evidence.length + " records)" }), evidenceTable(f.evidence)),
+    h("p", { class: "small muted", text: "Proposed by " + f.proposed_by + "." }),
+    h("div", { class: "controls" },
+      h("div", {}, h("label", { for: "note-" + f.id, text: "Note (optional)" }), note),
+      h("div", { class: "row" }, approve, edit, reject), editWrap),
+    msg);
+  return card;
+}
+
+function summaryCard(sm) {
+  const msg = h("div", { "aria-live": "polite" });
+  const note = h("input", { type: "text", id: "snote-" + sm.id, placeholder: "Optional" });
+  const buttons = [];
+  async function send(decision) {
+    if (!teacherId()) return decisionError(msg, "Choose your name in “Signed in as” in the side panel first.");
+    buttons.forEach((b) => (b.disabled = true));
+    try {
+      const r = await post("/api/summaries/" + encodeURIComponent(sm.id) + "/decision", { decision, teacher_id: teacherId(), note: note.value || null });
+      const who = state.teachers.find((t) => t.id === teacherId());
+      clear(msg).append(h("span", { class: "okmsg", text: (decision === "approved" ? "Approved" : "Rejected") + " by " + (who ? who.name : "you") + "." + (r.resumed_runs && r.resumed_runs.length ? " The waiting agent run was resumed." : "") }));
+      card.querySelector(".controls").hidden = true;
+      refreshPending();
+    } catch (e) { decisionError(msg, e.message); buttons.forEach((b) => (b.disabled = false)); }
+  }
+  const approve = h("button", { type: "button", class: "primary", onclick: () => send("approved") }, "Approve this text");
+  const reject = h("button", { type: "button", class: "danger", onclick: () => send("rejected") }, "Reject");
+  buttons.push(approve, reject);
+  const rtl = RTL.has(sm.language);
+  const audience = sm.audience === "guardian" ? "For the learner's guardian" : "Handover for the next teacher";
+  const card = h("article", { class: "card", "aria-label": "Drafted summary for " + aliasOf(sm.learner_id) },
+    h("div", { class: "row" }, h("span", { class: "pill", text: audience }), h("span", { class: "pill", text: langName(sm.language) }), h("strong", { text: aliasOf(sm.learner_id) })),
+    sm.language !== "en"
+      ? h("div", { class: "small muted", text: "Machine draft in " + langName(sm.language) + ". Approve it only if you, or someone you trust, can read " + langName(sm.language) + ". The English note says the same thing." })
+      : null,
+    h("p", { class: "statement" + (rtl ? " rtl" : ""), lang: sm.language, dir: rtl ? "rtl" : "auto", style: "font-size:16px;margin:8px 0", text: sm.text }),
+    h("details", {}, h("summary", { text: "Approved findings this is built from (" + sm.findings.length + ")" }),
+      sm.findings.map((f) => h("div", { class: "stack", style: "margin-bottom:10px" }, h("div", { text: f.statement }), evidenceTable(f.evidence)))),
+    h("div", { class: "controls", style: "display:grid;gap:8px;margin-top:10px" },
+      h("div", {}, h("label", { for: "snote-" + sm.id, text: "Note (optional)" }), note),
+      h("div", { class: "row" }, approve, reject)),
+    msg);
+  return card;
+}
+
+// ---------------------------------------------------------------- approved
+// What a named teacher has already approved for this learner: the findings, and the notes built from them.
+async function viewApproved(root) {
+  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  const lid = encodeURIComponent(state.learnerId);
+  await getGraph(state.learnerId).catch(() => null);
+  const [fr, sr] = await Promise.all([api("/api/findings?learner_id=" + lid), api("/api/summaries?learner_id=" + lid)]);
+  const findings = fr.findings.filter((f) => f.status === "approved" || f.status === "edited");
+  const notes = sr.summaries.filter((x) => x.status === "approved");
+  const teacherName = (id) => (state.teachers.find((t) => t.id === id) || {}).name || id || "a teacher";
+  const when = (iso) => (iso || "").slice(0, 10);
+  clear(root);
+  root.append(h("h2", { text: "Approved for " + aliasOf(state.learnerId) }),
+    h("p", { class: "muted", text: "Only what a named teacher has approved appears here. Each item shows who approved it and the records it rests on." }),
+    h("p", {}, reportLink(state.learnerId)));
+
+  root.append(h("h3", { class: "section-title", text: "Notes (" + notes.length + ")" }));
+  if (!notes.length) root.append(h("p", { class: "empty card", text: "No note has been approved for this learner yet." }));
+  for (const n of notes) {
+    const rtl = RTL.has(n.language);
+    const copied = h("span", { class: "small muted", "aria-live": "polite" });
+    const copy = h("button", { type: "button", onclick: async () => {
+      try { await navigator.clipboard.writeText(n.text); copied.textContent = "Copied."; }
+      catch (e) { copied.textContent = "Could not copy. Select the text instead."; }
+    } }, "Copy text");
+    root.append(h("article", { class: "card", "aria-label": "Approved note" },
+      h("div", { class: "row" },
+        h("span", { class: "pill", text: n.audience === "guardian" ? "For the learner's guardian" : "Handover for the next teacher" }),
+        h("span", { class: "pill plain", text: langName(n.language) }),
+        h("span", { class: "pill ok", text: "Approved by " + teacherName(n.decided_by) + (n.decided_at ? " on " + when(n.decided_at) : "") })),
+      h("p", { class: "note-text" + (rtl ? " rtl" : ""), lang: n.language, dir: rtl ? "rtl" : "auto", text: n.text }),
+      h("div", { class: "row" }, copy, copied)));
+  }
+
+  root.append(h("h3", { class: "section-title", text: "Findings (" + findings.length + ")" }));
+  if (!findings.length) root.append(h("p", { class: "empty card", text: "No finding has been approved for this learner yet." }));
+  for (const f of findings) {
+    root.append(h("article", { class: "card finding", "aria-label": "Approved finding" },
+      h("div", { class: "row" },
+        h("span", { class: "pill", text: KIND[f.kind] || f.kind }),
+        h("span", { class: "pill ok", text: (f.status === "edited" ? "Edited and approved by " : "Approved by ") + teacherName(f.decided_by) + (f.decided_at ? " on " + when(f.decided_at) : "") })),
+      h("p", { class: "statement", text: f.statement }),
+      whyBlock(f),
+      f.next_step ? h("div", { class: "nextstep" }, h("strong", { text: "A possible next step" }), h("div", { text: f.next_step })) : null,
+      h("details", {}, h("summary", { text: "Evidence behind this (" + f.evidence.length + " records)" }), evidenceTable(f.evidence))));
+  }
+}
+
+// ---------------------------------------------------------------- agent
+async function viewAgent(root) {
+  clear(root);
+  root.append(h("h2", { text: "Agent" }),
+    h("p", { class: "muted", text: "The agent reads a document, checks the map and proposes findings. It cannot approve anything: it stops and waits for a teacher." }));
+  const out = h("div", { id: "agent-out" });
+  const runsBox = h("div", { id: "runs-list" });
+  let files = [];
+  try { files = (await api("/api/inbox")).files; } catch (e) { out.append(h("p", { class: "err", text: e.message })); }
+  const fileSel = h("select", { id: "inbox-file" }, h("option", { value: "", text: "No file: use the records already stored" }), files.map((f) => h("option", { value: f.name, text: f.name })));
+  const learnerSel = h("select", { id: "run-learner" }, state.learners.map((l) => h("option", { value: l.learner_id, text: l.name + "  ·  " + codeOf(l.learner_id) })));
+  learnerSel.value = state.learnerId;
+  let offered = { default: "", models: [], problem: null, providers: [] };
+  try { offered = await api("/api/models"); } catch (e) { /* the default model is used */ }
+  const providers = offered.providers || [];
+  // One list, grouped by where the model runs. The value carries the provider and the model.
+  const pickValue = (pid, m) => pid + "::" + m;
+  const modelSel = h("select", { id: "run-model" }, providers.filter((p) => p.models.length).map((p) =>
+    h("optgroup", { label: p.label }, p.models.map((m) => h("option", { value: pickValue(p.id, m), text: m + (p.id === "local" && m === offered.default ? " (default)" : "") })))));
+  const saved = store("meska.model");
+  if (saved && [...modelSel.options].some((o) => o.value === saved)) modelSel.value = saved;
+  const cloudNote = h("p", { class: "small", role: "status" });
+  const chosen = () => { const [pid, ...rest] = String(modelSel.value || "local::").split("::"); return { provider: pid, model: rest.join("::") }; };
+  const showCloudNote = () => {
+    const p = providers.find((x) => x.id === chosen().provider);
+    clear(cloudNote);
+    if (p && p.cloud) cloudNote.append(h("strong", { text: "This run uses " + p.label + ". " }), "The document and the records the agent reads are sent to that company. Use it with made-up data only. Results from it cannot go in EVALS.md.");
+  };
+  modelSel.addEventListener("change", () => { store("meska.model", modelSel.value); showCloudNote(); });
+  showCloudNote();
+  // Cloud keys: typed here, kept in the app's memory until it stops, never saved and never shown again.
+  const cloudBox = h("details", { class: "card", style: "margin-top:12px" }, h("summary", { text: "Cloud models (optional): OpenAI and Claude" }),
+    h("p", { class: "small muted", text: "The default is a model on this computer, so nothing leaves it. To compare with a cloud model, paste your own key below. It stays in memory until the app stops. It is not saved to a file or the database, and the app never shows it back." }),
+    providers.filter((p) => p.cloud).map((p) => {
+      const input = h("input", { type: "password", id: "key-" + p.id, autocomplete: "off", spellcheck: "false", placeholder: p.ready ? "A key is in use. Paste another to replace it." : "Paste your " + p.label.replace(" (cloud)", "") + " key", style: "min-width:280px" });
+      const status = h("span", { class: "small " + (p.ready ? "okmsg" : "muted"), text: p.ready ? "Ready. Key from " + p.key_source + ". " + p.models.length + " models." : "No key yet. You can also set " + p.key_env + " before starting the app." });
+      const say = (text, bad) => { status.className = "small " + (bad ? "err" : "okmsg"); status.textContent = text; };
+      const save = h("button", { type: "button", onclick: async () => {
+        if (!input.value.trim()) return say("Paste a key first.", true);
+        try { await post("/api/providers/" + p.id + "/key", { key: input.value.trim() }); input.value = ""; show("agent"); }
+        catch (e) { say(e.message, true); }
+      } }, "Use this key");
+      const forget = h("button", { type: "button", onclick: async () => {
+        try { await api("/api/providers/" + p.id + "/key", { method: "DELETE" }); show("agent"); } catch (e) { say(e.message, true); }
+      } }, "Forget key");
+      return h("div", { class: "row", style: "margin:8px 0" }, h("label", { for: "key-" + p.id, text: p.label, style: "min-width:120px" }), input, save, p.ready ? forget : null, status,
+        p.problem ? h("span", { class: "small err", text: p.problem }) : null);
+    }));
+  const msg = h("div", { "aria-live": "polite" });
+  const go = h("button", { type: "button", class: "primary" }, "Start a run");
+  go.addEventListener("click", async () => {
+    go.disabled = true; clear(msg);
+    try {
+      const r = await post("/api/runs", { learner_id: learnerSel.value, inbox_file: fileSel.value || null, model: chosen().model || null, provider: chosen().provider || "local" });
+      state.runId = r.run_id;
+      pollRun(out, runsBox);
+    } catch (e) { msg.append(h("span", { class: "err", role: "alert", text: e.message })); }
+    go.disabled = false;
+  });
+  root.append(h("div", { class: "card" }, h("div", { class: "row" },
+    h("div", {}, h("label", { for: "inbox-file", text: "Document from the inbox" }), h("br"), fileSel),
+    h("div", {}, h("label", { for: "run-learner", text: "Learner" }), h("br"), learnerSel),
+    h("div", {}, h("label", { for: "run-model", text: "Model" }), h("br"), modelSel),
+    h("div", {}, h("br"), go)),
+    h("p", { class: "small muted", text: offered.problem ? offered.problem + " Start it, or the run will fail." : "Models come from " + (offered.endpoint || "the local endpoint") + ". Only results from an open-weights model belong in EVALS.md." }),
+    cloudNote, msg), cloudBox, out, h("h3", { style: "margin:16px 0 6px", text: "Earlier runs" }), runsBox);
+  await loadRuns(runsBox, out);
+  if (state.runId) pollRun(out, runsBox);
+}
+
+async function loadRuns(box, out) {
+  try {
+    const r = await api("/api/runs");
+    clear(box);
+    if (!r.runs.length) { box.append(h("p", { class: "muted", text: "No runs yet." })); return; }
+    box.append(h("div", { class: "tablewrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Started", "Learner", "Status", ""].map((t) => h("th", { scope: "col", text: t })))),
+      h("tbody", {}, r.runs.slice(0, 15).map((run) => h("tr", {},
+        h("td", { text: run.started_at ? new Date(run.started_at).toLocaleString() : "" }),
+        h("td", { text: aliasOf((run.task || {}).learner_id) }),
+        h("td", { class: "status-" + run.status, text: statusWords(run.status) }),
+        h("td", {}, h("button", { type: "button", onclick: () => { state.runId = run.run_id; pollRun(out, box); } }, "Open"))))))));
+  } catch (e) { clear(box).append(h("p", { class: e.status === 503 ? "muted" : "err", text: e.message })); }
+}
+const statusWords = (st) => ({ running: "Running", waiting_for_teacher: "Waiting for a teacher", done: "Done", failed: "Failed" }[st] || st);
+
+function pollRun(out, runsBox) {
+  if (state.runTimer) clearInterval(state.runTimer);
+  const tick = async () => {
+    if (!document.body.contains(out)) { clearInterval(state.runTimer); state.runTimer = null; return; }
+    try {
+      const r = await api("/api/runs/" + encodeURIComponent(state.runId));
+      renderRun(out, r);
+      if (r.status === "done" || r.status === "failed") { clearInterval(state.runTimer); state.runTimer = null; loadRuns(runsBox, out); refreshPending(); }
+    } catch (e) { clear(out).append(h("p", { class: "err", role: "alert", text: e.message })); clearInterval(state.runTimer); state.runTimer = null; }
+  };
+  tick();
+  state.runTimer = setInterval(tick, 2000);
+}
+
+function renderRun(out, r) {
+  clear(out);
+  const u = r.usage || {};
+  const usageText = Object.keys(u).length
+    ? [u.calls !== undefined ? u.calls + " model calls" : null, u.input_tokens !== undefined ? u.input_tokens + " tokens in" : null, u.output_tokens !== undefined ? u.output_tokens + " tokens out" : null, u.seconds !== undefined ? u.seconds + " s of model time" : null].filter(Boolean).join(", ")
+    : "not recorded yet";
+  const card = h("div", { class: "card stack", "aria-live": "polite" },
+    h("div", { class: "row" }, h("strong", { text: "Run " + r.run_id }), h("span", { class: "status-" + r.status, text: statusWords(r.status) }),
+      r.task ? h("span", { class: "muted", text: aliasOf(r.task.learner_id) + (r.task.inbox_file ? ", file " + String(r.task.inbox_file).split(/[\\/]/).pop() : "") }) : null),
+    h("dl", { class: "kv" }, h("dt", { text: "Model" }), h("dd", { text: r.model || "not recorded" }), h("dt", { text: "Usage" }), h("dd", { text: usageText })));
+  if (r.status === "waiting_for_teacher") {
+    card.append(h("p", {}, h("strong", { text: "Waiting for a teacher. " }), h("a", { href: "#review", onclick: (ev) => { ev.preventDefault(); show("review"); } }, "Open the review queue"),
+      (r.pending && r.pending.gate === "records") ? " to answer the agent's question about a missing record. The run continues once you answer." : " to approve, edit or reject what the agent proposed. The run continues once you decide."));
+  }
+  if (r.error) card.append(h("p", { class: "err", role: "alert", text: "The run stopped: " + r.error }));
+  card.append(h("h3", { text: "Steps" }));
+  card.append((r.steps || []).length
+    ? h("ol", { class: "steps" }, r.steps.map((st) => h("li", {}, h("strong", { text: st.node }), " ", h("span", { class: st.ok === false ? "err" : "muted", text: (st.ok === false ? "failed. " : "") + (st.note || "") }))))
+    : h("p", { class: "muted", text: "No steps yet." }));
+  const oq = r.open_questions || [];
+  if (oq.length) {
+    card.append(h("h3", { text: "Questions the agent left open instead of guessing" }),
+      h("ul", {}, oq.map((q) => h("li", { text: typeof q === "string" ? q : JSON.stringify(q) }))));
+  }
+  const ids = (r.finding_ids || []).length;
+  if (ids || (r.summary_ids || []).length) card.append(h("p", { class: "small muted", text: "Proposed " + ids + " finding(s) and " + (r.summary_ids || []).length + " summary draft(s)." }));
+  out.append(card);
+}
+
+// ---------------------------------------------------------------- audit
+async function viewAudit(root) {
+  clear(root);
+  root.append(h("h2", { text: "Audit log" }),
+    h("p", { class: "muted", text: "Every tool call anyone made, and every decision with the teacher's name." }));
+  const tool = h("input", { type: "text", id: "audit-tool", placeholder: "e.g. propose_finding" });
+  const limit = h("select", { id: "audit-limit" }, [50, 100, 300].map((n) => h("option", { value: n, text: "Latest " + n })));
+  const table = h("div"), appr = h("div");
+  async function load() {
+    const q = "?limit=" + limit.value + (tool.value.trim() ? "&tool=" + encodeURIComponent(tool.value.trim()) : "");
+    const r = await api("/api/audit" + q);
+    clear(table);
+    if (!r.entries.length) { table.append(h("p", { class: "empty", text: "No entries match." })); return; }
+    const tb = h("tbody");
+    for (const e of r.entries) {
+      const detail = h("tr", { hidden: true }, h("td", { colspan: 6 },
+        h("strong", { text: "Input" }), h("pre", { text: pretty(e.input) }), h("strong", { text: "Output" }), h("pre", { text: pretty(e.output) })));
+      const btn = h("button", { type: "button", "aria-expanded": "false", onclick: () => { detail.hidden = !detail.hidden; btn.setAttribute("aria-expanded", String(!detail.hidden)); btn.textContent = detail.hidden ? "Show" : "Hide"; } }, "Show");
+      tb.append(h("tr", {}, h("td", { text: new Date(e.ts).toLocaleString() }), h("td", { text: e.actor }), h("td", { text: e.tool }),
+        h("td", { class: e.ok ? "okmsg" : "err", text: e.ok ? "ok" : "failed" }), h("td", { text: e.duration_ms + " ms" }), h("td", {}, btn)), detail);
+    }
+    table.append(h("div", { class: "tablewrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Time", "Actor", "Tool", "Result", "Duration", "Details"].map((t) => h("th", { scope: "col", text: t })))), tb)));
+  }
+  const filter = h("div", { class: "row card" }, h("div", {}, h("label", { for: "audit-tool", text: "Tool name" }), h("br"), tool),
+    h("div", {}, h("label", { for: "audit-limit", text: "How many" }), h("br"), limit),
+    h("div", {}, h("br"), h("button", { type: "button", onclick: () => load().catch((e) => clear(table).append(h("p", { class: "err", text: e.message }))) }, "Apply")));
+  root.append(filter, table, h("h3", { style: "margin:18px 0 6px", text: "Decisions by teachers" }), appr);
+  const a = await api("/api/approvals");
+  if (!a.approvals.length) appr.append(h("p", { class: "muted", text: "No decisions yet." }));
+  else appr.append(h("div", { class: "tablewrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, ["Time", "Teacher", "Decision", "On", "Note"].map((t) => h("th", { scope: "col", text: t })))),
+    h("tbody", {}, a.approvals.map((x) => h("tr", {}, h("td", { text: new Date(x.ts).toLocaleString() }), h("td", { text: x.teacher_name }),
+      h("td", { text: x.decision }), h("td", { text: x.target_type + " " + x.target_id }), h("td", { text: x.note || "" })))))));
+  await load();
+}
+function pretty(text) { try { return JSON.stringify(JSON.parse(text), null, 2); } catch (e) { return text; } }
+
+// ---------------------------------------------------------------- add records
+function gradeSelect(id) {
+  const [lo, hi] = state.session.curriculum.grades;
+  const sel = h("select", { id });
+  for (let g = lo; g <= hi; g++) sel.append(h("option", { value: g, text: "Grade " + g }));
+  return sel;
+}
+async function viewUpload(root) {
+  clear(root);
+  const cur = state.session.curriculum;
+  root.append(h("h2", { text: "Add records" }),
+    h("p", { class: "muted", text: "Two ways in. A marks sheet is exact and uses no model. A document goes to the agent, which proposes rows for you to confirm." }));
+
+  // ---- marks sheet
+  const grade = gradeSelect("up-grade");
+  const term = h("select", { id: "up-term" }, Array.from({ length: cur.terms }, (_, i) => h("option", { value: i + 1, text: "Term " + (i + 1) })));
+  const year = h("input", { type: "number", id: "up-year", min: 2000, max: 2100, value: state.session.latest_year || new Date().getFullYear() });
+  const count = h("input", { type: "number", id: "up-count", min: 1, max: 60, value: 5 });
+  const subjects = cur.subjects || [];
+  const subject = h("select", { id: "up-subject" }, subjects.length > 1 ? h("option", { value: "", text: "All subjects" }) : null,
+    subjects.map((x) => h("option", { value: x.id, text: x.label })));
+  let classes = [];
+  try { classes = (await api("/api/classes")).classes.filter((c) => c.learners.length); } catch (e) { classes = []; }
+  const klass = h("select", { id: "up-class" }, h("option", { value: "", text: "Everyone in the grade" }),
+    classes.map((c) => h("option", { value: c.id, text: c.name + " (" + c.learners.length + " learners)" })));
+  klass.onchange = () => { const c = classes.find((x) => x.id === klass.value); if (c) grade.value = c.grade; };
+  grade.onchange = () => { const c = classes.find((x) => x.id === klass.value); if (c && String(c.grade) !== grade.value) klass.value = ""; };
+  const link = (format, text) => h("button", { type: "button", onclick: () => {
+    location.href = "/api/upload/template?grade=" + grade.value + "&term=" + term.value + "&questions=" + (count.value || 5) + "&format=" + format +
+      "&class_id=" + encodeURIComponent(klass.value) + "&subject=" + encodeURIComponent(subject.value);
+  } }, text);
+  const title = h("input", { type: "text", id: "up-title", placeholder: "e.g. Fractions quiz, week 6", maxlength: 80 });
+  const file = h("input", { type: "file", id: "up-file", accept: ".xlsx,.csv" });
+  const out = h("div", { id: "up-out", "aria-live": "polite" });
+  const send = async (confirm) => {
+    if (!file.files.length) throw new Error("Choose the filled marks sheet first.");
+    const form = new FormData();
+    form.append("file", file.files[0]);
+    form.append("title", title.value);
+    form.append("year", year.value);
+    form.append("term", term.value);
+    form.append("grade", grade.value);
+    form.append("teacher_id", teacherId());
+    form.append("confirm", confirm ? "true" : "false");
+    return postForm("/api/upload/marks", form);
+  };
+  const check = h("button", { type: "button", class: "primary" }, "Check the sheet");
+  check.onclick = async () => {
+    clear(out);
+    try {
+      const r = (await send(false)).check;
+      if (!r.ok) {
+        out.append(h("p", { class: "err", text: "Nothing was saved. " + r.problem_count + " thing(s) to fix in the sheet:" }),
+          h("ul", {}, r.problems.map((x) => h("li", { text: x }))));
+        return;
+      }
+      out.append(h("p", {}, h("strong", { text: r.quiz.title }), "  ·  " + r.quiz.year + "-T" + r.quiz.term + "  ·  Grade " + r.quiz.grade));
+      out.append(h("div", { class: "tablewrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, h("th", { scope: "col", text: "Learner" }), h("th", { scope: "col", text: "Code" }),
+          r.questions.map((q) => h("th", { scope: "col" }, q.name, h("br"), h("span", { class: "small muted", text: q.topic + " (out of " + q.out_of + ")" }))))),
+        h("tbody", {}, r.learners.map((l) => h("tr", {}, h("td", { text: l.name }), h("td", { text: l.code }),
+          l.marks.map((m) => h("td", { text: m === null ? "" : m }))))))));
+      const notes = [r.new_rows + " new mark(s) will be saved as records."];
+      if (r.already_imported) notes.push(r.already_imported + " were saved before and will be skipped.");
+      if (r.blank) notes.push(r.blank + " blank cell(s) are treated as not attempted and are not saved.");
+      out.append(h("p", { class: "muted", text: notes.join(" ") }));
+      if (!r.new_rows) return;
+      const save = h("button", { type: "button", class: "primary" }, "Save " + r.new_rows + " marks as records");
+      save.onclick = async () => {
+        save.disabled = true;
+        try {
+          const done = (await send(true)).saved;
+          clear(out).append(h("p", { class: "okmsg", text: "Saved " + done.saved + " records for " + done.learners + " learner(s). They now count in each learner's map." }));
+          state.graphs = {};
+          state.learners = (await api("/api/learners")).learners;
+        } catch (e) { save.disabled = false; out.append(h("p", { class: "err", role: "alert", text: e.message })); }
+      };
+      out.append(save);
+    } catch (e) { out.append(h("p", { class: "err", role: "alert", text: e.message })); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "1. Download a marks sheet" }),
+    h("p", { class: "muted", text: "One sheet is one quiz. Learners go down the side, questions go across the top. In the Topic row, say which topic each question tests: that is what lets the map show where a learner is stuck. Names in the sheet are for you. A learner is matched by record code." }),
+    h("div", { class: "row" }, classes.length ? field("Class", klass) : null, field("Grade", grade), field("Term", term),
+      subjects.length > 1 ? field("Subject", subject) : null, field("Questions", count)),
+    h("div", { class: "row", style: "margin-top:10px" }, link("xlsx", "Download for Excel"), link("csv", "Download as CSV")),
+    h("h3", { style: "margin-top:22px", text: "2. Upload the filled sheet" }),
+    h("div", { class: "row" }, field("Quiz name", title), field("School year (the year it starts)", year), field("Filled sheet", file)),
+    h("div", { class: "row", style: "margin-top:10px" }, check),
+    out));
+
+  // ---- document for the agent
+  const doc = h("input", { type: "file", id: "up-doc", accept: ".md,.txt,.csv" });
+  const docOut = h("div", { "aria-live": "polite" });
+  const docBtn = h("button", { type: "button" }, "Send to the inbox");
+  docBtn.onclick = async () => {
+    clear(docOut);
+    try {
+      if (!doc.files.length) throw new Error("Choose a file first.");
+      const form = new FormData();
+      form.append("file", doc.files[0]);
+      form.append("teacher_id", teacherId());
+      const r = await postForm("/api/upload/document", form);
+      docOut.append(h("p", { class: "okmsg", text: r.name + " is in the inbox. " }), h("p", {}, h("button", { type: "button", onclick: () => show("agent") }, "Open the Agent page to have it read")));
+    } catch (e) { docOut.append(h("p", { class: "err", role: "alert", text: e.message })); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "A document for the agent" }),
+    h("p", { class: "muted", text: "A quiz sheet or a teacher's note as text (.md, .txt or .csv), in English or Arabic. Use the learner's record code in it, not their name. The agent proposes rows from it and stops for a teacher to confirm. Sending the file adds no record by itself." }),
+    h("div", { class: "row" }, field("Document", doc), docBtn), docOut));
+}
+
+// ---------------------------------------------------------------- school: classes, people, accounts, records
+async function viewPeople(root) {
+  clear(root);
+  const me = state.session.teacher;
+  const admin = !!me && me.role === "admin";
+  const demo = !state.session.sign_in;
+  const subjects = state.session.curriculum.subjects || [];
+  const subjectName = (id) => (subjects.find((x) => x.id === id) || {}).label || (id === "all" ? "All subjects" : id);
+  const say = (box, cls, text) => clear(box).append(h("p", { class: cls, role: cls === "err" ? "alert" : "status", text }));
+  const size = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+  root.append(h("h2", { text: "School" }),
+    h("p", { class: "muted", text: demo ? "Made-up data, no sign-in yet. Everything here is open to whoever is at this machine." :
+      admin ? "You are the school admin: you set up classes, accounts and look after the records." :
+      "Your classes and your own account. The school admin sets up classes and accounts." }));
+
+  if (demo) {
+    const name = h("input", { type: "text", id: "su-name", autocomplete: "name" });
+    const user = h("input", { type: "text", id: "su-user", autocomplete: "username" });
+    const pass = h("input", { type: "password", id: "su-pass", autocomplete: "new-password" });
+    const msg = h("div");
+    const go = h("button", { type: "button", class: "primary" }, "Create the admin and turn on sign-in");
+    go.onclick = async () => {
+      try { await post("/api/session/setup", { name: name.value, username: user.value, password: pass.value }); location.reload(); }
+      catch (e) { say(msg, "err", e.message); }
+    };
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Turn on sign-in" }),
+      h("p", { class: "muted", text: "Right now anyone who opens this page can pick a teacher's name. That is fine for made-up data. Create the school admin account to turn on sign-in: after that every teacher needs a username and a password, sees only the learners of their own classes, and only the admin can add teachers." }),
+      h("div", { class: "row" }, field("Your name", name), field("Username", user), field("Password (8 characters or more)", pass)),
+      h("div", { class: "row", style: "margin-top:10px" }, go), msg));
+  }
+
+  // ---- classes
+  const classBox = h("div");
+  const classMsg = h("div");
+  let classes = [];
+  async function loadClasses() {
+    classes = (await api("/api/classes")).classes;
+    clear(classBox);
+    if (!classes.length) {
+      classBox.append(h("p", { class: "muted", text: admin ? "No class yet. Make the first one below." : "You have no class yet. Ask the school admin to give you one." }));
+      return;
+    }
+    for (const c of classes) {
+      const body = h("div", { class: "classbody" });
+      const teachers = h("div", { class: "row" }, c.teachers.length ? c.teachers.map((t) => {
+        const chip = h("span", { class: "pill plain" }, t.name + " · " + subjectName(t.subject));
+        if (admin) chip.append(" ", h("button", { type: "button", class: "x", "aria-label": "Remove " + t.name + " from " + c.name, onclick: async () => {
+          try { await api("/api/classes/" + encodeURIComponent(c.id) + "/teachers/" + encodeURIComponent(t.teacher_id), { method: "DELETE" }); await loadClasses(); }
+          catch (e) { say(classMsg, "err", e.message); }
+        } }, "×"));
+        return chip;
+      }) : h("span", { class: "muted", text: "No teacher yet" }));
+      body.append(h("p", { class: "small muted", text: "Teachers" }), teachers,
+        h("p", { class: "small muted", style: "margin-top:10px", text: "Learners" }),
+        h("div", { class: "row" }, c.learners.length ? c.learners.map((l) => {
+          const chip = h("span", { class: "pill plain" }, l.name + " (" + l.alias.replace("Learner ", "") + ")");
+          if (admin) chip.append(" ", h("button", { type: "button", class: "x", "aria-label": "Take " + l.name + " out of " + c.name, onclick: async () => {
+            try { await api("/api/classes/" + encodeURIComponent(c.id) + "/learners/" + encodeURIComponent(l.learner_id), { method: "DELETE" }); await loadClasses(); }
+            catch (e) { say(classMsg, "err", e.message); }
+          } }, "×"));
+          return chip;
+        }) : h("span", { class: "muted", text: "No learner yet" })));
+      if (admin) {
+        const tsel = h("select", { id: "ct-" + c.id }, state.teachers.map((t) => h("option", { value: t.id, text: t.name })));
+        const ssel = h("select", { id: "cs-" + c.id }, (subjects.length ? subjects : [{ id: "all", label: "All subjects" }]).map((x) => h("option", { value: x.id, text: x.label })));
+        const inClass = new Set(c.learners.map((l) => l.learner_id));
+        const lsel = h("select", { id: "cl-" + c.id }, state.learners.filter((l) => !inClass.has(l.learner_id) && l.grade_now === c.grade)
+          .map((l) => h("option", { value: l.learner_id, text: l.name + " (" + l.alias.replace("Learner ", "") + ")" + (l.class_name ? ", now in " + l.class_name : "") })));
+        body.append(h("div", { class: "row", style: "margin-top:12px" },
+          field("Give this class to", tsel), field("for", ssel),
+          h("button", { type: "button", onclick: async () => {
+            try { await post("/api/classes/" + encodeURIComponent(c.id) + "/teachers", { teacher_id: tsel.value, subject: ssel.value }); await loadClasses(); }
+            catch (e) { say(classMsg, "err", e.message); }
+          } }, "Add teacher"),
+          field("Move a grade " + c.grade + " learner here", lsel),
+          h("button", { type: "button", disabled: !lsel.options.length, onclick: async () => {
+            try {
+              await post("/api/classes/" + encodeURIComponent(c.id) + "/learners", { learner_ids: [lsel.value] });
+              state.learners = (await api("/api/learners")).learners;
+              await loadClasses();
+            } catch (e) { say(classMsg, "err", e.message); }
+          } }, "Move")));
+      }
+      classBox.append(h("details", { class: "classrow" },
+        h("summary", {}, h("strong", { text: c.name }), h("span", { class: "muted", text: "  Grade " + c.grade + " · " + c.year + "/" + String(c.year + 1).slice(2) + " · " + c.learners.length + " learner(s) · " + c.teachers.length + " teacher(s)" })),
+        body));
+    }
+  }
+  const classCard = h("div", { class: "card" },
+    h("h3", { text: admin || demo ? "Classes" : "My classes" }),
+    h("p", { class: "muted", text: "A class is a group of learners in one school year. Once sign-in is on, a teacher sees the learners of their own classes and nobody else. A teacher who can see a learner sees that learner's whole record, every subject and every year." }),
+    classBox, classMsg);
+  if (admin) {
+    const cname = h("input", { type: "text", id: "nc-name", maxlength: 30, placeholder: "e.g. 5B" });
+    const cgrade = gradeSelect("nc-grade");
+    const cyear = h("input", { type: "number", id: "nc-year", min: 2000, max: 2100, value: state.session.latest_year || new Date().getFullYear() });
+    classCard.append(h("div", { class: "row", style: "margin-top:14px" }, field("New class", cname), field("Grade", cgrade), field("School year (the year it starts)", cyear),
+      h("button", { type: "button", class: "primary", onclick: async () => {
+        try { await post("/api/classes", { name: cname.value, grade: Number(cgrade.value), year: Number(cyear.value) }); cname.value = ""; say(classMsg, "okmsg", "Class made. Open it to add a teacher and learners."); await loadClasses(); }
+        catch (e) { say(classMsg, "err", e.message); }
+      } }, "Make the class")));
+  }
+  root.append(classCard);
+  await loadClasses();
+
+  if (!demo) {
+    // ---- add a learner
+    const lname = h("input", { type: "text", id: "nl-name", maxlength: 60 });
+    const lgrade = gradeSelect("nl-grade");
+    const lclass = h("select", { id: "nl-class" }, admin ? h("option", { value: "", text: "No class yet" }) : null,
+      classes.map((c) => h("option", { value: c.id, "data-grade": c.grade, text: c.name + " (grade " + c.grade + ")" })));
+    lclass.onchange = () => { const c = classes.find((x) => x.id === lclass.value); if (c) lgrade.value = c.grade; };
+    if (!admin) lclass.onchange();
+    const lmsg = h("div");
+    const ladd = h("button", { type: "button", class: "primary" }, "Add the learner");
+    ladd.onclick = async () => {
+      try {
+        const r = await post("/api/learners", { name: lname.value, grade: Number(lgrade.value), class_id: lclass.value || null });
+        say(lmsg, "okmsg", r.name + " now has the record code " + r.code + ". Use that code in documents and marks sheets.");
+        lname.value = "";
+        state.learners = (await api("/api/learners")).learners;
+        await loadClasses();
+      } catch (e) { say(lmsg, "err", e.message); }
+    };
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Add a learner" }),
+      h("p", { class: "muted", text: "This opens a record and gives it a code. There is no login for learners. The name is shown to teachers only. The agent, documents and any model only ever see the code." }),
+      h("div", { class: "row" }, field("Name, as on the class list", lname), field("Class", lclass), field("Grade", lgrade), ladd), lmsg));
+  }
+
+  if (admin) {
+    // ---- teachers and accounts
+    const list = h("div");
+    const tname = h("input", { type: "text", id: "nt-name", maxlength: 80 });
+    const tuser = h("input", { type: "text", id: "nt-user", autocomplete: "off" });
+    const tpass = h("input", { type: "password", id: "nt-pass", autocomplete: "new-password" });
+    const trole = h("select", { id: "nt-role" }, h("option", { value: "teacher", text: "Teacher" }), h("option", { value: "admin", text: "School admin" }));
+    const tsub = h("select", { id: "nt-sub" }, h("option", { value: "", text: "Not set" }), subjects.map((x) => h("option", { value: x.id, text: x.label })));
+    const tmsg = h("div");
+    const loadPeople = async () => {
+      const r = await api("/api/school/people");
+      clear(list).append(h("div", { class: "tablewrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Name", "Username", "Role", "Subjects", "Password"].map((t) => h("th", { scope: "col", text: t })))),
+        h("tbody", {}, r.people.map((p) => {
+          const box = h("input", { type: "password", "aria-label": "New password for " + p.name, placeholder: "New password", autocomplete: "new-password" });
+          const cell = h("td", {});
+          if (p.username) {
+            const btn = h("button", { type: "button" }, "Reset");
+            btn.onclick = async () => {
+              try { await post("/api/teachers/" + encodeURIComponent(p.id) + "/password", { password: box.value }); clear(cell).append(h("span", { class: "okmsg", text: "Changed. Tell them in person." })); }
+              catch (e) { cell.append(h("p", { class: "err", role: "alert", text: e.message })); }
+            };
+            cell.append(h("div", { class: "row" }, box, btn));
+          } else cell.append(h("span", { class: "muted", text: "No account" }));
+          return h("tr", {}, h("td", { text: p.name }), h("td", { text: p.username || "" }),
+            h("td", { text: p.role === "admin" ? "School admin" : p.role ? "Teacher" : "" }), h("td", { text: (p.subjects || []).map(subjectName).join(", ") }), cell);
+        })))));
+    };
+    const tadd = h("button", { type: "button", class: "primary" }, "Add the teacher");
+    tadd.onclick = async () => {
+      try {
+        const r = await post("/api/teachers", { name: tname.value, username: tuser.value, password: tpass.value, role: trole.value, subjects: tsub.value ? [tsub.value] : [] });
+        say(tmsg, "okmsg", r.name + " can now sign in as " + r.username + ". Give them the password in person and ask them to change it. They see no learner until you give them a class.");
+        tname.value = tuser.value = tpass.value = "";
+        state.teachers = (await api("/api/teachers")).teachers;
+        await loadPeople();
+        await loadClasses();
+      } catch (e) { say(tmsg, "err", e.message); }
+    };
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Teachers and accounts" }),
+      h("div", { class: "row" }, field("Name", tname), field("Username", tuser), field("First password", tpass), field("Subject", tsub), field("Role", trole), tadd), tmsg,
+      h("div", { style: "margin-top:14px" }, list)));
+    await loadPeople();
+  }
+
+  if (admin || demo) {
+    // ---- looking after the records
+    const bbox = h("div");
+    const bmsg = h("div");
+    const showBackups = (r) => {
+      clear(bbox);
+      if (!r.backups.length) { bbox.append(h("p", { class: "muted", text: "No backup copy yet." })); return; }
+      bbox.append(h("div", { class: "tablewrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Made", "Size", "Copy"].map((t) => h("th", { scope: "col", text: t })))),
+        h("tbody", {}, r.backups.map((b) => h("tr", {}, h("td", { text: new Date(b.made_at).toLocaleString() }), h("td", { text: size(b.bytes) }),
+          h("td", {}, h("a", { class: "btnlink", href: "/api/admin/backups/" + encodeURIComponent(b.file) }, "Save a copy elsewhere"))))))),
+        h("p", { class: "small muted", text: "Kept in " + (r.folder || "the backups folder") + ". The newest 14 are kept. A copy on the same disk does not survive a lost or broken computer: save one to a USB stick or another machine every week." }));
+    };
+    const bbtn = h("button", { type: "button", class: "primary" }, "Make a backup now");
+    bbtn.onclick = async () => {
+      try { const r = await post("/api/admin/backups", {}); showBackups(r); say(bmsg, "okmsg", "Backup made: " + r.made.file + " (" + size(r.made.bytes) + ")."); }
+      catch (e) { say(bmsg, "err", e.message); }
+    };
+    const pick = h("select", { id: "rec-learner" }, state.learners.map((l) => h("option", { value: l.learner_id, "data-code": l.alias.replace("Learner ", ""), text: l.name + " (" + l.alias.replace("Learner ", "") + ")" })));
+    const code = h("input", { type: "text", id: "rec-code", maxlength: 8, autocomplete: "off", placeholder: "e.g. K-42" });
+    const rmsg = h("div");
+    const exp = h("button", { type: "button", onclick: () => { if (pick.value) location.href = "/api/learners/" + encodeURIComponent(pick.value) + "/export"; } }, "Save this learner's whole record as a file");
+    const del = h("button", { type: "button", class: "danger" }, "Delete this record for good");
+    del.onclick = async () => {
+      if (!pick.value) return;
+      const label = pick.options[pick.selectedIndex].textContent;
+      if (!window.confirm("Delete the whole record of " + label + "? Every mark, note, finding and report goes. This cannot be undone.")) return;
+      try {
+        const r = await post("/api/learners/" + encodeURIComponent(pick.value) + "/delete", { confirm_code: code.value });
+        let text = "Deleted the record " + r.code + ": " + r.evidence + " record(s), " + r.findings + " finding(s), " + r.audit_rows_blanked + " log row(s) blanked.";
+        if (r.backups_that_still_hold_it.length) text += " " + r.backups_that_still_hold_it.length + " older backup copy(ies) still hold it. Make a new backup and delete the old ones to finish.";
+        say(rmsg, "okmsg", text);
+        code.value = "";
+        state.graphs = {};
+        state.learners = (await api("/api/learners")).learners;
+        clear(pick).append(...state.learners.map((l) => h("option", { value: l.learner_id, text: l.name + " (" + l.alias.replace("Learner ", "") + ")" })));
+        await loadClasses();
+      } catch (e) { say(rmsg, "err", e.message); }
+    };
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Look after the records" }),
+      h("p", { class: "muted", text: "A backup is one file with everything in it, names included. Keep it as carefully as this computer." }),
+      h("div", { class: "row" }, bbtn), bmsg, h("div", { style: "margin-top:10px" }, bbox),
+      h("h3", { style: "margin-top:22px", text: "One learner's record" }),
+      h("p", { class: "muted", text: "A family can ask what the school holds about their child, and can ask for it to be removed. To delete, type the learner's record code to confirm." }),
+      h("div", { class: "row" }, field("Learner", pick), exp),
+      h("div", { class: "row", style: "margin-top:10px" }, field("Record code, to confirm deleting", code), del), rmsg));
+    try { showBackups(await api("/api/admin/backups")); } catch (e) { say(bmsg, "err", e.message); }
+  }
+
+  if (!demo) {
+    // ---- my password
+    const cur = h("input", { type: "password", id: "pw-cur", autocomplete: "current-password" });
+    const next = h("input", { type: "password", id: "pw-new", autocomplete: "new-password" });
+    const pmsg = h("div");
+    const pbtn = h("button", { type: "button" }, "Change my password");
+    pbtn.onclick = async () => {
+      try { await post("/api/session/password", { current: cur.value, password: next.value }); location.reload(); }
+      catch (e) { say(pmsg, "err", e.message); }
+    };
+    root.append(h("div", { class: "card" }, h("h3", { text: "My password" }),
+      h("div", { class: "row" }, field("Current password", cur), field("New password", next), pbtn), pmsg));
+  }
+}
+
+init();
+</script>
+</body>
+</html>

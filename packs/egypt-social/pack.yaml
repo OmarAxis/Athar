@@ -1,0 +1,187 @@
+# Egypt national curriculum, Social Studies, Primary 4 to Preparatory 2 (grades 4 to 8). DRAFT.
+#
+# What is taken from the curriculum: the topics, their grade and their term, as listed in the unit and
+# lesson titles of the student books (history, geography and civics are taught as one subject).
+# Titles are shortened into plain topic names in our own words. No textbook text is copied.
+# Where two neighbouring lessons of one unit cover one topic, they are merged into one topic here.
+# Each topic names its source below. Primary 4 (both terms), Primary 5 term 1 and Primary 6 term 1 were
+# read from scanned copies of the ministry student books. The other six terms were read from commercial
+# workbooks and teacher notes that follow the ministry books, which are secondary sources. None of the
+# sources is the ministry's own website, so check a topic against the current printed book before relying
+# on it. A source was found for every grade and term, so no topic is marked `verified: false`. The titles
+# were read from machine-read scans of Arabic text and translated by the authors of this software.
+#
+# What is NOT from the curriculum: the `requires` links and the grouping into strands. The curriculum does
+# not publish which topic depends on which. In this subject the links are mostly about background and
+# skills (reading a map before climate regions, an earlier period before a later one, the same theme met
+# at a smaller scale in an earlier grade). These links were drafted by the authors of this software and
+# have not yet been reviewed by a teacher. The trace-back is only as good as these links.
+#
+# We graph the school's curriculum. We never change it.
+id: egypt-social
+name: Egypt, Social Studies, Primary 4 to Preparatory 2
+subject: social
+subject_label: {en: Social Studies}
+grades: [4, 8]
+terms: 2
+languages: [en]
+generator: school
+status: draft
+links_reviewed_by: null
+
+sources:
+  - {id: p4t1, covers: "Primary 4, term 1", kind: "Ministry student book, 2023/24 printing (scanned copy)", url: "https://archive.org/details/4-1_20231006", note: "contents page and scope table read; what the two economics lessons of unit 3 cover is inferred from their titles and the unit word list"}
+  - {id: p4t2, covers: "Primary 4, term 2", kind: "Ministry student book, 2021/22 printing (scanned copy)", url: "https://archive.org/details/4-2_20220228", note: "contents page read; an older printing than term 1"}
+  - {id: p5t1, covers: "Primary 5, term 1", kind: "Ministry student book, 2023/24 printing (scanned copy)", url: "https://archive.org/details/5-1_20231006", note: "contents page and scope table read"}
+  - {id: p5t2, covers: "Primary 5, term 2", kind: "Commercial workbook that follows the ministry book, 2022/23", url: "https://archive.org/details/5-2_20230205_202302", note: "secondary source; contents page read"}
+  - {id: p6t1, covers: "Primary 6, term 1", kind: "Ministry student book, 2023/24 printing (scanned copy)", url: "https://archive.org/details/6-1_20231006", note: "contents page read"}
+  - {id: p6t2, covers: "Primary 6, term 2", kind: "Commercial workbook that follows the ministry book, 2023/24", url: "https://archive.org/details/6-2_20240205", note: "secondary source; contents page read"}
+  - {id: s1t1, covers: "Preparatory 1, term 1", kind: "Commercial workbook for the new curriculum, 2024/25", url: "https://archive.org/details/1-1_20240905_202409", note: "secondary source; contents page read; unit and lesson titles match a second set of teacher notes at https://archive.org/details/1-1-1_20260727_2100"}
+  - {id: s1t2, covers: "Preparatory 1, term 2", kind: "Commercial workbook for the new curriculum, 2024/25", url: "https://archive.org/details/20250217_20250217_0854", note: "single secondary source; contents page read"}
+  - {id: s2t1, covers: "Preparatory 2, term 1", kind: "Commercial workbook for the new curriculum, 2025/26", url: "https://archive.org/details/2-1_20250818", note: "single secondary source; contents page read; the title of unit 4 was not readable, its two lesson titles were"}
+  - {id: s2t2, covers: "Preparatory 2, term 2", kind: "School teacher notes for the new curriculum, 2025/26", url: "https://archive.org/details/2-2-2_20260311", note: "secondary source; contents page read in two sets of notes in the same upload"}
+
+strands:
+  - {id: soc-maps, label: {en: "Maps, location and sources"}}
+  - {id: soc-physical, label: {en: Physical geography and environment}}
+  - {id: soc-human, label: {en: "People, resources and economy"}}
+  - {id: soc-ancient, label: {en: Ancient history and civilizations}}
+  - {id: soc-islamic-modern, label: {en: Islamic and modern history}}
+  - {id: soc-civics, label: {en: "Civics, heritage and society"}}
+
+skills:
+  - {id: reading-maps, label: {en: Reading maps}}
+  - {id: ordering-events-in-time, label: {en: Ordering events in time}}
+  - {id: using-sources, label: {en: Using sources}}
+  - {id: explaining-reasoning, label: {en: Explaining reasoning}}
+  - {id: working-with-data, label: {en: Working with data}}
+
+approaches:
+  - {id: concrete_objects, label: {en: Hands-on objects}}
+  - {id: visual_models, label: {en: Diagrams and visual models}}
+  - {id: worked_examples, label: {en: Worked examples}}
+  - {id: peer_groups, label: {en: Group work with peers}}
+  - {id: story_problems, label: {en: Story and real-life problems}}
+  - {id: drill_practice, label: {en: Drill and practice}}
+
+concepts:
+  # ---------------------------------------------------------------- Primary 4, term 1
+  - {id: soc-g4-map-elements, label: {en: "Tools for finding places: map elements, scale and aerial images"}, strand: soc-maps, grade: 4, term: 1, requires: [], skills: [reading-maps], source: p4t1}
+  - {id: soc-g4-primary-secondary-sources, label: {en: "Primary and secondary sources; fact and opinion"}, strand: soc-maps, grade: 4, term: 1, requires: [], skills: [using-sources], source: p4t1}
+  - {id: soc-g4-egypt-location-world, label: {en: "Egypt's place in the world: continents and oceans"}, strand: soc-maps, grade: 4, term: 1, requires: [soc-g4-map-elements], skills: [reading-maps], source: p4t1}
+  - {id: soc-g4-governorates, label: {en: "The governorates of Egypt"}, strand: soc-civics, grade: 4, term: 1, requires: [soc-g4-egypt-location-world], skills: [reading-maps], source: p4t1}
+  - {id: soc-g4-national-symbols, label: {en: "National symbols: the flag and governorate emblems"}, strand: soc-civics, grade: 4, term: 1, requires: [soc-g4-governorates], skills: [], source: p4t1}
+  - {id: soc-g4-landforms-egypt, label: {en: "Natural features of Egypt and the elevation map"}, strand: soc-physical, grade: 4, term: 1, requires: [soc-g4-map-elements], skills: [reading-maps], source: p4t1}
+  - {id: soc-g4-weather-climate, label: {en: "Weather and climate"}, strand: soc-physical, grade: 4, term: 1, requires: [], skills: [working-with-data], source: p4t1}
+  - {id: soc-g4-environments-resources, label: {en: "Egypt's environments and their natural resources"}, strand: soc-physical, grade: 4, term: 1, requires: [soc-g4-landforms-egypt, soc-g4-weather-climate], skills: [explaining-reasoning], source: p4t1}
+  - {id: soc-g4-sustainable-living, label: {en: "Towards sustainable living"}, strand: soc-physical, grade: 4, term: 1, requires: [soc-g4-environments-resources], skills: [explaining-reasoning], source: p4t1}
+  - {id: soc-g4-heritage-crafts, label: {en: "Traditional heritage crafts"}, strand: soc-civics, grade: 4, term: 1, requires: [], skills: [], source: p4t1}
+  - {id: soc-g4-saving-investing, label: {en: "The young investor: saving and investing"}, strand: soc-human, grade: 4, term: 1, requires: [], skills: [], source: p4t1}
+  - {id: soc-g4-needs-goods-services, label: {en: "Together for a better life: needs, goods and services"}, strand: soc-human, grade: 4, term: 1, requires: [], skills: [explaining-reasoning], source: p4t1}
+  - {id: soc-g4-childrens-rights, label: {en: "Children's rights"}, strand: soc-civics, grade: 4, term: 1, requires: [], skills: [], source: p4t1}
+  # ---------------------------------------------------------------- Primary 4, term 2
+  - {id: soc-g4-population-patterns, label: {en: "Population patterns and distribution in Egypt"}, strand: soc-human, grade: 4, term: 2, requires: [soc-g4-governorates, soc-g4-environments-resources], skills: [working-with-data, reading-maps], source: p4t2}
+  - {id: soc-g4-cultural-heritage-people, label: {en: "Cultural heritage of Egypt's communities"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-population-patterns, soc-g4-heritage-crafts], skills: [], source: p4t2}
+  - {id: soc-g4-social-problems, label: {en: "Social problems in Egypt: illiteracy"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-childrens-rights], skills: [explaining-reasoning], source: p4t2}
+  - {id: soc-g4-system-of-government, label: {en: "How Egypt is governed"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-national-symbols], skills: [], source: p4t2}
+  - {id: soc-g4-local-government, label: {en: "Who governs my governorate: local government"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-system-of-government, soc-g4-governorates], skills: [], source: p4t2}
+  - {id: soc-g4-heritage-sites, label: {en: "National heritage: cultural and natural heritage sites"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-cultural-heritage-people], skills: [using-sources], source: p4t2}
+  - {id: soc-g4-tourism-economy, label: {en: "Tourist and archaeological sites, and tourism in the economy"}, strand: soc-human, grade: 4, term: 2, requires: [soc-g4-heritage-sites, soc-g4-needs-goods-services], skills: [explaining-reasoning], source: p4t2}
+  - {id: soc-g4-protecting-heritage, label: {en: "Our responsibility for heritage"}, strand: soc-civics, grade: 4, term: 2, requires: [soc-g4-heritage-sites], skills: [], source: p4t2}
+  - {id: soc-g4-transport-development, label: {en: "How transport developed and changed society"}, strand: soc-human, grade: 4, term: 2, requires: [], skills: [ordering-events-in-time], source: p4t2}
+  - {id: soc-g4-transport-types-rules, label: {en: "Types of transport and rules for using them"}, strand: soc-human, grade: 4, term: 2, requires: [soc-g4-transport-development], skills: [], source: p4t2}
+  - {id: soc-g4-communication-development, label: {en: "How communication developed and changed society"}, strand: soc-human, grade: 4, term: 2, requires: [], skills: [ordering-events-in-time], source: p4t2}
+  # ---------------------------------------------------------------- Primary 5, term 1
+  - {id: soc-g5-location-coordinates, label: {en: "Egypt's location: latitude and longitude"}, strand: soc-maps, grade: 5, term: 1, requires: [soc-g4-egypt-location-world], skills: [reading-maps], source: p5t1}
+  - {id: soc-g5-rise-ancient-egypt, label: {en: "How ancient Egyptian civilization began and was unified"}, strand: soc-ancient, grade: 5, term: 1, requires: [soc-g4-primary-secondary-sources, soc-g4-landforms-egypt], skills: [ordering-events-in-time], source: p5t1}
+  - {id: soc-g5-landforms, label: {en: "Landform regions of Egypt"}, strand: soc-physical, grade: 5, term: 1, requires: [soc-g4-landforms-egypt], skills: [reading-maps], source: p5t1}
+  - {id: soc-g5-climate, label: {en: "Climate of Egypt and its climate regions"}, strand: soc-physical, grade: 5, term: 1, requires: [soc-g4-weather-climate, soc-g5-location-coordinates], skills: [reading-maps, working-with-data], source: p5t1}
+  - {id: soc-g5-vegetation-wildlife, label: {en: "Natural vegetation, wildlife and nature reserves"}, strand: soc-physical, grade: 5, term: 1, requires: [soc-g5-climate, soc-g4-environments-resources], skills: [explaining-reasoning], source: p5t1}
+  - {id: soc-g5-climate-change, label: {en: "Climate change and its effects on Egypt"}, strand: soc-physical, grade: 5, term: 1, requires: [soc-g5-climate, soc-g4-sustainable-living], skills: [explaining-reasoning], source: p5t1}
+  - {id: soc-g5-water-resources, label: {en: "Water resources of Egypt"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-landforms, soc-g4-environments-resources], skills: [reading-maps], source: p5t1}
+  - {id: soc-g5-mineral-resources, label: {en: "Mineral resources of Egypt"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-landforms], skills: [reading-maps], source: p5t1}
+  - {id: soc-g5-energy-sources, label: {en: "Energy sources in Egypt"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-mineral-resources, soc-g4-sustainable-living], skills: [], source: p5t1}
+  - {id: soc-g5-money, label: {en: "The invention and development of money"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g4-saving-investing], skills: [ordering-events-in-time], source: p5t1}
+  - {id: soc-g5-agriculture-livestock, label: {en: "Farming, livestock and fishing in Egypt, past and present"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-water-resources, soc-g5-climate], skills: [explaining-reasoning], source: p5t1}
+  - {id: soc-g5-industry, label: {en: "Industry in Egypt, past and present"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-mineral-resources, soc-g5-energy-sources], skills: [], source: p5t1}
+  - {id: soc-g5-trade, label: {en: "Trade in Egypt, past and present"}, strand: soc-human, grade: 5, term: 1, requires: [soc-g5-money, soc-g5-industry], skills: [working-with-data], source: p5t1}
+  # ---------------------------------------------------------------- Primary 5, term 2
+  - {id: soc-g5-population-growth, label: {en: "Population growth and distribution in Egypt"}, strand: soc-human, grade: 5, term: 2, requires: [soc-g4-population-patterns], skills: [working-with-data, reading-maps], source: p5t2}
+  - {id: soc-g5-population-pyramid, label: {en: "Egypt's population pyramid"}, strand: soc-human, grade: 5, term: 2, requires: [soc-g5-population-growth], skills: [working-with-data], source: p5t2}
+  - {id: soc-g5-overpopulation, label: {en: "The problem of population increase"}, strand: soc-human, grade: 5, term: 2, requires: [soc-g5-population-growth, soc-g4-social-problems], skills: [explaining-reasoning], source: p5t2}
+  - {id: soc-g5-social-religious-life, label: {en: "Social and religious life in Egypt, past and present"}, strand: soc-ancient, grade: 5, term: 2, requires: [soc-g5-rise-ancient-egypt], skills: [using-sources], source: p5t2}
+  - {id: soc-g5-victories, label: {en: "Egypt's victories through the ages"}, strand: soc-ancient, grade: 5, term: 2, requires: [soc-g5-rise-ancient-egypt], skills: [ordering-events-in-time], source: p5t2}
+  - {id: soc-g5-ptolemaic-roman, label: {en: "Egypt under the Ptolemies and the Romans"}, strand: soc-ancient, grade: 5, term: 2, requires: [soc-g5-rise-ancient-egypt], skills: [ordering-events-in-time], source: p5t2}
+  - {id: soc-g5-architecture-arts, label: {en: "Architecture and arts in Egypt across the ages"}, strand: soc-ancient, grade: 5, term: 2, requires: [soc-g5-social-religious-life, soc-g4-heritage-sites], skills: [using-sources], source: p5t2}
+  - {id: soc-g5-sciences-literature, label: {en: "Sciences and literature in Egypt across the ages"}, strand: soc-ancient, grade: 5, term: 2, requires: [soc-g5-social-religious-life], skills: [], source: p5t2}
+  - {id: soc-g5-links-world, label: {en: "Egypt's political, military, scientific and cultural links with the world"}, strand: soc-civics, grade: 5, term: 2, requires: [soc-g5-victories, soc-g4-egypt-location-world], skills: [explaining-reasoning], source: p5t2}
+  - {id: soc-g5-economic-links, label: {en: "Egypt's economic links with the world"}, strand: soc-human, grade: 5, term: 2, requires: [soc-g5-trade], skills: [working-with-data], source: p5t2}
+  - {id: soc-g5-stock-exchange, label: {en: "The Egyptian stock exchange"}, strand: soc-human, grade: 5, term: 2, requires: [soc-g5-money, soc-g4-saving-investing], skills: [], source: p5t2}
+  # ---------------------------------------------------------------- Primary 6, term 1
+  - {id: soc-g6-arab-world-location, label: {en: "Location of the Arab world"}, strand: soc-maps, grade: 6, term: 1, requires: [soc-g5-location-coordinates], skills: [reading-maps], source: p6t1}
+  - {id: soc-g6-rise-of-islam, label: {en: "The rise of Islam"}, strand: soc-islamic-modern, grade: 6, term: 1, requires: [soc-g6-arab-world-location], skills: [ordering-events-in-time], source: p6t1}
+  - {id: soc-g6-hijra-islamic-state, label: {en: "The Hijra and the founding of the Islamic state"}, strand: soc-islamic-modern, grade: 6, term: 1, requires: [soc-g6-rise-of-islam], skills: [ordering-events-in-time], source: p6t1}
+  - {id: soc-g6-rightly-guided-caliphs, label: {en: "The Rightly Guided Caliphs"}, strand: soc-islamic-modern, grade: 6, term: 1, requires: [soc-g6-hijra-islamic-state], skills: [ordering-events-in-time], source: p6t1}
+  - {id: soc-g6-arab-landforms, label: {en: "Landforms of the Arab world"}, strand: soc-physical, grade: 6, term: 1, requires: [soc-g5-landforms, soc-g6-arab-world-location], skills: [reading-maps], source: p6t1}
+  - {id: soc-g6-arab-climate-vegetation, label: {en: "Climate factors, climate regions and vegetation regions of the Arab world"}, strand: soc-physical, grade: 6, term: 1, requires: [soc-g5-climate, soc-g5-vegetation-wildlife], skills: [reading-maps, explaining-reasoning], source: p6t1}
+  - {id: soc-g6-arab-environment-problems, label: {en: "Environmental problems in the Arab world"}, strand: soc-physical, grade: 6, term: 1, requires: [soc-g6-arab-climate-vegetation, soc-g5-climate-change], skills: [explaining-reasoning], source: p6t1}
+  - {id: soc-g6-arab-agriculture, label: {en: "Farming, livestock and fishing in the Arab world"}, strand: soc-human, grade: 6, term: 1, requires: [soc-g5-agriculture-livestock, soc-g6-arab-climate-vegetation], skills: [reading-maps], source: p6t1}
+  - {id: soc-g6-arab-mining-industry, label: {en: "Mining and industry in the Arab world"}, strand: soc-human, grade: 6, term: 1, requires: [soc-g5-industry, soc-g5-mineral-resources], skills: [reading-maps], source: p6t1}
+  - {id: soc-g6-arab-tourism, label: {en: "Tourism in the Arab world"}, strand: soc-human, grade: 6, term: 1, requires: [soc-g4-tourism-economy], skills: [], source: p6t1}
+  - {id: soc-g6-arab-trade, label: {en: "Trade in the Arab world"}, strand: soc-human, grade: 6, term: 1, requires: [soc-g5-trade, soc-g6-arab-mining-industry], skills: [working-with-data], source: p6t1}
+  # ---------------------------------------------------------------- Primary 6, term 2
+  - {id: soc-g6-arab-population, label: {en: "Population growth and distribution in the Arab world"}, strand: soc-human, grade: 6, term: 2, requires: [soc-g5-population-growth, soc-g6-arab-landforms], skills: [working-with-data, reading-maps], source: p6t2}
+  - {id: soc-g6-arab-population-traits, label: {en: "Characteristics of the Arab world's population"}, strand: soc-human, grade: 6, term: 2, requires: [soc-g6-arab-population, soc-g5-population-pyramid], skills: [working-with-data], source: p6t2}
+  - {id: soc-g6-islamic-social-life, label: {en: "Social life in the Islamic state"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-rightly-guided-caliphs], skills: [using-sources], source: p6t2}
+  - {id: soc-g6-umayyads, label: {en: "The Umayyad state"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-rightly-guided-caliphs], skills: [ordering-events-in-time], source: p6t2}
+  - {id: soc-g6-abbasids, label: {en: "The Abbasid state"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-umayyads], skills: [ordering-events-in-time], source: p6t2}
+  - {id: soc-g6-egypt-conquest-independent-states, label: {en: "Egypt from the Arab conquest to the independent states"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-rightly-guided-caliphs, soc-g5-ptolemaic-roman], skills: [ordering-events-in-time], source: p6t2}
+  - {id: soc-g6-crusades-mongols, label: {en: "Saladin, Qutuz and the defence against the Crusaders and the Mongols"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-egypt-conquest-independent-states, soc-g6-abbasids], skills: [ordering-events-in-time], source: p6t2}
+  - {id: soc-g6-islamic-government-economy, label: {en: "Government, administration and economic life in the Islamic state"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-abbasids], skills: [explaining-reasoning], source: p6t2}
+  - {id: soc-g6-islamic-achievements, label: {en: "Scientific and artistic achievements of the Islamic state"}, strand: soc-islamic-modern, grade: 6, term: 2, requires: [soc-g6-abbasids, soc-g5-sciences-literature], skills: [using-sources], source: p6t2}
+  - {id: soc-g6-arab-integration, label: {en: "Cooperation between Arab countries and sustainable development"}, strand: soc-civics, grade: 6, term: 2, requires: [soc-g6-arab-trade, soc-g5-links-world], skills: [explaining-reasoning], source: p6t2}
+  # ---------------------------------------------------------------- Preparatory 1, term 1
+  - {id: soc-g7-africa-location, label: {en: "Africa: location and geographic exploration"}, strand: soc-maps, grade: 7, term: 1, requires: [soc-g6-arab-world-location], skills: [reading-maps], source: s1t1}
+  - {id: soc-g7-africa-landforms, label: {en: "Landforms of Africa"}, strand: soc-physical, grade: 7, term: 1, requires: [soc-g6-arab-landforms, soc-g7-africa-location], skills: [reading-maps], source: s1t1}
+  - {id: soc-g7-nile-ancient-africa, label: {en: "The Nile and ancient civilizations in Africa"}, strand: soc-ancient, grade: 7, term: 1, requires: [soc-g7-africa-landforms, soc-g5-rise-ancient-egypt], skills: [explaining-reasoning], source: s1t1}
+  - {id: soc-g7-old-kingdom, label: {en: "Ancient Egypt: the Old Kingdom"}, strand: soc-ancient, grade: 7, term: 1, requires: [soc-g5-rise-ancient-egypt, soc-g7-nile-ancient-africa], skills: [ordering-events-in-time], source: s1t1}
+  - {id: soc-g7-middle-kingdom, label: {en: "Ancient Egypt: the Middle Kingdom"}, strand: soc-ancient, grade: 7, term: 1, requires: [soc-g7-old-kingdom], skills: [ordering-events-in-time], source: s1t1}
+  - {id: soc-g7-new-kingdom, label: {en: "Ancient Egypt: the New Kingdom"}, strand: soc-ancient, grade: 7, term: 1, requires: [soc-g7-middle-kingdom, soc-g5-victories], skills: [ordering-events-in-time], source: s1t1}
+  - {id: soc-g7-africa-forests, label: {en: "Forest systems of Africa"}, strand: soc-physical, grade: 7, term: 1, requires: [soc-g6-arab-climate-vegetation, soc-g7-africa-landforms], skills: [reading-maps], source: s1t1}
+  - {id: soc-g7-africa-grasslands-deserts, label: {en: "Grassland and hot desert systems of Africa"}, strand: soc-physical, grade: 7, term: 1, requires: [soc-g6-arab-climate-vegetation], skills: [reading-maps], source: s1t1}
+  - {id: soc-g7-africa-aquatic, label: {en: "Aquatic ecosystems of Africa"}, strand: soc-physical, grade: 7, term: 1, requires: [soc-g7-africa-landforms, soc-g5-water-resources], skills: [explaining-reasoning], source: s1t1}
+  - {id: soc-g7-islam-in-africa, label: {en: "The spread of Islam in Africa"}, strand: soc-islamic-modern, grade: 7, term: 1, requires: [soc-g6-egypt-conquest-independent-states, soc-g7-africa-location], skills: [ordering-events-in-time, reading-maps], source: s1t1}
+  - {id: soc-g7-egypt-africa-medieval, label: {en: "Egypt's role in Africa in the Middle Ages"}, strand: soc-islamic-modern, grade: 7, term: 1, requires: [soc-g7-islam-in-africa], skills: [explaining-reasoning], source: s1t1}
+  # ---------------------------------------------------------------- Preparatory 1, term 2
+  - {id: soc-g7-africa-population, label: {en: "Population growth and distribution in Africa"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g6-arab-population, soc-g7-africa-landforms], skills: [working-with-data, reading-maps], source: s1t2}
+  - {id: soc-g7-africa-population-traits, label: {en: "Characteristics of Africa's population"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g7-africa-population, soc-g6-arab-population-traits], skills: [working-with-data], source: s1t2}
+  - {id: soc-g7-muhammad-ali-africa, label: {en: "Egypt's role in Africa under Muhammad Ali and his successors"}, strand: soc-islamic-modern, grade: 7, term: 2, requires: [soc-g7-egypt-africa-medieval], skills: [ordering-events-in-time], source: s1t2}
+  - {id: soc-g7-africa-agriculture, label: {en: "Farming, livestock and fishing in Africa"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g6-arab-agriculture, soc-g7-africa-grasslands-deserts], skills: [reading-maps], source: s1t2}
+  - {id: soc-g7-africa-mining-energy-industry, label: {en: "Mining, energy and industry in Africa"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g6-arab-mining-industry, soc-g5-energy-sources], skills: [reading-maps], source: s1t2}
+  - {id: soc-g7-africa-tourism-heritage, label: {en: "Tourism and World Heritage sites in Africa"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g6-arab-tourism], skills: [], source: s1t2}
+  - {id: soc-g7-africa-transport-trade, label: {en: "Transport and trade in Africa"}, strand: soc-human, grade: 7, term: 2, requires: [soc-g6-arab-trade], skills: [working-with-data], source: s1t2}
+  - {id: soc-g7-colonial-expansion, label: {en: "European colonial expansion in Africa"}, strand: soc-islamic-modern, grade: 7, term: 2, requires: [soc-g7-africa-location, soc-g7-muhammad-ali-africa], skills: [reading-maps, ordering-events-in-time], source: s1t2}
+  - {id: soc-g7-africa-liberation, label: {en: "Africa from colonial rule to liberation"}, strand: soc-islamic-modern, grade: 7, term: 2, requires: [soc-g7-colonial-expansion], skills: [ordering-events-in-time], source: s1t2}
+  - {id: soc-g7-egypt-african-organizations, label: {en: "Egypt and regional organizations in Africa"}, strand: soc-civics, grade: 7, term: 2, requires: [soc-g7-africa-liberation, soc-g6-arab-integration], skills: [explaining-reasoning], source: s1t2}
+  # ---------------------------------------------------------------- Preparatory 2, term 1
+  - {id: soc-g8-asia-europe-landforms, label: {en: "Asia and Europe: location and landforms"}, strand: soc-physical, grade: 8, term: 1, requires: [soc-g7-africa-location, soc-g7-africa-landforms], skills: [reading-maps], source: s2t1}
+  - {id: soc-g8-asia-europe-minerals-energy, label: {en: "Minerals and energy sources in Asia and Europe"}, strand: soc-human, grade: 8, term: 1, requires: [soc-g7-africa-mining-energy-industry, soc-g8-asia-europe-landforms], skills: [reading-maps], source: s2t1}
+  - {id: soc-g8-ancient-near-east-yemen, label: {en: "Ancient civilizations of the Near East and of Yemen"}, strand: soc-ancient, grade: 8, term: 1, requires: [soc-g7-new-kingdom, soc-g8-asia-europe-landforms], skills: [ordering-events-in-time], source: s2t1}
+  - {id: soc-g8-ancient-far-east, label: {en: "Ancient civilizations of the Far East"}, strand: soc-ancient, grade: 8, term: 1, requires: [soc-g7-nile-ancient-africa], skills: [ordering-events-in-time], source: s2t1}
+  - {id: soc-g8-islamic-civilization, label: {en: "Islamic civilization"}, strand: soc-islamic-modern, grade: 8, term: 1, requires: [soc-g6-islamic-achievements], skills: [using-sources], source: s2t1}
+  - {id: soc-g8-asia-europe-forests, label: {en: "Forest systems of Asia and Europe"}, strand: soc-physical, grade: 8, term: 1, requires: [soc-g7-africa-forests, soc-g8-asia-europe-landforms], skills: [reading-maps], source: s2t1}
+  - {id: soc-g8-asia-europe-grasslands-deserts, label: {en: "Grassland and desert systems of Asia and Europe"}, strand: soc-physical, grade: 8, term: 1, requires: [soc-g7-africa-grasslands-deserts], skills: [reading-maps], source: s2t1}
+  - {id: soc-g8-asia-europe-aquatic, label: {en: "Aquatic ecosystems of Asia and Europe"}, strand: soc-physical, grade: 8, term: 1, requires: [soc-g7-africa-aquatic], skills: [explaining-reasoning], source: s2t1}
+  - {id: soc-g8-greek-civilization, label: {en: "Greek civilization"}, strand: soc-ancient, grade: 8, term: 1, requires: [soc-g5-ptolemaic-roman], skills: [ordering-events-in-time], source: s2t1}
+  - {id: soc-g8-roman-civilization, label: {en: "Roman civilization"}, strand: soc-ancient, grade: 8, term: 1, requires: [soc-g8-greek-civilization], skills: [ordering-events-in-time], source: s2t1}
+  # ---------------------------------------------------------------- Preparatory 2, term 2
+  - {id: soc-g8-asia-europe-population, label: {en: "Population growth and distribution in Asia and Europe"}, strand: soc-human, grade: 8, term: 2, requires: [soc-g7-africa-population, soc-g8-asia-europe-landforms], skills: [working-with-data, reading-maps], source: s2t2}
+  - {id: soc-g8-asia-europe-population-traits, label: {en: "Characteristics of the population of Asia and Europe"}, strand: soc-human, grade: 8, term: 2, requires: [soc-g8-asia-europe-population, soc-g7-africa-population-traits], skills: [working-with-data], source: s2t2}
+  - {id: soc-g8-egypt-after-conquest, label: {en: "Egypt after the Islamic conquest"}, strand: soc-islamic-modern, grade: 8, term: 2, requires: [soc-g6-egypt-conquest-independent-states, soc-g8-roman-civilization], skills: [ordering-events-in-time], source: s2t2}
+  - {id: soc-g8-independent-states, label: {en: "Independent states in Egypt, from the Tulunids to the Mamluks"}, strand: soc-islamic-modern, grade: 8, term: 2, requires: [soc-g8-egypt-after-conquest, soc-g6-crusades-mongols], skills: [ordering-events-in-time], source: s2t2}
+  - {id: soc-g8-asia-europe-agriculture, label: {en: "Farming in Asia and Europe"}, strand: soc-human, grade: 8, term: 2, requires: [soc-g7-africa-agriculture, soc-g8-asia-europe-grasslands-deserts], skills: [reading-maps], source: s2t2}
+  - {id: soc-g8-asia-europe-industry-trade, label: {en: "Industry and trade in Asia and Europe"}, strand: soc-human, grade: 8, term: 2, requires: [soc-g8-asia-europe-minerals-energy, soc-g7-africa-transport-trade], skills: [working-with-data], source: s2t2}
+  - {id: soc-g8-asia-europe-tourism, label: {en: "Tourism in Asia and Europe"}, strand: soc-human, grade: 8, term: 2, requires: [soc-g7-africa-tourism-heritage], skills: [], source: s2t2}
+  - {id: soc-g8-asia-europe-organizations, label: {en: "Regional organizations in Asia and Europe"}, strand: soc-civics, grade: 8, term: 2, requires: [soc-g7-egypt-african-organizations], skills: [explaining-reasoning], source: s2t2}
+  - {id: soc-g8-ottoman-egypt, label: {en: "Egypt under Ottoman rule"}, strand: soc-islamic-modern, grade: 8, term: 2, requires: [soc-g8-independent-states], skills: [ordering-events-in-time], source: s2t2}
+  - {id: soc-g8-french-campaign, label: {en: "The French campaign in Egypt"}, strand: soc-islamic-modern, grade: 8, term: 2, requires: [soc-g8-ottoman-egypt], skills: [ordering-events-in-time, using-sources], source: s2t2}
