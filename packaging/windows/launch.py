@@ -104,6 +104,37 @@ def find_local_server(timeout: float = 1.5) -> tuple[str, str, str] | None:
     return None
 
 
+def wants_model(answer: str) -> bool:
+    """Enter alone means yes. Only a clear no, in English or Arabic, means no."""
+    return answer.strip().lower() not in ("n", "no", "لا", "لأ")
+
+
+def offer_model(root: Path) -> bool:
+    """The first time there is no model at all, offer to fetch it, so a person who has never heard of
+    LM Studio can still use the assistant. Asked once: the answer is remembered in the data folder.
+    True when the model file is now there."""
+    asked = root / "data" / "model-asked.txt"
+    if asked.exists() or os.environ.get("ATHAR_NO_BROWSER") or not (sys.stdin and sys.stdin.isatty()):
+        return False
+    print("  The assistant needs a model, and there is none on this computer yet.")
+    print("  Athar can download one now: one file, 5.2 GB, free and open. It then works with no internet.")
+    print("  Everything else in Athar works without it, so you can also do this later")
+    print("  with \"Download the model\" in this folder.\n")
+    try:
+        answer = input("  Download the model now? Press Enter for yes, or type n and Enter for later: ")
+    except (EOFError, KeyboardInterrupt):
+        return False
+    asked.parent.mkdir(exist_ok=True)
+    asked.write_text("The question about downloading the model was asked once. Delete this file to be asked again.\n",
+                     encoding="utf-8")
+    if not wants_model(answer):
+        print("  Later, then. Starting without a model.\n")
+        return False
+    python = root / "runtime" / "python" / "python.exe"
+    subprocess.call([str(python), "-E", "-s", "-u", str(root / "app" / "download_model.py")])
+    return find_model(root / "models") is not None
+
+
 def port_is_free(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
@@ -284,6 +315,8 @@ def main(argv: list[str]) -> int:
 
     runner, runner_url, model_name = None, None, MODEL_NAME
     model = find_model(root / "models")
+    if model is None and "ATHAR_LLM_BASE_URL" not in settings and find_local_server() is None and offer_model(root):
+        model = find_model(root / "models")
     if "ATHAR_LLM_BASE_URL" in settings:
         print(f"  Model: the address in settings.txt ({settings['ATHAR_LLM_BASE_URL']}).")
     elif model is None and (found := find_local_server()):

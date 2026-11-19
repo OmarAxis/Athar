@@ -190,3 +190,9 @@ CREATE TABLE IF NOT EXISTS class_teachers (
   subject    TEXT NOT NULL DEFAULT 'all',     -- subject id in the pack, or 'all'
   PRIMARY KEY (class_id, teacher_id, subject)
 );
+
+-- A few facts about this installation, such as who uses it: a school, or a family.
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);

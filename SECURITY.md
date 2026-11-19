@@ -26,6 +26,8 @@ says what the code enforces today, what it does not, and how to report a problem
 | Only the school admin makes classes, adds teachers, makes a backup, saves one learner's record as a file, or deletes a learner. None of these is an MCP tool, so the agent cannot do them. | `web/app.py`, `privacy.py` | `tests/test_classes_privacy.py` |
 | Deleting a learner needs their record code typed again. It removes the learner, every record, finding, note, question and decision about them, the agent runs about them and inbox files named with their code, and blanks the audit rows that mention them. One new audit row says a record was deleted, without a name. | `privacy.py` | `tests/test_classes_privacy.py` |
 | A backup is downloaded by file name only, from the backups folder. | `web/app.py` | `tests/test_classes_privacy.py` |
+| On the family side only the family's own children are served: every list is filtered, and any other learner is refused (403) on every learner page, for agent runs and for notes. Switching sides deletes nothing. Once a school has sign-in, only its admin can switch. | `family.py`, `web/app.py` | `tests/test_family.py` |
+| A parent's note is stored as written and never becomes a score. The audit log records that a note was added, not its words. | `family.py` | `tests/test_family.py` |
 | A label in a curriculum pack that was cut at an unquoted comma is refused when the pack loads. | `curriculum.py` | `tests/test_synth_school.py` |
 
 ## What it does not do yet
@@ -47,6 +49,7 @@ These are known gaps. Do not use Athar with real learners until they are closed.
   learner's records in every subject and every year. That is on purpose (a difficulty in one subject often starts
   in another), but it is wider than "my subject only". Files in the inbox are shared by all signed-in teachers,
   and the school map shows topic totals for the learners a teacher can see, which is a small group.
+- **The family side has no password.** It is meant for a home computer. Anyone who can use that computer can open the records, switch sides, make a backup or delete a child's record. Use the computer's own user accounts if that matters.
 - **In demonstration mode there are no limits.** Until an admin exists, anyone at the machine sees every learner
   and can make a backup or delete a record. That mode is for made-up data only.
 - **No consent records.** The app does not record that a family agreed to their child's records being kept.

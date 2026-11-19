@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .. import accounts, audit, classes, db, graph, imports, privacy, report, review, school, tools
+from .. import accounts, audit, classes, db, family, graph, imports, privacy, report, review, school, tools
 from ..config import get_settings
 from ..curriculum import current_lang, load_pack
 from . import dashboard, people
@@ -72,6 +72,10 @@ async def _require_sign_in(request: Request, call_next):
             if allowed is not None and named.group(1) not in allowed:
                 return JSONResponse({"error": "This learner is not in one of your classes. Ask the school admin."},
                                     status_code=403)
+    elif path.startswith(("/api/learners/", "/learners/")) and family.mode() == "family":
+        named = _LEARNER_PATH.match(path)
+        if named and named.group(1) not in family.children_ids():
+            return JSONResponse({"error": "That child is not in this family's records."}, status_code=403)
     return await call_next(request)
 
 
@@ -81,6 +85,9 @@ def _acting(request: Request, claimed: str | None) -> str:
     who = getattr(request.state, "who", None)
     if who is not None:
         return who["id"]
+    parent = family.guardian()
+    if parent is not None:            # at home every record is written under the parent's name
+        return parent["id"]
     if not claimed:
         raise ValueError("Choose your name first, so the record shows who did this.")
     return claimed
@@ -88,7 +95,17 @@ def _acting(request: Request, claimed: str | None) -> str:
 
 def _only(request: Request) -> set[str] | None:
     """The learner ids the person asking may see. None means everyone (the admin, or demonstration mode)."""
-    return classes.visible(getattr(request.state, "who", None))
+    who = getattr(request.state, "who", None)
+    if who is None and family.mode() == "family":
+        return family.children_ids()
+    return classes.visible(who)
+
+
+def _check_learner(request: Request, learner_id: str) -> None:
+    """Refuse a learner the person asking may not see: outside their classes, or outside the family."""
+    only = _only(request)
+    if only is not None and learner_id not in only:
+        raise accounts.NotAllowed("This learner is not in your records.")
 
 
 def _mine(request: Request, items: list[dict], key: str = "learner_id") -> list[dict]:
@@ -101,7 +118,7 @@ def _check_target(request: Request, table: str, target_id: str) -> None:
     with db.connect() as conn:
         row = db.one(conn, f"SELECT learner_id FROM {table} WHERE id = ?", (target_id,))
     if row is not None:
-        classes.check(getattr(request.state, "who", None), row["learner_id"])
+        _check_learner(request, row["learner_id"])
 
 
 def _admin_or_demo(request: Request) -> str:
@@ -528,7 +545,7 @@ def inbox() -> dict:
 
 @app.post("/api/runs")
 def start_run(body: RunRequest, request: Request) -> dict:
-    classes.check(getattr(request.state, "who", None), body.learner_id)
+    _check_learner(request, body.learner_id)
     task: dict[str, Any] = {"learner_id": body.learner_id}
     with db.connect() as conn:
         _learner_exists(conn, body.learner_id)
@@ -649,7 +666,7 @@ def run_status(run_id: str, request: Request) -> dict:
     found = _runner().status(run_id)
     learner = _run_learner(found)
     if learner:
-        classes.check(getattr(request.state, "who", None), learner)
+        _check_learner(request, learner)
     return found
 
 
@@ -670,6 +687,7 @@ def _session_view(who: dict | None) -> dict:
     pack = _pack()
     return {"product": get_settings().product_name, "sign_in": accounts.enabled(), "teacher": who,
             "language": get_settings().language, "curriculum_name": pack.title(),
+            "mode": family.mode(), "guardian": family.guardian(), "school_year": family.school_year(),
             "curriculum": {"id": pack.id, "name": pack.title(), "grades": list(pack.grades), "terms": pack.terms,
                            "subjects": [{"id": sid, "label": pack.label(sid)} for sid in pack.subjects]},
             "latest_year": _latest_year()}
@@ -754,6 +772,79 @@ def add_learner(body: NewLearner, request: Request) -> dict:
             raise ValueError("Choose one of your classes for this learner.")
     return imports.add_learner(body.name, body.grade, body.year or _latest_year() or 2025, body.home_language,
                                actor=f"teacher:{who['id']}", class_id=body.class_id)
+
+
+# ------------------------------------------------------------------ who uses this: a school or a family
+
+class ModeBody(BaseModel):
+    mode: str
+    name: str = ""
+
+
+class ChildBody(BaseModel):
+    name: str
+    grade: int
+
+
+class ResultsBody(BaseModel):
+    items: list[dict[str, Any]]
+    title: str = ""
+    grade: int | None = None
+    year: int | None = None
+    term: int = 1
+
+
+class NoteBody(BaseModel):
+    text: str
+    topic_id: str | None = None
+
+
+@app.post("/api/mode")
+def choose_mode(body: ModeBody, request: Request) -> dict:
+    """Say whether a school or a family uses this installation. Once a school has sign-in, only its admin may change it."""
+    if accounts.enabled():
+        _admin(request)
+    return family.choose(body.mode, body.name)
+
+
+@app.get("/api/family/children")
+def family_children() -> dict:
+    return {"children": family.children()}
+
+
+@app.post("/api/family/children")
+def family_add_child(body: ChildBody) -> dict:
+    return family.add_child(body.name, body.grade)
+
+
+@app.post("/api/family/example-child")
+def family_example_child() -> dict:
+    return family.add_example_child()
+
+
+@app.delete("/api/family/example-child")
+def family_remove_example() -> dict:
+    return family.remove_example_child()
+
+
+@app.get("/api/family/children/{learner_id}/summary")
+def family_summary(learner_id: str) -> dict:
+    return family.summary(learner_id)
+
+
+@app.post("/api/family/children/{learner_id}/results")
+def family_results(learner_id: str, body: ResultsBody) -> dict:
+    return family.add_results(learner_id, body.items, title=body.title, grade=body.grade, year=body.year, term=body.term)
+
+
+@app.get("/api/family/children/{learner_id}/notes")
+def family_notes(learner_id: str) -> dict:
+    return {"notes": family.notes(learner_id)}
+
+
+@app.post("/api/family/children/{learner_id}/notes")
+def family_add_note(learner_id: str, body: NoteBody) -> dict:
+    return family.add_note(learner_id, body.text, body.topic_id)
 
 
 # ------------------------------------------------------------------ classes

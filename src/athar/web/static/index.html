@@ -118,6 +118,18 @@ nav.tabs button[aria-current=page] { background: #fff; color: var(--ink); font-w
 .signin input { width: 100%; }
 button.danger { background: #fff; color: var(--bad, #B42318); border-color: var(--bad, #B42318); }
 button.danger:hover { background: var(--bad, #B42318); color: #fff; }
+.chooser { max-width: 980px; margin: 4vh auto 0; }
+.chooser h2 { font-size: 26px; margin-bottom: 6px; }
+.chooser .card h3 { font-size: 18px; margin-bottom: 6px; }
+.chooser input { width: 100%; }
+.famlist { margin: 6px 0 0; padding-inline-start: 20px; display: grid; gap: 8px; }
+.famitem { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; margin-top: 10px; background: var(--bg); }
+.famitem p { margin: 6px 0; }
+.famline { margin-bottom: 8px; }
+.famline select { flex: 1 1 280px; min-width: 0; }
+.famline input { width: 90px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 7px 10px; min-height: 38px; }
+.famfoot { max-width: 760px; margin-top: 18px; }
+.card textarea { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 8px 10px; }
 button.linkish { border: none; background: none; padding: 0; min-height: 0; color: var(--muted); text-decoration: underline; font-size: 12px; cursor: pointer; }
 button.linkish:hover { color: var(--bad); }
 .classrow { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 14px; background: var(--bg); }
@@ -519,7 +531,7 @@ async function loadArabic() {
   }
   I18N.fragments.sort((a, b) => b[0].length - a[0].length);
 }
-const TR_ATTRS = ["placeholder", "aria-label", "title", "alt"];
+const TR_ATTRS = ["placeholder", "aria-label", "title", "alt", "label"];
 function isData(el) { return !!(el && el.closest && el.closest('[dir="auto"], [data-raw], script, style, body [lang]')); }
 function localize(node) {
   if (node.nodeType === 3) {
@@ -609,7 +621,7 @@ async function getGraph(lid) {
   }
   return state.graphs[lid];
 }
-function teacherId() { return document.getElementById("teacher").value; }
+function teacherId() { return FAMILY && state.session.guardian ? state.session.guardian.id : document.getElementById("teacher").value; }
 function stopTimers() {
   if (state.timer) { clearInterval(state.timer); state.timer = null; }
   if (state.runTimer) { clearInterval(state.runTimer); state.runTimer = null; }
@@ -653,7 +665,7 @@ function evidenceTable(rows, onWithdraw) {
 function db_period(r) { return r.year + "-T" + r.term; }
 
 // ---------------------------------------------------------------- navigation
-const NAV = [
+let NAV = [
   ["overview", "Class overview", "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"],
   ["school", "School map", "M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"],
   ["learner", "Learners", "M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
@@ -709,6 +721,9 @@ async function init() {
   document.title = tr(PRODUCT + ": learning map");
   document.getElementById("product").textContent = PRODUCT;
   if (state.session.sign_in && !state.session.teacher) { showSignIn(); return; }
+  if (!state.session.mode && !state.session.sign_in) { showChooser(); return; }
+  FAMILY = state.session.mode === "family" && !state.session.sign_in;
+  if (FAMILY) NAV = NAV_FAMILY;
   try {
     const [l, t] = await Promise.all([api("/api/learners"), api("/api/teachers")]);
     state.learners = l.learners;
@@ -720,7 +735,16 @@ async function init() {
   const sel = document.getElementById("teacher");
   for (const t of state.teachers) sel.append(h("option", { value: t.id, text: t.name }));
   const me = state.session.teacher;
-  if (me) {
+  if (FAMILY) {
+    // At home there is one grown-up: every record is written under their name.
+    sel.hidden = true;
+    document.querySelector("#who label").textContent = "Family record of";
+    const name = document.getElementById("who-name");
+    name.setAttribute("dir", "auto");
+    name.textContent = (state.session.guardian || {}).name || "";
+    name.hidden = false;
+    document.getElementById("who-note").textContent = "Everything stays on this computer.";
+  } else if (me) {
     // Signed in: the server records every action under this teacher, whatever the page sends.
     sel.value = me.id;
     sel.hidden = true;
@@ -740,7 +764,7 @@ async function init() {
   const first = state.learners.find((l) => l.learner_id === savedLearner) || state.learners[0];
   if (first) state.learnerId = first.learner_id;
   refreshPending();
-  show(location.hash.slice(1) || "overview");
+  show(location.hash.slice(1) || (FAMILY ? "home" : "overview"));
 }
 
 function pickLearner(id, sub) {
@@ -779,7 +803,7 @@ function show(view) {
   stopTimers();
   let [v, sub] = String(view || "").split("/");
   if (SUB.some((t) => t[0] === v)) { sub = v; v = "learner"; }          // old links such as #map
-  state.view = NAV.some((t) => t[0] === v) ? v : "overview";
+  state.view = NAV.some((t) => t[0] === v) ? v : (FAMILY ? "home" : "overview");
   if (state.view === "learner") state.sub = SUB.some((t) => t[0] === sub) ? sub : (state.sub || "profile");
   history.replaceState(null, "", "#" + (state.view === "learner" ? "learner/" + state.sub : state.view));
   drawTabs();
@@ -787,7 +811,7 @@ function show(view) {
   root.className = state.view === "learner" ? "learner-view" : "";
   const fn = state.view === "learner"
     ? { profile: viewProfile, map: viewMap, patterns: viewPatterns, approved: viewApproved }[state.sub]
-    : { overview: viewOverview, school: viewSchool, teaching: viewTeaching, review: viewReview, agent: viewAgent, audit: viewAudit, upload: viewUpload, people: viewPeople }[state.view];
+    : { overview: viewOverview, school: viewSchool, teaching: viewTeaching, review: viewReview, agent: viewAgent, audit: viewAudit, upload: viewUpload, people: FAMILY ? viewFamilySettings : viewPeople, home: viewFamilyHome, add: viewFamilyAdd }[state.view];
   Promise.resolve(fn(root)).catch((e) => root.append(h("p", { class: "err", role: "alert", text: e.message })));
   window.scrollTo(0, 0);
 }
@@ -1637,7 +1661,7 @@ async function viewReview(root) {
   await Promise.all(lids.map((id) => getGraph(id).catch(() => null)));
   clear(root);
   root.append(h("h2", { text: "Review queue" }),
-    h("p", { class: "muted", text: "Proposals wait here until a named teacher decides. " + (state.session.sign_in ? "" : "Choose your name in the side panel first. ") + "Approving, editing or rejecting is recorded with your name." }));
+    h("p", { class: "muted", text: (FAMILY ? "These are things Athar noticed in the results you entered. Keep the ones that match what you see at home, and reject the ones that do not. Nothing is used until you decide." : "Proposals wait here until a named teacher decides. " + (state.session.sign_in ? "" : "Choose your name in the side panel first. ") + "Approving, editing or rejecting is recorded with your name.") }));
   if (!p.findings.length && !p.summaries.length && !requests.length) root.append(h("p", { class: "empty card", text: "Nothing is waiting for review." }));
   if (requests.length) {
     const inbox = await api("/api/inbox").catch(() => ({ files: [] }));
@@ -2362,6 +2386,13 @@ async function viewPeople(root) {
     try { showBackups(await api("/api/admin/backups")); } catch (e) { say(bmsg, "err", e.message); }
   }
 
+  if (demo) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Are you a parent?" }),
+      h("p", { class: "muted", text: "The same program has a family side, for a parent following their own child. Switching does not delete anything." }),
+      h("div", { class: "row" }, h("button", { type: "button", onclick: () => showChooser() }, "Switch to the family side"))));
+  }
+
   if (!demo) {
     // ---- my password
     const cur = h("input", { type: "password", id: "pw-cur", autocomplete: "current-password" });
@@ -2375,6 +2406,345 @@ async function viewPeople(root) {
     root.append(h("div", { class: "card" }, h("h3", { text: "My password" }),
       h("div", { class: "row" }, field("Current password", cur), field("New password", next), pbtn), pmsg));
   }
+}
+
+// ---------------------------------------------------------------- family mode: a parent and their own children
+// The same records and the same engine as the school mode. A parent sees only their own children, types a
+// result in instead of uploading a class sheet, and reads a short summary computed from the records.
+let FAMILY = false;
+const NAV_FAMILY = [
+  ["home", "My child", "M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 4-6 8-6s8 2 8 6"],
+  ["add", "Add a result or a note", "M12 16V4M7 9l5-5 5 5M5 20h14"],
+  ["learner", "The full picture", "M4 6l5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"],
+  ["review", "What Athar noticed", "M10 6h10M10 12h10M10 18h10M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"],
+  ["agent", "Read a paper", "M12 3v4M12 17v4M3 12h4M17 12h4M6 6l3 3M15 15l3 3M18 6l-3 3M9 15l-3 3"],
+  ["people", "Family and settings", "M4 20V9l8-5 8 5v11M9 20v-6h6v6"],
+];
+const sayIn = (box, cls, text) => clear(box).append(h("p", { class: cls, role: cls === "err" ? "alert" : "status", text }));
+const strong = (text) => h("strong", { dir: "auto", text });
+const qmark = () => (LANG === "ar" ? "؟" : "?");
+
+function showChooser() {
+  stopTimers();
+  document.querySelector(".app").classList.add("signed-out");
+  const root = clear(document.getElementById("view"));
+  document.getElementById("tabs").hidden = true;
+  const msg = h("div");
+  const name = h("input", { type: "text", id: "ch-name", maxlength: 60, autocomplete: "name" });
+  const go = async (mode) => {
+    try { await post("/api/mode", { mode, name: name.value }); location.hash = ""; location.reload(); }
+    catch (e) { sayIn(msg, "err", e.message); }
+  };
+  root.append(h("div", { class: "chooser" },
+    h("h2", { text: "Who is using Athar on this computer?" }),
+    h("p", { class: "muted", text: "It is the same program either way. This only sets what you see first. You can change it later in the settings." }),
+    h("div", { class: "grid2" },
+      h("div", { class: "card" },
+        h("h3", { text: "I am a parent" }),
+        h("p", { class: "muted", text: "Keep your own child's results and notes across the years, and see where they are doing well and where to help first. Everything stays on this computer." }),
+        field("Your name", name),
+        h("div", { class: "row", style: "margin-top:12px" }, h("button", { type: "button", class: "primary", onclick: () => go("family") }, "Start as a parent"))),
+      h("div", { class: "card" },
+        h("h3", { text: "I am a teacher or I work in a school" }),
+        h("p", { class: "muted", text: "Follow the learners of your classes, add marks from a sheet, and review what the records show. It opens with a made-up school so you can look around." }),
+        h("div", { class: "row", style: "margin-top:12px" }, h("button", { type: "button", class: "primary", onclick: () => go("school") }, "Start as a school")))),
+    msg));
+}
+
+function familyChild() {
+  if (!state.learners.some((l) => l.learner_id === state.learnerId)) state.learnerId = state.learners.length ? state.learners[0].learner_id : null;
+  return state.learners.find((l) => l.learner_id === state.learnerId) || null;
+}
+async function reloadFamily() {
+  state.learners = (await api("/api/learners")).learners;
+  state.graphs = {};
+}
+function childPicker(onchange) {
+  if (state.learners.length < 2) return null;
+  const pick = h("select", { id: "fam-child", "aria-label": "Child" },
+    state.learners.map((l) => h("option", { value: l.learner_id, selected: l.learner_id === state.learnerId, "data-raw": true, text: l.name })));
+  pick.addEventListener("change", () => { state.learnerId = pick.value; store("athar.learner", pick.value); onchange(); });
+  return field("Child", pick);
+}
+function addChildCard(after) {
+  const name = h("input", { type: "text", id: "fc-name", maxlength: 60 });
+  const grade = gradeSelect("fc-grade");
+  const msg = h("div");
+  const add = h("button", { type: "button", class: "primary" }, "Add my child");
+  add.onclick = async () => {
+    try {
+      const r = await post("/api/family/children", { name: name.value, grade: Number(grade.value) });
+      await reloadFamily();
+      state.learnerId = r.learner_id; store("athar.learner", r.learner_id);
+      after();
+    } catch (e) { sayIn(msg, "err", e.message); }
+  };
+  return h("div", { class: "card" },
+    h("h3", { text: "Add your child" }),
+    h("p", { class: "muted", text: "Only a first name and the grade they are in now. The name stays on this computer. There is no account for the child." }),
+    h("div", { class: "row" }, field("Name", name), field("Grade now", grade), add), msg);
+}
+
+async function viewFamilyHome(root) {
+  clear(root);
+  const me = state.session.guardian || {};
+  root.append(h("h2", {}, "Welcome, ", h("span", { dir: "auto", text: me.name || "" })));
+  const child = familyChild();
+  if (!child) {
+    const msg = h("div");
+    root.append(h("p", { class: "muted", text: "Start by adding your child. Then add a few results, and Athar shows where they are doing well and where to help first." }),
+      addChildCard(() => show("add")),
+      h("div", { class: "card" },
+        h("h3", { text: "Or look around first" }),
+        h("p", { class: "muted", text: "See how it looks with a made-up child who has three years of results. You can remove them at any time." }),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: async () => {
+          try { const r = await post("/api/family/example-child", {}); await reloadFamily(); state.learnerId = r.learner_id; show("home"); }
+          catch (e) { sayIn(msg, "err", e.message); }
+        } }, "Show a made-up child")), msg));
+    return;
+  }
+  const kids = (await api("/api/family/children")).children;
+  const mine = kids.find((k) => k.learner_id === child.learner_id) || {};
+  const sum = await api("/api/family/children/" + encodeURIComponent(child.learner_id) + "/summary");
+  const open = (topicId) => { state.sel = topicId; state.subject = null; pickLearner(child.learner_id, "map"); };
+  const picker = childPicker(() => show("home"));
+  root.append(h("div", { class: "card famhead" },
+    h("div", { class: "card-head" },
+      h("h3", {}, h("span", { dir: "auto", text: child.name }), "  ·  ", "Grade " + child.grade_now),
+      h("div", { class: "row" }, picker, h("button", { type: "button", class: "primary", onclick: () => show("add") }, "Add a result or a note"))),
+    h("p", { class: "muted" }, "Marks on record: ", String(sum.records), "  ·  ", "Terms with records: ", String(sum.terms)),
+    mine.example ? h("p", { class: "pill plain", text: "This is a made-up child, to show how Athar works. Nothing here is about a real child." }) : null));
+
+  if (!sum.enough) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Too little to say much yet" }),
+      h("p", { text: "Athar needs a few results before it can see anything. With about six marks it starts to show where things are going well and where they are not." }),
+      h("p", { class: "muted", text: "What helps most is a mark tied to a topic: not only 14 out of 20 in the exam, but how the questions on fractions went and how the questions on geometry went. Old papers from earlier years help too." })));
+  }
+
+  if (sum.going_well.length) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Going well" }),
+      h("ul", { class: "famlist" }, sum.going_well.map((g) => h("li", {},
+        strong(g.label), "  ", h("span", { class: "pill ok", text: pct(g.average) }),
+        h("span", { class: "muted small" }, "  ", "Marks behind this: ", String(g.items),
+          g.kind === "area" ? ["  ·  ", "Terms in a row: ", String(g.terms)] : null))))));
+  }
+
+  if (sum.help_first.length) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Where to help first" }),
+      h("p", { class: "muted", text: "The lowest topics on record, each followed back to where the difficulty may have started. Start with the earliest one." }),
+      sum.help_first.map((x) => h("div", { class: "famitem" },
+        h("div", {}, strong(x.topic), "  ", h("span", { class: "pill", text: pct(x.average) }), h("span", { class: "muted small" }, "  ", "Grade " + x.grade)),
+        x.starts_here
+          ? h("p", { text: "The earlier topics it builds on look fine on record, which suggests the difficulty starts with this topic itself." })
+          : h("p", {}, "This may have started earlier, with ", strong(x.start.topic), " (", "Grade " + x.start.grade, ")",
+              x.start.average !== null && x.start.average !== undefined ? [", where the average on record was ", pct(x.start.average)] : null, "."),
+        !x.starts_here && !x.certain ? h("p", { class: "muted small", text: "This is not certain: some earlier results are missing from the record." }) : null,
+        x.days_absent >= 5 ? h("p", { class: "muted small" }, "Days absent recorded in that term: ", String(x.days_absent)) : null,
+        h("p", {}, h("strong", { text: "What to try: " }),
+          x.starts_here ? "a little practice on this topic, often, rather than one long session. Ask your child to explain one solved example to you."
+            : ["go back to ", strong(x.start.topic), " first, a little at a time, before more practice on ", strong(x.topic), "."]),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: () => open(x.topic_id) }, "See the results behind this"))))));
+  }
+
+  if (sum.next_up.length) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Coming up this year" }),
+      h("p", { class: "muted", text: "Topics of this grade with no result yet that build on a topic which is low on record. A short review first may make them easier." }),
+      h("ul", { class: "famlist" }, sum.next_up.map((n) => h("li", {}, strong(n.topic), " ", "builds on", " ", n.needs.flatMap((t, i) => [i ? "، " : "", strong(t)]))))));
+  }
+
+  if (sum.worked) {
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "What seemed to help" }),
+      h("p", {}, "Results were better after lessons taught with ", strong(sum.worked.label), ". ", "Times it was followed by better results: ", String(sum.worked.improved), ".")));
+  }
+
+  if (sum.help_first.length) {
+    const qs = [];
+    for (const x of sum.help_first) {
+      if (!x.starts_here) qs.push(h("li", {}, "Could we look again at ", strong(x.start.topic), qmark() + " ", "The results on it were low, and ", strong(x.topic), " ", "builds on it."));
+      else qs.push(h("li", {}, "What would you suggest for ", strong(x.topic), qmark()));
+    }
+    qs.push(h("li", { text: "Which topics come next this term, and what should be solid before them?" }));
+    root.append(h("div", { class: "card" },
+      h("h3", { text: "Questions you could ask the teacher" }),
+      h("ul", { class: "famlist" }, qs)));
+  }
+
+  root.append(h("p", { class: "muted small famfoot", text: "This is a reading of the results you entered, not a judgement of your child. It never compares your child with anyone else, and the teacher knows things these records do not. If something here does not match what you see, trust what you see." }));
+}
+
+async function viewFamilyAdd(root) {
+  clear(root);
+  root.append(h("h2", { text: "Add a result or a note" }));
+  const child = familyChild();
+  if (!child) { root.append(addChildCard(() => show("add"))); return; }
+  const cur = state.session.curriculum;
+  const picker = childPicker(() => show("add"));
+  if (picker) root.append(h("div", { class: "card" }, h("div", { class: "row" }, picker)));
+
+  // ---- a result
+  const title = h("input", { type: "text", id: "fr-title", maxlength: 80, placeholder: "e.g. November monthly test" });
+  const grade = gradeSelect("fr-grade");
+  grade.value = child.grade_now;
+  const term = h("select", { id: "fr-term" }, Array.from({ length: cur.terms }, (_, i) => h("option", { value: i + 1, text: "Term " + (i + 1) })));
+  const year = h("select", { id: "fr-year" }, Array.from({ length: 6 }, (_, i) => {
+    const y = state.session.school_year - i;
+    return h("option", { value: y, "data-raw": true, text: y + "/" + String(y + 1).slice(2) });
+  }));
+  const subjects = cur.subjects || [];
+  const subject = h("select", { id: "fr-subject" }, subjects.map((x) => h("option", { value: x.id, text: x.label })));
+  const lines = h("div", { class: "famlines" });
+  const out = h("div", { "aria-live": "polite" });
+  let topics = [];
+  const topicSelect = () => {
+    const sel = h("select", { class: "fr-topic", "aria-label": "Topic" }, h("option", { value: "", text: "Choose the topic" }));
+    const g = Number(grade.value);
+    const byGrade = {};
+    for (const t of topics) (byGrade[t.grade] = byGrade[t.grade] || []).push(t);
+    for (const k of Object.keys(byGrade).map(Number).sort((a, b) => (a === g ? -1 : b === g ? 1 : b - a))) {
+      sel.append(h("optgroup", { label: "Grade " + k }, byGrade[k].map((t) => h("option", { value: t.id, "data-raw": true, text: t.label }))));
+    }
+    return sel;
+  };
+  const addLine = () => lines.append(h("div", { class: "row famline" }, topicSelect(),
+    h("input", { type: "text", class: "fr-mark", inputmode: "decimal", size: 5, "aria-label": "Mark", placeholder: "Mark" }),
+    h("span", { class: "muted", text: "out of" }),
+    h("input", { type: "text", class: "fr-out", inputmode: "decimal", size: 5, "aria-label": "Out of", placeholder: "Out of" })));
+  const loadTopics = async () => {
+    const q = "/api/upload/topics?grade=" + grade.value + "&subject=" + encodeURIComponent(subject.value || "");
+    topics = (await api(q)).topics;
+    clear(lines);
+    for (let i = 0; i < 3; i++) addLine();
+  };
+  grade.onchange = loadTopics;
+  subject.onchange = loadTopics;
+  grade.addEventListener("change", () => { const back = Number(child.grade_now) - Number(grade.value); if (back >= 0 && back < 6) year.value = state.session.school_year - back; });
+  const save = h("button", { type: "button", class: "primary" }, "Save these results");
+  save.onclick = async () => {
+    const items = [...lines.querySelectorAll(".famline")].map((row) => ({
+      topic_id: row.querySelector(".fr-topic").value, mark: row.querySelector(".fr-mark").value, out_of: row.querySelector(".fr-out").value }));
+    try {
+      const r = await post("/api/family/children/" + encodeURIComponent(child.learner_id) + "/results",
+        { items, title: title.value, grade: Number(grade.value), year: Number(year.value), term: Number(term.value) });
+      await reloadFamily();
+      clear(out).append(h("p", { class: "okmsg" }, "Saved. Results added: ", String(r.saved), "."),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: () => show("home") }, "See what this shows")));
+      title.value = "";
+      await loadTopics();
+    } catch (e) { sayIn(out, "err", e.message); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "A result from a test, an exam or homework" }),
+    h("p", { class: "muted", text: "One line for each part of the paper: the topic the questions were about, the mark, and what it was out of. If the paper only has a total, split it by topic as well as you can, or ask the teacher. A total alone cannot show where the difficulty is." }),
+    h("div", { class: "row" }, field("What was it?", title), field("Subject", subject), field("Grade it was in", grade), field("Term", term), field("School year", year)),
+    h("div", { style: "margin-top:12px" }, lines),
+    h("div", { class: "row", style: "margin-top:10px" }, h("button", { type: "button", onclick: addLine }, "Add another line"), save),
+    out));
+  await loadTopics();
+
+  // ---- a note
+  const note = h("textarea", { id: "fn-text", rows: 3, maxlength: 1000, dir: "auto", placeholder: "For example: she understands the idea when we use real things, but loses marks in written steps." });
+  const nmsg = h("div");
+  const list = h("div");
+  const loadNotes = async () => {
+    const r = await api("/api/family/children/" + encodeURIComponent(child.learner_id) + "/notes");
+    clear(list);
+    if (!r.notes.length) return;
+    list.append(h("h4", { style: "margin-top:16px", text: "Your notes so far" }),
+      h("ul", { class: "famlist" }, r.notes.map((n) => h("li", {}, h("span", { dir: "auto", lang: n.language, text: n.text }),
+        h("span", { class: "muted small", "data-raw": true, text: "  " + String(n.recorded_at).slice(0, 10) })))));
+  };
+  const nsave = h("button", { type: "button", class: "primary" }, "Keep this note");
+  nsave.onclick = async () => {
+    try {
+      await post("/api/family/children/" + encodeURIComponent(child.learner_id) + "/notes", { text: note.value });
+      note.value = "";
+      sayIn(nmsg, "okmsg", "Note kept. It is stored as you wrote it and is never turned into a mark.");
+      await loadNotes();
+    } catch (e) { sayIn(nmsg, "err", e.message); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "A note in your own words" }),
+    h("p", { class: "muted", text: "What you notice when you study together: what clicks, what does not, what helped. Write about the work, not about your child's worth. Leave health and private family matters out of here." }),
+    field("Your note", note),
+    h("div", { class: "row", style: "margin-top:10px" }, nsave), nmsg, list));
+  await loadNotes();
+
+  // ---- a paper for the assistant
+  const doc = h("input", { type: "file", id: "fd-file", accept: ".md,.txt,.csv" });
+  const dmsg = h("div");
+  const dsend = h("button", { type: "button" }, "Send it to the assistant");
+  dsend.onclick = async () => {
+    try {
+      if (!doc.files.length) throw new Error("Choose a file first.");
+      const form = new FormData();
+      form.append("file", doc.files[0]);
+      form.append("teacher_id", teacherId());
+      await postForm("/api/upload/document", form);
+      clear(dmsg).append(h("p", { class: "okmsg", text: "The file is ready for the assistant." }),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: () => show("agent") }, "Open the assistant")));
+    } catch (e) { sayIn(dmsg, "err", e.message); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "A typed paper for the assistant to read" }),
+    h("p", { class: "muted" }, "If you have a result as a text file, the assistant can read it and fill in the lines for you. Write this code in the file instead of the name: ", h("strong", { "data-raw": true, text: codeOf(child.learner_id) }), ". ", "It needs a model, and it cannot read a photo yet."),
+    h("div", { class: "row" }, field("File (.txt, .md or .csv)", doc), dsend), dmsg));
+}
+
+async function viewFamilySettings(root) {
+  clear(root);
+  root.append(h("h2", { text: "Family and settings" }));
+  const kids = (await api("/api/family/children")).children;
+  const kmsg = h("div");
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "Children" }),
+    kids.length ? h("ul", { class: "famlist" }, kids.map((k) => h("li", {}, strong(k.name), "  ·  ", "Grade " + k.grade_now, "  ·  ", "Records: ", String(k.records),
+      h("span", { class: "muted small", "data-raw": true, text: "  (" + k.alias.replace("Learner ", "") + ")" }),
+      k.example ? [" ", h("span", { class: "pill plain", text: "made up" }), " ", h("button", { type: "button", class: "linkish", onclick: async () => {
+        try { await api("/api/family/example-child", { method: "DELETE" }); await reloadFamily(); show("people"); } catch (e) { sayIn(kmsg, "err", e.message); }
+      } }, "Remove")] : null)))
+      : h("p", { class: "muted", text: "No child yet." }), kmsg));
+  root.append(addChildCard(() => show("people")));
+
+  // ---- keeping the records safe
+  const bmsg = h("div");
+  const bbtn = h("button", { type: "button", class: "primary" }, "Make a backup now");
+  bbtn.onclick = async () => {
+    try { const r = await post("/api/admin/backups", {}); clear(bmsg).append(h("p", { class: "okmsg" }, "Backup made: ", h("span", { "data-raw": true, text: r.made.file }), "."),
+      h("p", {}, h("a", { class: "btnlink", href: "/api/admin/backups/" + encodeURIComponent(r.made.file) }, "Save a copy elsewhere"))); }
+    catch (e) { sayIn(bmsg, "err", e.message); }
+  };
+  const pick = h("select", { id: "fs-child" }, kids.filter((k) => !k.example).map((k) => h("option", { value: k.learner_id, "data-raw": true, text: k.name + " (" + k.alias.replace("Learner ", "") + ")" })));
+  const code = h("input", { type: "text", id: "fs-code", maxlength: 8, autocomplete: "off" });
+  const dmsg = h("div");
+  const exp = h("button", { type: "button", onclick: () => { if (pick.value) location.href = "/api/learners/" + encodeURIComponent(pick.value) + "/export"; } }, "Save the whole record as a file");
+  const del = h("button", { type: "button", class: "danger" }, "Delete this record for good");
+  del.onclick = async () => {
+    if (!pick.value) return;
+    if (!window.confirm("Delete this child's whole record? Every result and note goes. This cannot be undone.")) return;
+    try { await post("/api/learners/" + encodeURIComponent(pick.value) + "/delete", { confirm_code: code.value }); await reloadFamily(); show("people"); }
+    catch (e) { sayIn(dmsg, "err", e.message); }
+  };
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "Keeping the records safe" }),
+    h("p", { class: "muted", text: "Everything is in one file on this computer. A backup is a copy of it. Save one to a USB stick now and then: if this computer is lost, so are the records." }),
+    h("div", { class: "row" }, bbtn), bmsg,
+    pick.options.length ? [h("h4", { style: "margin-top:18px", text: "One child's record" }),
+      h("div", { class: "row" }, field("Child", pick), exp),
+      h("div", { class: "row", style: "margin-top:10px" }, field("To delete, type the code shown in brackets", code), del), dmsg] : null));
+
+  // ---- school mode
+  const smsg = h("div");
+  root.append(h("div", { class: "card" },
+    h("h3", { text: "Are you a teacher too?" }),
+    h("p", { class: "muted", text: "The same program has a school side, for a teacher with classes. Switching does not delete anything: your family's records stay, and you can switch back here." }),
+    h("div", { class: "row" }, h("button", { type: "button", onclick: async () => {
+      try { await post("/api/mode", { mode: "school" }); location.hash = ""; location.reload(); } catch (e) { sayIn(smsg, "err", e.message); }
+    } }, "Switch to the school side")), smsg));
 }
 
 init();

@@ -30,6 +30,8 @@ uv run athar demo
 
 Open http://127.0.0.1:8765. The first run builds the made-up school.
 
+The first time it opens, Athar asks who is using it: **a parent** or **a school**. It is the same program. Pick the one that fits; you can switch later in the settings.
+
 ## Step 2: give it a model
 
 Pick one. You can change your mind later.
@@ -68,9 +70,15 @@ A key in `settings.txt` or in your shell is plain text on your own computer. Nev
 
 ### 3. The model inside the Windows package
 
+This is the way for someone who has never heard of LM Studio. The first time you start the Windows package with no model, the black window asks whether to download one. Press Enter and wait: it fetches one 5.2 GB file and then works with no internet. If you said no, do it later:
+
 In the Athar folder, double-click **Download the model** once, with internet. It fetches one 5.2 GB file into the `models` folder and checks it. After that Athar runs its own model with no internet and no other program.
 
 ## Step 3: look around
+
+**If you chose parent:** add your child, then add a result (the topic, the mark, and what it was out of). The home page shows what is going well and where to help first once there are about six marks. To see it full first, choose "Show a made-up child".
+
+**If you chose school:**
 
 - The page opens in Arabic. The button at the bottom of the side panel switches to English.
 - Choose a teacher's name in the side panel. With made-up data there is no password.
