@@ -13,11 +13,26 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, File, Form, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .. import accounts, audit, classes, db, family, graph, imports, privacy, report, review, school, tools
+from .. import (
+    accounts,
+    audit,
+    classes,
+    db,
+    family,
+    graph,
+    imports,
+    photo,
+    privacy,
+    report,
+    review,
+    school,
+    tools,
+)
 from ..config import get_settings
 from ..curriculum import current_lang, load_pack
 from . import dashboard, people
@@ -845,6 +860,27 @@ def family_notes(learner_id: str) -> dict:
 @app.post("/api/family/children/{learner_id}/notes")
 def family_add_note(learner_id: str, body: NoteBody) -> dict:
     return family.add_note(learner_id, body.text, body.topic_id)
+
+
+@app.post("/api/family/children/{learner_id}/photo")
+async def family_photo(learner_id: str, file: UploadFile = File(...), grade: int = Form(...),   # noqa: B008
+                       subject: str = Form("")) -> dict:
+    """Read a photo of a marked paper with the model on this computer. Nothing is saved: the lines go back
+    to the page for the parent to check against the paper."""
+    parent = family.guardian()
+    if parent is None or learner_id not in family.children_ids():
+        raise ValueError("That child is not in this family's records.")
+    with db.connect() as conn:
+        pack = load_pack(db.one(conn, "SELECT pack_id FROM learners WHERE id = ?", (learner_id,))["pack_id"])
+    data = await file.read(photo.MAX_BYTES + 1)
+    model = get_settings().llm_model
+    try:
+        from ..agent import llm
+        model = _usable_model(llm.list_models(), model)
+    except Exception:  # noqa: BLE001, S110 - if the model is off, read_paper says so in plain words
+        pass
+    return await run_in_threadpool(photo.read_paper, data, pack, int(grade), subject or None, model=model,
+                                   actor=f"guardian:{parent['id']}")
 
 
 # ------------------------------------------------------------------ classes

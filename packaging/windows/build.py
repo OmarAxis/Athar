@@ -50,6 +50,7 @@ MARKITDOWN_MCP = "markitdown-mcp==0.0.1a7"
 
 # The model the package is tested with. Apache 2.0, so it may be passed on.
 MODEL_SHA256 = "cd76ec205963b3b33350093e6904d9de16c4e666fd104e1f632d25c7f15f2a13"
+VISION_SHA256 = "330d17547bfdbcd0e7a0cb3f4b06b4ceeac0aaa1e449122d9d66ef957aeb74b3"
 MODEL_SOURCE = "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF (base model: Qwen/Qwen3.5-9B)"
 
 # Parts of the Python copy the app never uses.
@@ -303,6 +304,12 @@ def main() -> int:
     if args.model:
         say("adding the model")
         shutil.copy2(args.model, stage / "models" / args.model.name)
+        for vision in sorted(args.model.parent.glob("mmproj*.gguf"))[:1]:      # the part that reads photos
+            if sha256_of(vision) == VISION_SHA256:
+                say(f"adding {vision.name}")
+                shutil.copy2(vision, stage / "models" / vision.name)
+            else:
+                say(f"{vision.name} is not the tested file (checksum differs); left out")
         shutil.rmtree(stage / "LICENSES")
         add_licenses(stage, out, with_model=True)
         version_file(stage, args.model)

@@ -117,7 +117,7 @@ def offer_model(root: Path) -> bool:
     if asked.exists() or os.environ.get("ATHAR_NO_BROWSER") or not (sys.stdin and sys.stdin.isatty()):
         return False
     print("  The assistant needs a model, and there is none on this computer yet.")
-    print("  Athar can download one now: one file, 5.2 GB, free and open. It then works with no internet.")
+    print("  Athar can download one now: two files, 6.1 GB in all, free and open. It then works with no internet.")
     print("  Everything else in Athar works without it, so you can also do this later")
     print("  with \"Download the model\" in this folder.\n")
     try:
@@ -232,10 +232,18 @@ def wait_until(url: str, process: subprocess.Popen, seconds: float) -> bool:
     return False
 
 
+def find_vision(models_dir: Path) -> Path | None:
+    """The add-on file that lets the model see pictures, when it is in the models folder."""
+    files = sorted(models_dir.glob("mmproj*.gguf")) if models_dir.is_dir() else []
+    return files[0] if files else None
+
+
 def runner_command(folder: Path, model: Path, port: int) -> list[str]:
+    vision = find_vision(model.parent)
     return [str(folder / "llama-server.exe"), "--model", str(model), "--alias", MODEL_NAME,
             "--host", "127.0.0.1", "--port", str(port), "--ctx-size", str(CONTEXT_TOKENS),
-            "--parallel", "1", "--reasoning", "off", "--no-webui", "--offline", "--no-mmproj"]
+            "--parallel", "1", "--reasoning", "off", "--no-webui", "--offline",
+            *(["--mmproj", str(vision)] if vision else ["--no-mmproj"])]
 
 
 def start_runner(root: Path, model: Path, port: int, say=print) -> tuple[subprocess.Popen, str] | None:

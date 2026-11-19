@@ -252,3 +252,30 @@ Because of that, Arabic findings and questions now use fixed sentences written i
 turns the model's wording back on). After the change the same cases were checked without a model through
 `athar story` and a unit test: the sentences carry the right topic names, averages and terms. Notes for
 families in Arabic are still worded by the model and were not tried again. Three runs is not a measurement.
+
+### Reading a photo of a marked paper
+
+Tried by hand in November 2026 with `qwen3.5-9b` and its picture-reading part, on one computer. The papers were
+made up and drawn by a program to look like marked school papers. **No real photo of a real child's paper, and
+no real handwriting, was used.** Real photos will be harder.
+
+| Paper | What came back |
+|---|---|
+| Clear, straight, Arabic, maths, four marked questions | All four marks right. All four topics right, once the topic named in the printed heading was matched in code. About 16 seconds. |
+| Clear, straight, English, science, four marked questions | All four marks right. Three topics right; one left empty for the parent, because no topic in the map matched. |
+| Clear, straight, Arabic, marks in Arabic digits, one question with no mark | Three marks right and the unmarked question left out. The total check correctly said the lines do not add up to the total. |
+| A paper with only a total | No lines. The page says the paper has only a total and that a total cannot show where the difficulty is. |
+| Tilted, good light | Two marks right. One mark put beside the question that had none, and one mark invented (8 out of 10). The total check flagged it. |
+| Dim and slightly blurred | Read as sent: the Arabic text came back scrambled and a mark was invented. After the page's own clean-up of the picture: three marks right, the unmarked question left out. |
+| Dim, blurred and tilted | Two marks right, one beside the wrong question, one invented. The total check flagged it. On an earlier try the model invented a zero that made the lines add up, so the total check passed a wrong reading. |
+
+A larger model (`qwen/qwen3.8-27b`) read the text of the worst paper correctly but got every mark wrong.
+
+What follows from this:
+
+- Marks on a clear, straight picture were read correctly every time in this small trial.
+- A poor picture produces confident wrong lines. The model does not say "I cannot read this".
+- The check against the written total catches most wrong readings, and once it did not.
+- So nothing read from a photo is saved until the parent ticks that they checked every line against the paper.
+  That tick is the real safeguard, and it depends on the parent actually checking.
+- This is a handful of drawn papers. It is not a measurement, and it says nothing yet about handwriting.

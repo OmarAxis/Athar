@@ -48,7 +48,7 @@ Open http://127.0.0.1:8765. The first run builds the synthetic school.
 
 - **LM Studio or Ollama on your computer.** Switch its server on. Athar finds it and uses a model it offers.
 - **Your own OpenAI or Claude key.** Paste it on the Agent page under "Cloud models". It is kept in memory only.
-- **The model inside the Windows package.** Run "Download the model" once (5.2 GB).
+- **The model inside the Windows package.** Run "Download the model" once (6.1 GB).
 
 To see findings waiting for a decision without running a model:
 
@@ -78,7 +78,7 @@ Seeding again (`uv run athar seed`) wipes all data, accounts and classes include
 Choose **I am a parent** the first time Athar opens. Then:
 
 1. Add your child: a first name and the grade. There is no account for the child.
-2. Add a result: for each part of a test, the topic, the mark, and what it was out of. Old papers from earlier years count too.
+2. Add a result. Take a photo of the marked paper and Athar fills in the lines for you to check, or type them in: for each part of a test, the topic, the mark, and what it was out of. Old papers from earlier years count too.
 3. Write a note in your own words whenever you notice something while studying together.
 4. Read the home page. It is worked out in plain code from what you entered, and each part lists the results behind it.
 
@@ -123,11 +123,13 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **In Arabic the model does not word the findings.** The local model's Arabic dropped words and added claims in our tries, so Arabic findings and questions use fixed sentences. They are correct but all sound alike. Notes for families are still worded by the model, and a teacher must approve each one.
 - **The guard is weaker in Arabic.** It is a word list written mostly for English. A teacher's Arabic edit that labels a child may get through. The teacher gates are the real protection.
 - **Parts still in English in Arabic mode:** the raw entries of the audit log, tool names, file names, model names, and any server message that has no entry in the dictionary yet. The learning map and charts keep their left-to-right shape (grade 4 on the left). Numbers are not given Arabic plural forms, so counts are written like "عدد السجلات: 5".
-- **The family side is new and untried.** No parent has used it. A parent cannot yet add a photo of a paper: results are typed in, or read by the assistant from a text file. The assistant and review pages still speak of "the teacher" in places. There is no password on the family side, so anyone who uses the computer can open it.
+- **The family side is new and untried.** No parent has used it.
+- **Photo reading was tried on made-up papers only, never on a real photo of real handwriting.** On clear, straight pictures it read every mark. On a dim or tilted picture it put marks beside the wrong questions and once invented a mark. The check against the total written on the paper caught most of those, not all. So the lines are never saved until the parent ticks that they checked each one. It needs a model that can see pictures, on the same computer. See `EVALS.md`.
+- **Wording on the family side is not finished.** The assistant and review pages still speak of "the teacher" in places. There is no password on the family side, so anyone who uses the computer can open it.
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 328 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **Tested by the authors only.** 337 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
 - **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for a small reference cohort on a generic curriculum (`uv run athar seed --pack generic-maths`), and `athar eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.

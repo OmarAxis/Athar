@@ -129,6 +129,10 @@ button.danger:hover { background: var(--bad, #B42318); color: #fff; }
 .famline select { flex: 1 1 280px; min-width: 0; }
 .famline input { width: 90px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 7px 10px; min-height: 38px; }
 .famfoot { max-width: 760px; margin-top: 18px; }
+.famabout { flex: 1 1 100%; }
+.famcheck { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.famcheck[hidden] { display: none; }
+.famcheck input { width: 20px; height: 20px; }
 .card textarea { border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 8px 10px; }
 button.linkish { border: none; background: none; padding: 0; min-height: 0; color: var(--muted); text-decoration: underline; font-size: 12px; cursor: pointer; }
 button.linkish:hover { color: var(--bad); }
@@ -2577,6 +2581,33 @@ async function viewFamilyHome(root) {
   root.append(h("p", { class: "muted small famfoot", text: "This is a reading of the results you entered, not a judgement of your child. It never compares your child with anyone else, and the teacher knows things these records do not. If something here does not match what you see, trust what you see." }));
 }
 
+async function preparePhoto(file) {
+  // Done in the browser, so nothing leaves this computer. A phone photo is large and often dim: it is made
+  // smaller, and its contrast is stretched so that the paper is white and the ink is dark again.
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const w = Math.max(1, Math.round(bmp.width * scale)), hgt = Math.max(1, Math.round(bmp.height * scale));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = hgt;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(bmp, 0, 0, w, hgt);
+    const img = ctx.getImageData(0, 0, w, hgt), d = img.data, hist = new Uint32Array(256);
+    for (let i = 0; i < d.length; i += 4) hist[(d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000 | 0]++;
+    let lo = 0, hi = 255, acc = 0;
+    for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= w * hgt * 0.01) { lo = v; break; } }
+    acc = 0;
+    for (let v = 255; v >= 0; v--) { acc += hist[v]; if (acc >= w * hgt * 0.25) { hi = v; break; } }
+    if (hi - lo > 30 && (lo > 10 || hi < 240)) {
+      const k = 255 / (hi - lo);
+      for (let i = 0; i < d.length; i += 4) for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, Math.min(255, (d[i + j] - lo) * k));
+      ctx.putImageData(img, 0, 0);
+    }
+    const blob = await new Promise((done) => c.toBlob(done, "image/jpeg", 0.9));
+    return blob || file;
+  } catch (e) { return file; }                       // a browser that cannot do this sends the photo as it is
+}
+
 async function viewFamilyAdd(root) {
   clear(root);
   root.append(h("h2", { text: "Add a result or a note" }));
@@ -2624,7 +2655,10 @@ async function viewFamilyAdd(root) {
   subject.onchange = loadTopics;
   grade.addEventListener("change", () => { const back = Number(child.grade_now) - Number(grade.value); if (back >= 0 && back < 6) year.value = state.session.school_year - back; });
   const save = h("button", { type: "button", class: "primary" }, "Save these results");
+  const checked = h("input", { type: "checkbox", id: "fr-checked" });
+  const checkedRow = h("label", { class: "famcheck", for: "fr-checked", hidden: true }, checked, " ", h("span", { text: "I checked every line against the paper." }));
   save.onclick = async () => {
+    if (!checkedRow.hidden && !checked.checked) { sayIn(out, "err", "These lines came from a photo. Check each one against the paper, then tick the box."); return; }
     const items = [...lines.querySelectorAll(".famline")].map((row) => ({
       topic_id: row.querySelector(".fr-topic").value, mark: row.querySelector(".fr-mark").value, out_of: row.querySelector(".fr-out").value }));
     try {
@@ -2634,17 +2668,70 @@ async function viewFamilyAdd(root) {
       clear(out).append(h("p", { class: "okmsg" }, "Saved. Results added: ", String(r.saved), "."),
         h("div", { class: "row" }, h("button", { type: "button", onclick: () => show("home") }, "See what this shows")));
       title.value = "";
+      checkedRow.hidden = true; checked.checked = false;
       await loadTopics();
     } catch (e) { sayIn(out, "err", e.message); }
   };
-  root.append(h("div", { class: "card" },
+  const resultCard = h("div", { class: "card" },
     h("h3", { text: "A result from a test, an exam or homework" }),
     h("p", { class: "muted", text: "One line for each part of the paper: the topic the questions were about, the mark, and what it was out of. If the paper only has a total, split it by topic as well as you can, or ask the teacher. A total alone cannot show where the difficulty is." }),
     h("div", { class: "row" }, field("What was it?", title), field("Subject", subject), field("Grade it was in", grade), field("Term", term), field("School year", year)),
     h("div", { style: "margin-top:12px" }, lines),
     h("div", { class: "row", style: "margin-top:10px" }, h("button", { type: "button", onclick: addLine }, "Add another line"), save),
-    out));
+    checkedRow, out);
+  root.append(resultCard);
   await loadTopics();
+
+  // ---- a photo of a marked paper: read by the model on this computer, then checked by the parent
+  const shot = h("input", { type: "file", id: "fp-file", accept: "image/jpeg,image/png,image/webp" });
+  const pmsg = h("div", { "aria-live": "polite" });
+  const read = h("button", { type: "button", class: "primary" }, "Read the photo");
+  read.onclick = async () => {
+    if (!shot.files.length) { sayIn(pmsg, "err", "Choose a photo first."); return; }
+    read.disabled = true;
+    sayIn(pmsg, "muted", "Reading the photo. This can take a minute or two...");
+    try {
+      const form = new FormData();
+      form.append("file", await preparePhoto(shot.files[0]), "paper.jpg");
+      form.append("grade", grade.value);
+      form.append("subject", subject.value || "");
+      const r = await postForm("/api/family/children/" + encodeURIComponent(child.learner_id) + "/photo", form);
+      if (!r.lines.length && r.total_on_paper) {
+        clear(pmsg).append(h("p", { class: "err" }, "This paper seems to have only a total: ", r.total_on_paper.mark + " / " + r.total_on_paper.out_of, ". ",
+          "A total alone cannot show where the difficulty is. If you can, type in how each part went, or ask the teacher."));
+        return;
+      }
+      if (!r.lines.length) { sayIn(pmsg, "err", "Athar could not read any marks in that photo. Try a clearer photo, or type the result in below."); return; }
+      if (r.title) title.value = r.title;
+      await loadTopics();          // the topic lists must match the grade and subject the photo was read for
+      clear(lines);
+      for (const x of r.lines) {
+        addLine();
+        const row = lines.lastChild;
+        if (x.topic_id) row.querySelector(".fr-topic").value = x.topic_id;
+        row.querySelector(".fr-mark").value = x.mark;
+        row.querySelector(".fr-out").value = x.out_of;
+        if (x.about) row.append(h("span", { class: "muted small famabout", dir: "auto", text: x.about }));
+      }
+      const notes = [h("p", { class: "okmsg" }, "Lines read from the photo: ", String(r.lines.length), ". ", "Nothing is saved yet.")];
+      notes.push(h("p", {}, h("strong", { text: "Check every line against the paper, then press Save below." })));
+      if (r.lines.length > 1 && r.without_topic === r.lines.length) notes.push(h("p", { class: "err", text: "Athar could not match any line to a topic. The photo may be hard to read, and the marks may be beside the wrong questions. Check each one with extra care, or take the photo again in better light." }));
+      const guessed = r.lines.filter((x) => x.topic_from === "model").length;
+      if (guessed) notes.push(h("p", { class: "muted" }, "Topics Athar guessed, for you to check with extra care: ", String(guessed), "."));
+      if (r.without_topic) notes.push(h("p", { class: "muted" }, "Lines with no topic chosen, for you to choose: ", String(r.without_topic), "."));
+      if (r.dropped) notes.push(h("p", { class: "err" }, "Marks Athar could not read and left out: ", String(r.dropped), ". ", "Add them by hand."));
+      if (r.totals_match === false) notes.push(h("p", { class: "err" }, "The lines do not add up to the total written on the paper. ", "Total on the paper: ", r.total_on_paper.mark + " / " + r.total_on_paper.out_of, ". ", "Total of the lines: ", r.total_of_lines.mark + " / " + r.total_of_lines.out_of, "."));
+      if (r.totals_match === true) notes.push(h("p", { class: "muted", text: "The lines add up to the total written on the paper." }));
+      clear(pmsg).append(...notes);
+      checkedRow.hidden = false; checked.checked = false;
+      resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) { sayIn(pmsg, "err", e.message); }
+    finally { read.disabled = false; }
+  };
+  root.insertBefore(h("div", { class: "card" },
+    h("h3", { text: "A photo of a marked paper" }),
+    h("p", { class: "muted", text: "Lay the paper flat in good light and take the photo straight from above, with the marks showing. Athar reads it with the model on this computer and fills in the lines below. The photo is not kept, and it is never sent anywhere. Choose the subject and the grade below first." }),
+    h("div", { class: "row" }, field("Photo", shot), read), pmsg), resultCard);
 
   // ---- a note
   const note = h("textarea", { id: "fn-text", rows: 3, maxlength: 1000, dir: "auto", placeholder: "For example: she understands the idea when we use real things, but loses marks in written steps." });
@@ -2691,7 +2778,7 @@ async function viewFamilyAdd(root) {
   };
   root.append(h("div", { class: "card" },
     h("h3", { text: "A typed paper for the assistant to read" }),
-    h("p", { class: "muted" }, "If you have a result as a text file, the assistant can read it and fill in the lines for you. Write this code in the file instead of the name: ", h("strong", { "data-raw": true, text: codeOf(child.learner_id) }), ". ", "It needs a model, and it cannot read a photo yet."),
+    h("p", { class: "muted" }, "If you have a result as a text file, the assistant can read it and fill in the lines for you. Write this code in the file instead of the name: ", h("strong", { "data-raw": true, text: codeOf(child.learner_id) }), ". ", "It needs a model."),
     h("div", { class: "row" }, field("File (.txt, .md or .csv)", doc), dsend), dmsg));
 }
 
