@@ -61,14 +61,34 @@ def _analyses(learner_id: str, db_path) -> dict[str, Any]:
     return {"patterns": patterns, "roots": roots, "what_worked": tools.what_worked(learner_id=learner_id, db_path=db_path)}
 
 
-def build(db_path=None) -> dict[str, Any]:
-    """Create the presenting state. Safe to run once on a freshly seeded database."""
+def propose_for(learner: dict, approve_kinds: tuple[str, ...], decider_id: str, note: str, out: dict[str, Any],
+                db_path=None) -> None:
+    """Run the engine for one learner, word each result with the fixed sentences, propose it, and record a
+    decision for the kinds named. Used by the school story and by the demo family."""
     from .agent.workflow import (  # deterministic helpers, no model
         _candidates,
         _template_statement,
         in_language,
     )
+    pack = load_pack(learner["pack_id"])
+    candidates, questions = _candidates(_analyses(learner["id"], db_path), pack)
+    candidates = [in_language(c, pack, get_settings().language) for c in candidates]
+    out["open_questions"] += len(questions)
+    for candidate in candidates:
+        made = tools.propose_finding(
+            learner_id=learner["id"], kind=candidate["kind"], statement=_template_statement(candidate),
+            evidence_ids=candidate["evidence_ids"], concept_ids=candidate["concept_ids"],
+            path=candidate["path"], confidence=candidate["confidence"], db_path=db_path)
+        out["proposed"] += 1
+        if candidate["kind"] in approve_kinds:
+            review.decide_finding(made["finding_id"], "approved", decider_id, note=note, db_path=db_path)
+            out["approved"] += 1
+        else:
+            out["waiting"] += 1
 
+
+def build(db_path=None) -> dict[str, Any]:
+    """Create the presenting state. Safe to run once on a freshly seeded database."""
     with db.connect(db_path) as conn:
         learners = db.rows(conn, "SELECT id, alias, pack_id FROM learners ORDER BY alias")
         teacher = db.one(conn, "SELECT id, name FROM teachers ORDER BY name")
@@ -83,23 +103,9 @@ def build(db_path=None) -> dict[str, Any]:
             learner = next((row for row in learners if row["alias"].endswith(suffix)), None)
             if learner is None:
                 continue
-            pack = load_pack(learner["pack_id"])
-            candidates, questions = _candidates(_analyses(learner["id"], db_path), pack)
-            candidates = [in_language(c, pack, get_settings().language) for c in candidates]
-            out["open_questions"] += len(questions)
-            for candidate in candidates:
-                made = tools.propose_finding(
-                    learner_id=learner["id"], kind=candidate["kind"], statement=_template_statement(candidate),
-                    evidence_ids=candidate["evidence_ids"], concept_ids=candidate["concept_ids"],
-                    path=candidate["path"], confidence=candidate["confidence"], db_path=db_path)
-                out["proposed"] += 1
-                if candidate["kind"] in approve_kinds:
-                    review.decide_finding(made["finding_id"], "approved", teacher["id"],
-                                          note=("سُجّل ضمن إعداد العرض التجريبي، وليس بقرار مدرس حقيقي." if get_settings().language == "ar"
-                                                else "Recorded by the demo setup, not by a real teacher."), db_path=db_path)
-                    out["approved"] += 1
-                else:
-                    out["waiting"] += 1
+            propose_for(learner, approve_kinds, teacher["id"],
+                        ("سُجّل ضمن إعداد العرض التجريبي، وليس بقرار مدرس حقيقي." if get_settings().language == "ar"
+                         else "Recorded by the demo setup, not by a real teacher."), out, db_path)
             out["learners"].append(learner["alias"])
     finally:
         audit.current_actor.reset(token)

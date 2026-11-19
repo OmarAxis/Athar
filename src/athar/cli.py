@@ -77,6 +77,18 @@ def story() -> None:
     console.print_json(json.dumps(story_module.build(), default=str))
 
 
+@app.command("family-demo")
+def family_demo(english: bool = typer.Option(False, "--english", help="English names and notes instead of Arabic.")) -> None:
+    """Set up a made-up family to look around or take pictures: a parent, three children, results across
+    three school years, notes, and findings. Everything is invented. No model is used."""
+    if english:                       # findings are worded in the language of the installation
+        import os
+        os.environ["ATHAR_LANGUAGE"] = "en"
+    _ensure_seeded()
+    from . import demo_family
+    console.print_json(json.dumps(demo_family.build(language="en" if english else None), default=str))
+
+
 @app.command()
 def demo() -> None:
     """Seed if needed, then open the teacher app."""

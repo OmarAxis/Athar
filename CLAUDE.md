@@ -52,7 +52,7 @@ Who does what:
 | `packs/egypt-*` | Egypt, grades 4 to 8, one pack per subject, and `egypt-school` which joins them. ALL DRAFT |
 | `packs/generic-*` | Small country-neutral packs, used by the evaluation set and as examples |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 340 tests, no model needed |
+| `tests/` | 343 tests, no model needed |
 
 ## Commands
 
@@ -64,6 +64,7 @@ uv run ruff check src tests  # lint
 uv run athar seed            # rebuild the synthetic Egyptian school, five subjects (wipes everything)
 uv run athar seed --pack generic-maths    # the small reference cohort the evaluation set uses
 uv run athar story           # findings waiting and decided, no model used
+uv run athar family-demo     # a made-up family (parent, three children, three years), no model used
 uv run athar learners        # list learners
 uv run athar run <code> --file data/inbox/<file>
 uv run athar pending         # what is waiting for a teacher

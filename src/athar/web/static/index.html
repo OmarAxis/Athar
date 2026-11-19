@@ -424,6 +424,8 @@ html[dir="rtl"] svg { direction: ltr; }
 html[dir="rtl"] input[type="number"], html[dir="rtl"] input[type="password"] { direction: ltr; text-align: right; }
 #lang-switch { align-self: flex-start; min-height: 30px; padding: 3px 12px; font-size: 13px; background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px; }
 #lang-switch:hover { background: rgba(255, 255, 255, .14); }
+#help-link { align-self: flex-start; color: #cfe9e0; font-size: 13.5px; text-decoration: underline; text-underline-offset: 3px; margin-bottom: 8px; }
+#help-link:hover { color: #fff; }
 </style>
 </head>
 <body>
@@ -442,6 +444,7 @@ html[dir="rtl"] input[type="number"], html[dir="rtl"] input[type="password"] { d
       <span class="note" id="who-note">Demonstration data, so there is no password yet. It records who made each decision.</span>
       <button type="button" id="sign-out" hidden>Sign out</button>
     </div>
+    <a id="help-link" href="/static/guide/guide.html" target="_blank" rel="noopener">Guide and help</a>
     <button type="button" id="lang-switch" data-raw hidden></button>
   </aside>
 
@@ -569,6 +572,7 @@ async function startLanguage(serverDefault) {
   LANG = store("athar.lang") || serverDefault || "en";
   if (LANG !== "ar") LANG = "en";
   document.cookie = "athar_lang=" + LANG + "; path=/; max-age=31536000; samesite=strict";
+  document.getElementById("help-link").href = "/static/guide/guide.html?lang=" + LANG;      // the guide opens in the same language
   const sw = document.getElementById("lang-switch");
   sw.hidden = false;
   sw.textContent = LANG === "ar" ? "English" : "العربية";
@@ -668,7 +672,7 @@ function evidenceTable(rows, onWithdraw) {
   // Long lists start short, so the decision buttons under them stay within reach.
   const tbody = h("tbody", {}, rows.slice(0, EVIDENCE_FIRST).map(row));
   const wrap = h("div", { class: "tablewrap" }, h("table", {},
-    h("thead", {}, h("tr", {}, ["Period", "Type", "Concept", "Score", "Teacher's words", "Source", "Record"].map((t) => h("th", { scope: "col", text: t })))),
+    h("thead", {}, h("tr", {}, ["Period", "Type", "Concept", "Score", FAMILY ? "What it says" : "Teacher's words", "Source", "Record"].map((t) => h("th", { scope: "col", text: t })))),
     tbody));
   if (rows.length <= EVIDENCE_FIRST) return wrap;
   const more = h("button", { type: "button", text: "Show all " + rows.length + " records" });
@@ -758,6 +762,7 @@ async function init() {
     name.hidden = false;
     document.getElementById("who-note").textContent = "Everything stays on this computer.";
     document.querySelector(".brand .sub").textContent = "Your child's results, year after year. You decide.";
+    KIND_PLURAL.observation = "Your notes";
     document.getElementById("foot").textContent = "Everything here stays on this computer. Athar never compares your child with anyone, and every finding shows the results it rests on.";
   } else if (me) {
     // Signed in: the server records every action under this teacher, whatever the page sends.
@@ -1676,7 +1681,7 @@ async function viewReview(root) {
   const lids = [...new Set([...p.findings.map((f) => f.learner_id), ...p.summaries.map((x) => x.learner_id)])];
   await Promise.all(lids.map((id) => getGraph(id).catch(() => null)));
   clear(root);
-  root.append(h("h2", { text: "Review queue" }),
+  root.append(h("h2", { text: FAMILY ? "What Athar noticed" : "Review queue" }),
     h("p", { class: "muted", text: (FAMILY ? "These are things Athar noticed in the results you entered. Keep the ones that match what you see at home, and reject the ones that do not. Nothing is used until you decide." : "Proposals wait here until a named teacher decides. " + (state.session.sign_in ? "" : "Choose your name in the side panel first. ") + "Approving, editing or rejecting is recorded with your name.") }));
   if (!p.findings.length && !p.summaries.length && !requests.length) root.append(h("p", { class: "empty card", text: "Nothing is waiting for review." }));
   if (requests.length) {

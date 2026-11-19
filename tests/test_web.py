@@ -241,3 +241,10 @@ def test_a_run_uses_a_model_the_local_program_really_offers():
     assert _usable_model(["text-embedding-x", "llama-3", "qwen/qwen3.8-27b"], "qwen3.5-9b") == "qwen/qwen3.8-27b"
     assert _usable_model(["text-embedding-x", "llama-3"], "qwen3.5-9b") == "llama-3"
     assert _usable_model([], "qwen3.5-9b") == "qwen3.5-9b"          # nothing listed: say what was configured
+
+
+def test_the_guide_is_linked_from_the_page_and_served(client):
+    assert 'id="help-link"' in client.get("/").text
+    guide = client.get("/static/guide/guide.html")
+    assert guide.status_code == 200 and "If something is not working" in guide.text and "لو حاجة مش شغالة" in guide.text
+    assert client.get("/static/guide/img/parent-home-ar.png").status_code == 200
