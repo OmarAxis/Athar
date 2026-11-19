@@ -266,3 +266,17 @@ def test_the_runner_gets_the_part_that_reads_photos_when_it_is_there(tmp_path):
     command = launch.runner_command(tmp_path, model, 11812)
     assert command[command.index("--mmproj") + 1] == str(vision) and "--no-mmproj" not in command
     assert launch.find_model(tmp_path) == model            # the add-on is never mistaken for the model itself
+
+
+def test_the_guide_goes_into_the_folder_and_opens_without_the_app(tmp_path):
+    import re
+
+    build.add_guide(tmp_path)
+    page = (tmp_path / "Guide" / "guide.html").read_text(encoding="utf-8")
+    assert "\u2014" not in page and "\u2013" not in page
+    assert "http://" not in page.replace("http://127.0.0.1:8780", "") and "https://" not in page   # nothing from the internet
+    pictures = set(re.findall(r'src="(img/[^"]+)"', page))
+    assert len(pictures) >= 20 and all((tmp_path / "Guide" / p).is_file() for p in pictures)
+    assert {p.rsplit("-", 1)[1] for p in pictures} == {"en.png", "ar.png"}        # every picture in both languages
+    for name, lang in build.GUIDE_LINKS.items():
+        assert f"Guide/guide.html?lang={lang}" in (tmp_path / name).read_text(encoding="utf-8")

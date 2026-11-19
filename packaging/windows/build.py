@@ -139,6 +139,20 @@ def install_libraries(python: Path, work: Path) -> None:
     shutil.rmtree(python.parent / "Scripts", ignore_errors=True)  # launchers there hold absolute paths
 
 
+GUIDE_LINKS = {"Guide (English).html": "en", "الدليل (عربي).html": "ar"}
+
+
+def add_guide(stage: Path) -> None:
+    """The guide with pictures, as plain files that open by double-click even when Athar is not running:
+    the page and its pictures in `Guide`, and one file per language beside the start files that opens it."""
+    shutil.copytree(REPO / "src" / "athar" / "web" / "static" / "guide", stage / "Guide")
+    for name, lang in GUIDE_LINKS.items():
+        (stage / name).write_text(
+            '<!doctype html><meta charset="utf-8"><title>Athar</title>'
+            f'<meta http-equiv="refresh" content="0; url=Guide/guide.html?lang={lang}">'
+            f'<a href="Guide/guide.html?lang={lang}">Open the guide</a>\n', encoding="utf-8", newline="")
+
+
 def copy_app(stage: Path) -> None:
     say("copying the app")
     app = stage / "app"
@@ -152,6 +166,7 @@ def copy_app(stage: Path) -> None:
     for path in (HERE / "files").iterdir():
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\n", "\r\n")
         (stage / path.name).write_text(text, encoding="utf-8", newline="")
+    add_guide(stage)
     (stage / "models").mkdir()
     (stage / "models" / "PUT THE MODEL FILE HERE.txt").write_text(
         "The model file goes in this folder: Qwen3.5-9B-Q4_K_M.gguf\r\n\r\n"

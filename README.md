@@ -140,6 +140,8 @@ The same four jobs are on the School page for the admin. A backup holds names an
 
 - [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md))
 - [For parents: the first five minutes](docs/FOR-PARENTS.md) ([بالعربي](docs/FOR-PARENTS.ar.md))
+- [For teachers: the first ten minutes](docs/FOR-TEACHERS.md) ([بالعربي](docs/FOR-TEACHERS.ar.md))
+- The guide with pictures, in both languages: open **Guide and help** inside Athar, or the `Guide` files in the Windows folder
 - [Which model to use, especially for Arabic](docs/MODELS.md)
 - [Using your own class data](docs/DATA-GUIDE.md) ([بالعربي](docs/DATA-GUIDE.ar.md))
 - [How it is built](ARCHITECTURE.md), [what the code protects](SECURITY.md), [how it was tested](EVALS.md)
@@ -158,6 +160,7 @@ uv run athar seed                          # rebuild the synthetic Egyptian scho
 uv run athar seed --pack egypt-maths       # one subject only
 uv run athar seed --pack generic-maths     # the small reference cohort the evaluation set uses
 uv run athar story                         # findings waiting and decided, no model used
+uv run athar family-demo                   # a made-up family with three children, to look around the parent side
 uv run athar learners                      # list learners
 uv run athar run <code> --file data/inbox/<file>   # run the agent for one learner
 uv run athar report <code>                 # printable report, approved findings only

@@ -195,7 +195,7 @@ def children(db_path=None) -> list[dict[str, Any]]:
                    MAX(e.grade) AS latest_grade, COUNT(e.id) AS records
             FROM learners l JOIN class_learners c ON c.learner_id = l.id AND c.class_id = ?
             LEFT JOIN evidence e ON e.learner_id = l.id AND e.status != 'retracted'
-            GROUP BY l.id ORDER BY l.created_at, l.id""", (FAMILY_CLASS,))
+            GROUP BY l.id ORDER BY l.created_at, l.rowid""", (FAMILY_CLASS,))
     found.sort(key=lambda r: r["learner_id"] in example)        # the family's own children first, made-up ones after
     return [{"learner_id": r["learner_id"], "alias": r["alias"], "name": r["display_name"] or r["alias"],
              "grade_now": _grade_now(r), "records": r["records"],

@@ -604,7 +604,10 @@
   "The sample paper is missing from this copy of Athar.": "الورقة التجريبية مش موجودة في النسخة دي من أثر.",
   "Everything here stays on this computer. Athar never compares your child with anyone, and every finding shows the results it rests on.": "كل حاجة هنا بتفضل على الكمبيوتر ده. أثر مش بيقارن ابنك بأي حد أبدا، وكل استنتاج بيعرض النتائج اللي مبني عليها.",
   "Waiting for you": "مستني قرارك",
-  "Approved by you": "إنت وافقت عليه"
+  "Approved by you": "إنت وافقت عليه",
+  "What it says": "المكتوب فيه",
+  "Your notes": "ملاحظاتك",
+  "Guide and help": "الدليل والمساعدة"
  },
  "patterns": [
   {
@@ -1316,6 +1319,7 @@
   "Results across the class are mostly secure": "نتائج الفصل مطمئنة في الغالب",
   "Results across the class are mixed": "نتائج الفصل متفاوتة",
   "Results across the class are low": "نتائج الفصل منخفضة",
-  "No records yet (not the same as struggling)": "مفيش سجلات لسه (وده مش معناه إن فيه صعوبة)"
+  "No records yet (not the same as struggling)": "مفيش سجلات لسه (وده مش معناه إن فيه صعوبة)",
+  " your notes": " ملاحظة منك"
  }
 }
