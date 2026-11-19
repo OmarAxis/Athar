@@ -385,7 +385,11 @@ button.linkish:hover { text-decoration: underline; background: transparent; }
 .term ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
 .term li { display: grid; line-height: 1.3; }
 
-.kg-edge { fill: none; opacity: .35; stroke-linecap: round; }
+.kg-edge { fill: none; opacity: .35; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: kg-draw .7s ease-out forwards; }
+.kg-node { opacity: 0; animation: kg-show .4s ease-out forwards; }
+@keyframes kg-draw { to { stroke-dashoffset: 0; } }
+@keyframes kg-show { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .kg-edge { animation: none; stroke-dashoffset: 0; } .kg-node { animation: none; opacity: 1; } }
 .kg-node circle { stroke: #fff; stroke-width: 2.5; }
 .kg-node:hover circle { stroke: var(--ink); }
 .kg-label { font-size: 13px; font-weight: 600; fill: var(--ink); }
@@ -1105,9 +1109,10 @@ function knowledgeGraph(m) {
     const a = -Math.PI / 2 + (i / nodes.length) * Math.PI * 2;
     const x = cx + Math.cos(a) * RX, y = cy + Math.sin(a) * RY;
     const r = 9 + 11 * Math.sqrt(n.weight / maxW);
-    edges.append(s("path", { class: "kg-edge", stroke: NODE_COLOUR[n.type], "stroke-width": 1 + 3 * (n.weight / maxW),
+    const wait = (0.25 + i * 0.06).toFixed(2) + "s";       // drawn one after another, starting from the learner
+    edges.append(s("path", { class: "kg-edge", pathLength: 1, style: "animation-delay:" + wait, stroke: NODE_COLOUR[n.type], "stroke-width": 1 + 3 * (n.weight / maxW),
       d: "M" + cx + "," + cy + " Q" + (cx + Math.cos(a) * RX * 0.45).toFixed(1) + "," + (cy + Math.sin(a) * RY * 0.2).toFixed(1) + " " + x.toFixed(1) + "," + y.toFixed(1) }));
-    const g = s("g", { class: "kg-node" });
+    const g = s("g", { class: "kg-node", style: "animation-delay:" + (0.25 + i * 0.06 + 0.45).toFixed(2) + "s" });
     g.append(s("circle", { cx: x, cy: y, r, fill: NODE_COLOUR[n.type] }));
     const side = Math.abs(Math.cos(a)) > 0.12, right = Math.cos(a) >= 0, below = Math.sin(a) > 0;
     const lx = side ? x + (right ? r + 8 : -(r + 8)) : x, anchor = side ? (right ? "start" : "end") : "middle";
