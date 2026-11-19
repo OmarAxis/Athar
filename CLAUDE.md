@@ -52,7 +52,7 @@ Who does what:
 | `packs/egypt-*` | Egypt, grades 4 to 8, one pack per subject, and `egypt-school` which joins them. ALL DRAFT |
 | `packs/generic-*` | Small country-neutral packs, used by the evaluation set and as examples |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 339 tests, no model needed |
+| `tests/` | 340 tests, no model needed |
 
 ## Commands
 
