@@ -254,3 +254,15 @@ def test_the_model_is_offered_once_and_never_without_a_person_to_answer(tmp_path
     assert (tmp_path / "data" / "model-asked.txt").exists()
     monkeypatch.setattr("builtins.input", lambda _prompt: "")
     assert launch.offer_model(tmp_path) is False and calls == []          # already asked once: not asked again
+
+
+def test_the_runner_gets_the_part_that_reads_photos_when_it_is_there(tmp_path):
+    model = tmp_path / "Qwen3.5-9B-Q4_K_M.gguf"
+    model.write_bytes(b"x")
+    assert launch.find_vision(tmp_path) is None
+    assert "--no-mmproj" in launch.runner_command(tmp_path, model, 11812)
+    vision = tmp_path / "mmproj-Qwen3.5-9B-BF16.gguf"
+    vision.write_bytes(b"x")
+    command = launch.runner_command(tmp_path, model, 11812)
+    assert command[command.index("--mmproj") + 1] == str(vision) and "--no-mmproj" not in command
+    assert launch.find_model(tmp_path) == model            # the add-on is never mistaken for the model itself

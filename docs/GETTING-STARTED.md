@@ -70,13 +70,13 @@ A key in `settings.txt` or in your shell is plain text on your own computer. Nev
 
 ### 3. The model inside the Windows package
 
-This is the way for someone who has never heard of LM Studio. The first time you start the Windows package with no model, the black window asks whether to download one. Press Enter and wait: it fetches one 5.2 GB file and then works with no internet. If you said no, do it later:
+This is the way for someone who has never heard of LM Studio. The first time you start the Windows package with no model, the black window asks whether to download one. Press Enter and wait: it fetches two files, 6.1 GB in all, and then works with no internet. If you said no, do it later:
 
-In the Athar folder, double-click **Download the model** once, with internet. It fetches one 5.2 GB file into the `models` folder and checks it. After that Athar runs its own model with no internet and no other program.
+In the Athar folder, double-click **Download the model** once, with internet. It fetches two files, 6.1 GB in all, into the `models` folder and checks it. After that Athar runs its own model with no internet and no other program.
 
 ## Step 3: look around
 
-**If you chose parent:** add your child, then add a result (the topic, the mark, and what it was out of). The home page shows what is going well and where to help first once there are about six marks. To see it full first, choose "Show a made-up child".
+**If you chose parent:** add your child, then add a result: take a photo of the marked paper and check the lines Athar fills in, or type them (the topic, the mark, and what it was out of). The home page shows what is going well and where to help first once there are about six marks. To see it full first, choose "Show a made-up child".
 
 **If you chose school:**
 

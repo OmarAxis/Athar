@@ -72,6 +72,16 @@ Read this with care:
 
 If you want to try an Arabic-first model, Jais 2 8B has an official build for LM Studio, and Fanar 2 27B has community builds and lists Egyptian Arabic. We have not run Athar on either. Check each model's licence before using it in a paid service: Cohere's Arabic model, for one, is not licensed for commercial use.
 
+## Reading a photo of a paper
+
+On the family side a parent can photograph a marked paper. For that the model must be able to see pictures, and it must be on the same computer: Athar refuses to send a photo anywhere else, because a paper usually shows the child's name.
+
+- **The Windows package:** "Download the model" fetches the model and the part that reads pictures (two files, 6.1 GB in all).
+- **LM Studio:** pick a model marked as able to see images. Qwen3.5 9B from `lmstudio-community` is, and it is the one we tried.
+- **A cloud key:** photos are not sent. Type the result in instead.
+
+How well it reads is in `EVALS.md`. In short: good on a clear, straight picture; unreliable on a dim or tilted one.
+
 ## Things that trip people up
 
 - **Thinking mode.** Recent Qwen and Gemma models can "think" before answering, which makes every step slow. Athar asks local models not to. Hosted services may reject that request, so for them set `ATHAR_LLM_REASONING=default`.

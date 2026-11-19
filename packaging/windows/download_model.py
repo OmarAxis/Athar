@@ -17,6 +17,11 @@ MODEL_FILE = "Qwen3.5-9B-Q4_K_M.gguf"
 MODEL_URL = "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF/resolve/main/" + MODEL_FILE
 MODEL_BYTES = 5_627_044_256
 MODEL_SHA256 = "cd76ec205963b3b33350093e6904d9de16c4e666fd104e1f632d25c7f15f2a13"
+# The add-on that lets the same model see pictures, for reading a photo of a marked paper.
+VISION_FILE = "mmproj-Qwen3.5-9B-BF16.gguf"
+VISION_URL = "https://huggingface.co/lmstudio-community/Qwen3.5-9B-GGUF/resolve/main/" + VISION_FILE
+VISION_BYTES = 921_704_480
+VISION_SHA256 = "330d17547bfdbcd0e7a0cb3f4b06b4ceeac0aaa1e449122d9d66ef957aeb74b3"
 CHUNK = 1024 * 1024
 
 
@@ -64,29 +69,41 @@ def download(url: str, target: Path, total: int, out=sys.stdout) -> None:
     part.replace(target)
 
 
+def fetch_one(models: Path, name: str, url: str, size: int, sha256: str, what: str) -> bool:
+    """Download one file into the models folder and check it. True when it is there and correct."""
+    target = models / name
+    print(f"  {what}: {name} ({size / 1e9:.1f} GB)")
+    print(f"  From: {url}\n")
+    if target.is_file() and target.stat().st_size == size:
+        print("  Already in the models folder. Nothing to do.\n")
+        return True
+    try:
+        download(url, target, size)
+    except (urllib.error.URLError, OSError) as problem:
+        print(f"\n  The download stopped: {problem}")
+        print("  Run this again and it continues from where it stopped.")
+        return False
+    print("  Checking the file...")
+    if sha256_of(target) != sha256:
+        target.unlink()
+        print("  The file does not match its checksum, so it was removed. Please run this again.")
+        return False
+    print("  Done.\n")
+    return True
+
+
 def main() -> int:
     root = Path(__file__).resolve().parent.parent
     models = root / "models"
     models.mkdir(exist_ok=True)
-    target = models / MODEL_FILE
     print("\n  Athar: download the model\n  -------------------------------")
-    print(f"  File: {MODEL_FILE} (5.2 GB, open weights, Apache 2.0 licence)")
-    print(f"  From: {MODEL_URL}\n")
-    if target.is_file() and target.stat().st_size == MODEL_BYTES:
-        print("  The model is already in the models folder. Nothing to do.")
-        return 0
-    try:
-        download(MODEL_URL, target, MODEL_BYTES)
-    except (urllib.error.URLError, OSError) as problem:
-        print(f"\n  The download stopped: {problem}")
-        print("  Run this again and it continues from where it stopped.")
+    print("  Two files, open weights, Apache 2.0 licence.\n")
+    if not fetch_one(models, MODEL_FILE, MODEL_URL, MODEL_BYTES, MODEL_SHA256, "The model"):
         return 1
-    print("  Checking the file...")
-    if sha256_of(target) != MODEL_SHA256:
-        target.unlink()
-        print("  The file does not match its checksum, so it was removed. Please run this again.")
+    if not fetch_one(models, VISION_FILE, VISION_URL, VISION_BYTES, VISION_SHA256, "The part that reads photos"):
+        print("  The model itself is ready. Only reading photos is missing: run this again to finish.")
         return 1
-    print("  Done. Start Athar again and the model will run on this computer.")
+    print("  Start Athar again and the model will run on this computer.")
     return 0
 
 
