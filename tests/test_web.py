@@ -248,3 +248,9 @@ def test_the_guide_is_linked_from_the_page_and_served(client):
     guide = client.get("/static/guide/guide.html")
     assert guide.status_code == 200 and "If something is not working" in guide.text and "لو حاجة مش شغالة" in guide.text
     assert client.get("/static/guide/img/parent-home-ar.png").status_code == 200
+
+
+def test_the_knowledge_graph_draws_itself_in_and_respects_reduced_motion(client):
+    page = client.get("/").text
+    assert "@keyframes kg-draw" in page and "pathLength: 1" in page
+    assert "prefers-reduced-motion: reduce) { .kg-edge { animation: none" in page
