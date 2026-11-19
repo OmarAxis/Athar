@@ -125,7 +125,7 @@ def test_page_and_logo_are_served(client):
     assert page.status_code == 200
     # The logo is type, not an image file: the Arabic word, the Latin word, and three dots.
     assert 'class="logo"' in page.text and "أثر" in page.text and 'lang="en">Athar<' in page.text
-    assert ".png" not in page.text and "meska" not in page.text.lower()
+    assert "<img" not in page.text and "brand/" not in page.text and "meska" not in page.text.lower()
 
 
 def test_overview_describes_topics_and_records_not_learner_scores(client):

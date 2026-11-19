@@ -84,13 +84,16 @@ async def _require_sign_in(request: Request, call_next):
         named = _LEARNER_PATH.match(path)
         if named:
             allowed = classes.visible(who)
-            if allowed is not None and named.group(1) not in allowed:
+            if (allowed is not None and named.group(1) not in allowed) or named.group(1) in family.own_children_ids():
                 return JSONResponse({"error": "This learner is not in one of your classes. Ask the school admin."},
                                     status_code=403)
-    elif path.startswith(("/api/learners/", "/learners/")) and family.mode() == "family":
+    elif path.startswith(("/api/learners/", "/learners/")):
         named = _LEARNER_PATH.match(path)
-        if named and named.group(1) not in family.children_ids():
+        at_home = family.mode() == "family"
+        if named and at_home and named.group(1) not in family.children_ids():
             return JSONResponse({"error": "That child is not in this family's records."}, status_code=403)
+        if named and not at_home and named.group(1) in family.own_children_ids():
+            return JSONResponse({"error": "This learner is not in your records."}, status_code=403)
     return await call_next(request)
 
 
@@ -113,7 +116,13 @@ def _only(request: Request) -> set[str] | None:
     who = getattr(request.state, "who", None)
     if who is None and family.mode() == "family":
         return family.children_ids()
-    return classes.visible(who)
+    allowed, private = classes.visible(who), family.own_children_ids()
+    if not private:
+        return allowed
+    if allowed is None:                    # everyone the school has, but never a family's own children
+        with db.connect() as conn:
+            allowed = {row["id"] for row in db.rows(conn, "SELECT id FROM learners")}
+    return allowed - private
 
 
 def _check_learner(request: Request, learner_id: str) -> None:
@@ -264,6 +273,12 @@ def _learner_exists(conn, learner_id: str) -> None:
 def learners(request: Request) -> dict:
     with db.connect() as conn:
         found = _mine(request, tools.learner_rows(conn, names=True))
+    if family.mode() == "family" and getattr(request.state, "who", None) is None:
+        now = {c["learner_id"]: c for c in family.children()}       # a child moves up a grade each year
+        for row in found:
+            row["grade_now"] = now.get(row["learner_id"], row)["grade_now"]
+            row["example"] = now.get(row["learner_id"], {}).get("example", False)
+        found.sort(key=lambda row: list(now).index(row["learner_id"]) if row["learner_id"] in now else 99)
     in_class = classes.class_of()
     for row in found:
         row["class_name"] = (in_class.get(row["learner_id"]) or {}).get("name")
@@ -547,7 +562,9 @@ def approvals(request: Request) -> dict:
 # ------------------------------------------------------------------ agent runs
 
 def _inbox_dir() -> Path:
-    return get_settings().db_path.parent / "inbox"
+    """Where documents wait for the assistant. A family has its own folder, so a parent never sees the
+    made-up school's sample files, and a school never sees a family's papers."""
+    return get_settings().db_path.parent / ("inbox-family" if family.mode() == "family" else "inbox")
 
 
 @app.get("/api/inbox")
@@ -778,7 +795,10 @@ def reset_password(teacher_id: str, body: PasswordBody, request: Request) -> dic
 def add_learner(body: NewLearner, request: Request) -> dict:
     who = getattr(request.state, "who", None)
     if who is None:
-        raise ValueError("Create the school admin account first, then sign in to add learners.")
+        if family.mode() == "family":
+            raise ValueError("On the family side, add a child from the family page.")
+        return imports.add_learner(body.name, body.grade, body.year or _latest_year() or family.school_year(),
+                                   body.home_language, actor="teacher-app", class_id=body.class_id)
     if who["role"] != "admin":
         own = {c["id"] for c in classes.list_classes(who)}
         if not own:
@@ -838,8 +858,17 @@ def family_example_child() -> dict:
 
 
 @app.delete("/api/family/example-child")
-def family_remove_example() -> dict:
-    return family.remove_example_child()
+def family_remove_example(learner_id: str = "") -> dict:
+    return family.remove_example_child(learner_id or None)
+
+
+class RenameBody(BaseModel):
+    name: str
+
+
+@app.post("/api/family/children/{learner_id}/name")
+def family_rename(learner_id: str, body: RenameBody) -> dict:
+    return family.rename_child(learner_id, body.name)
 
 
 @app.get("/api/family/children/{learner_id}/summary")

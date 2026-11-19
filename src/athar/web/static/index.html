@@ -129,6 +129,13 @@ button.danger:hover { background: var(--bad, #B42318); color: #fff; }
 .famline select { flex: 1 1 280px; min-width: 0; }
 .famline input { width: 90px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); padding: 7px 10px; min-height: 38px; }
 .famfoot { max-width: 760px; margin-top: 18px; }
+.famswitch { margin: 0 0 12px; padding: 10px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, .08); display: grid; gap: 6px; }
+.famswitch-title { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, .7); padding: 0 4px 2px; }
+#nav .famswitch button.famkid { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #fff; text-align: start; font-weight: 600; }
+#nav .famswitch button.famkid:hover { background: rgba(255, 255, 255, .12); }
+#nav .famswitch button.famkid[aria-current=true] { background: #fff; color: var(--navy); }
+#nav .famswitch button.famkid.add { font-weight: 500; color: rgba(255, 255, 255, .85); border: 1px dashed rgba(255, 255, 255, .4); justify-content: center; }
+.famkid-grade { font-size: 12px; font-weight: 500; opacity: .75; white-space: nowrap; }
 .famabout { flex: 1 1 100%; }
 .famcheck { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 15px; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ink); }
 .famcheck[hidden] { display: none; }
@@ -441,7 +448,7 @@ html[dir="rtl"] input[type="number"], html[dir="rtl"] input[type="password"] { d
   <main class="content">
     <div class="learnerbar" id="tabs" hidden></div>
     <div id="view"></div>
-    <p class="small muted foot">
+    <p class="small muted foot" id="foot">
       The learners' names are invented. Documents, the agent and the model only ever see a record code such as A-17. Nothing on this page ranks or compares learners. Every finding shows the records it rests on.
     </p>
   </main>
@@ -557,6 +564,8 @@ function localize(node) {
   }
 }
 async function startLanguage(serverDefault) {
+  const asked = new URLSearchParams(location.search).get("lang");      // a link can open the page in a language: ?lang=en
+  if (asked === "ar" || asked === "en") store("athar.lang", asked);
   LANG = store("athar.lang") || serverDefault || "en";
   if (LANG !== "ar") LANG = "en";
   document.cookie = "athar_lang=" + LANG + "; path=/; max-age=31536000; samesite=strict";
@@ -748,6 +757,8 @@ async function init() {
     name.textContent = (state.session.guardian || {}).name || "";
     name.hidden = false;
     document.getElementById("who-note").textContent = "Everything stays on this computer.";
+    document.querySelector(".brand .sub").textContent = "Your child's results, year after year. You decide.";
+    document.getElementById("foot").textContent = "Everything here stays on this computer. Athar never compares your child with anyone, and every finding shows the results it rests on.";
   } else if (me) {
     // Signed in: the server records every action under this teacher, whatever the page sends.
     sel.value = me.id;
@@ -764,7 +775,7 @@ async function init() {
     if (saved && state.teachers.some((t) => t.id === saved)) sel.value = saved;
     sel.addEventListener("change", () => store("athar.teacher", sel.value));
   }
-  const savedLearner = store("athar.learner");
+  const savedLearner = new URLSearchParams(location.search).get("child") || store("athar.learner");
   const first = state.learners.find((l) => l.learner_id === savedLearner) || state.learners[0];
   if (first) state.learnerId = first.learner_id;
   refreshPending();
@@ -780,6 +791,7 @@ function pickLearner(id, sub) {
 
 function drawTabs() {
   const nav = clear(document.getElementById("nav"));
+  if (FAMILY) nav.append(familySwitcher());
   for (const [id, name, icon] of NAV) {
     nav.append(h("button", { type: "button", "aria-current": id === state.view ? "page" : "false", onclick: () => show(id) },
       s("svg", { viewBox: "0 0 24 24", width: 18, height: 18, "aria-hidden": "true" }, s("path", { d: icon })),
@@ -794,7 +806,7 @@ function drawTabs() {
   pick.addEventListener("change", () => pickLearner(pick.value));
   const tabs = h("nav", { class: "tabs", "aria-label": "Learner sections" },
     SUB.map(([id, name]) => h("button", { type: "button", "aria-current": id === state.sub ? "page" : "false", onclick: () => show("learner/" + id) }, name)));
-  bar.append(h("div", { class: "pickwrap" }, h("label", { for: "learner-pick", text: "Learner" }), pick), tabs);
+  bar.append(h("div", { class: "pickwrap" }, h("label", { for: "learner-pick", text: FAMILY ? "Child" : "Learner" }), pick), tabs);
 }
 async function refreshPending() {
   try {
@@ -992,7 +1004,7 @@ async function viewOverview(root) {
 
 // ---------------------------------------------------------------- learner profile
 async function viewProfile(root) {
-  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  if (!state.learnerId) { root.append(FAMILY ? familyEmpty() : h("p", { class: "empty", text: "No learners yet." })); return; }
   root.append(h("p", { class: "muted", text: "Loading..." }));
   const lid = encodeURIComponent(state.learnerId);
   await getGraph(state.learnerId).catch(() => null);
@@ -1001,7 +1013,7 @@ async function viewProfile(root) {
   clear(root);
   root.append(h("div", { class: "pagehead" },
     h("div", {}, h("h2", { text: d.learner.name || d.learner.alias }),
-      h("p", { class: "muted", text: "Grade " + d.learner.grade_now + ". Home language: " + langName(d.learner.home_language) + ". Followed from " + (t.first_period || "?") + " to " + (t.last_period || "?") + "." })),
+      h("p", { class: "muted", text: "Grade " + d.learner.grade_now + ". Home language: " + langName(d.learner.home_language) + (t.first_period ? ". Followed from " + t.first_period + " to " + t.last_period + "." : ". No records yet.") })),
     h("div", { class: "row" }, reportLink(state.learnerId),
       h("button", { type: "button", class: "primary", onclick: () => show("learner/map") }, "Open the learning map"))));
 
@@ -1009,8 +1021,8 @@ async function viewProfile(root) {
     tile("Records on file", num(t.records), d.records_by_kind.slice(0, 2).map((k) => num(k.n) + " " + (KIND_PLURAL[k.kind] || k.kind).toLowerCase()).join(", ")),
     tile("Terms followed", t.terms, (t.first_period || "") + " to " + (t.last_period || "")),
     tile("Days absent on record", num(t.days_absent), "across all terms"),
-    tile("Waiting for a teacher", num(t.waiting), t.waiting ? "open the review queue" : "nothing to decide", { accent: t.waiting > 0, onclick: () => show("review") }),
-    tile("Approved by teachers", num(t.approved), "findings and notes", { onclick: () => show("learner/approved") })));
+    tile(FAMILY ? "Waiting for you" : "Waiting for a teacher", num(t.waiting), t.waiting ? "open the review queue" : "nothing to decide", { accent: t.waiting > 0, onclick: () => show("review") }),
+    tile(FAMILY ? "Approved by you" : "Approved by teachers", num(t.approved), "findings and notes", { onclick: () => show("learner/approved") })));
 
   // knowledge graph and thinking skills
   root.append(h("div", { class: "grid2 wide-left" },
@@ -1303,7 +1315,7 @@ function mapSvg(g, L, label, onSelect) {
 }
 
 async function viewMap(root) {
-  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  if (!state.learnerId) { root.append(FAMILY ? familyEmpty() : h("p", { class: "empty", text: "No learners yet." })); return; }
   root.append(h("p", { class: "muted", text: "Loading the map..." }));
   let g = await getGraph(state.learnerId);
   const subjects = g.subjects || [];
@@ -1839,7 +1851,7 @@ function summaryCard(sm) {
 // ---------------------------------------------------------------- approved
 // What a named teacher has already approved for this learner: the findings, and the notes built from them.
 async function viewApproved(root) {
-  if (!state.learnerId) { root.append(h("p", { class: "empty", text: "No learners yet." })); return; }
+  if (!state.learnerId) { root.append(FAMILY ? familyEmpty() : h("p", { class: "empty", text: "No learners yet." })); return; }
   const lid = encodeURIComponent(state.learnerId);
   await getGraph(state.learnerId).catch(() => null);
   const [fr, sr] = await Promise.all([api("/api/findings?learner_id=" + lid), api("/api/summaries?learner_id=" + lid)]);
@@ -1887,8 +1899,11 @@ async function viewApproved(root) {
 // ---------------------------------------------------------------- agent
 async function viewAgent(root) {
   clear(root);
-  root.append(h("h2", { text: "Agent" }),
-    h("p", { class: "muted", text: "The agent reads a document, checks the map and proposes findings. It cannot approve anything: it stops and waits for a teacher." }));
+  root.append(h("h2", { text: FAMILY ? "Read a paper" : "Agent" }),
+    h("p", { class: "muted", text: FAMILY
+      ? "The assistant reads a typed paper you sent from the Add page, records what it finds, and looks for patterns. It decides nothing: what it notices waits for you. For a photo of a paper, use the Add page."
+      : "The agent reads a document, checks the map and proposes findings. It cannot approve anything: it stops and waits for a teacher." }));
+  if (FAMILY && !state.learners.length) { root.append(familyEmpty()); return; }
   const out = h("div", { id: "agent-out" });
   const runsBox = h("div", { id: "runs-list" });
   let files = [];
@@ -2269,14 +2284,14 @@ async function viewPeople(root) {
   root.append(classCard);
   await loadClasses();
 
-  if (!demo) {
-    // ---- add a learner
+  {
+    // ---- add a learner (with made-up data and no sign-in this is open, to try things out)
     const lname = h("input", { type: "text", id: "nl-name", maxlength: 60 });
     const lgrade = gradeSelect("nl-grade");
-    const lclass = h("select", { id: "nl-class" }, admin ? h("option", { value: "", text: "No class yet" }) : null,
+    const lclass = h("select", { id: "nl-class" }, admin || demo ? h("option", { value: "", text: "No class yet" }) : null,
       classes.map((c) => h("option", { value: c.id, "data-grade": c.grade, text: c.name + " (grade " + c.grade + ")" })));
     lclass.onchange = () => { const c = classes.find((x) => x.id === lclass.value); if (c) lgrade.value = c.grade; };
-    if (!admin) lclass.onchange();
+    if (!admin && !demo) lclass.onchange();
     const lmsg = h("div");
     const ladd = h("button", { type: "button", class: "primary" }, "Add the learner");
     ladd.onclick = async () => {
@@ -2439,6 +2454,7 @@ function showChooser() {
     try { await post("/api/mode", { mode, name: name.value }); location.hash = ""; location.reload(); }
     catch (e) { sayIn(msg, "err", e.message); }
   };
+  document.getElementById("who").hidden = true;          // nobody is signed in or chosen yet
   root.append(h("div", { class: "chooser" },
     h("h2", { text: "Who is using Athar on this computer?" }),
     h("p", { class: "muted", text: "It is the same program either way. This only sets what you see first. You can change it later in the settings." }),
@@ -2470,23 +2486,92 @@ function childPicker(onchange) {
   pick.addEventListener("change", () => { state.learnerId = pick.value; store("athar.learner", pick.value); onchange(); });
   return field("Child", pick);
 }
-function addChildCard(after) {
-  const name = h("input", { type: "text", id: "fc-name", maxlength: 60 });
+function familyEmpty() {
+  return h("div", { class: "card" },
+    h("h3", { text: "First, add your child" }),
+    h("p", { class: "muted", text: "Athar has nothing to show until there is a child to show it for. It takes a first name and a grade." }),
+    h("div", { class: "row" }, h("button", { type: "button", class: "primary", onclick: () => show("people") }, "Add my child")));
+}
+function familySwitcher() {
+  // Each child is one click away, and so is adding another.
+  const box = h("div", { class: "famswitch" }, h("div", { class: "famswitch-title", text: "My children" }));
+  for (const l of state.learners) {
+    box.append(h("button", { type: "button", class: "famkid", "aria-current": l.learner_id === state.learnerId ? "true" : "false",
+      onclick: () => { state.learnerId = l.learner_id; store("athar.learner", l.learner_id); state.sel = null; state.trace = null; show(state.view === "people" ? "home" : state.view === "learner" ? "learner/" + state.sub : state.view); } },
+      h("span", { dir: "auto", text: l.name }), h("span", { class: "famkid-grade", text: "Grade " + l.grade_now })));
+  }
+  box.append(h("button", { type: "button", class: "famkid add", onclick: () => show("people") }, state.learners.length ? "+ Add another child" : "+ Add my child"));
+  return box;
+}
+function familyChildrenCard(after) {
+  // The children of this family: add as many as you have, rename one, or try with made-up children.
+  const done = after || (() => show("people"));
+  const list = h("div");
+  const msg = h("div", { "aria-live": "polite" });
+  const name = h("input", { type: "text", id: "fc-name", maxlength: 60, placeholder: "First name" });
   const grade = gradeSelect("fc-grade");
-  const msg = h("div");
-  const add = h("button", { type: "button", class: "primary" }, "Add my child");
+  const add = h("button", { type: "button", class: "primary" }, "Add this child");
+  const draw = async () => {
+    const kids = (await api("/api/family/children")).children;
+    clear(list);
+    if (!kids.length) { list.append(h("p", { class: "muted", text: "No child yet. Add the first one below." })); return kids; }
+    list.append(h("div", { class: "tablewrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, ["Name", "Grade now", "Results on record", "Code", ""].map((t) => h("th", { scope: "col", text: t })))),
+      h("tbody", {}, kids.map((k) => {
+        const box = h("input", { type: "text", value: k.name, maxlength: 60, "aria-label": "Name", dir: "auto" });
+        const act = h("td", {});
+        if (k.example) {
+          act.append(h("span", { class: "pill plain", text: "made up" }), " ", h("button", { type: "button", onclick: async () => {
+            try { await api("/api/family/example-child?learner_id=" + encodeURIComponent(k.learner_id), { method: "DELETE" }); await reloadFamily(); drawTabs(); await draw(); } catch (e) { sayIn(msg, "err", e.message); }
+          } }, "Remove"));
+        } else {
+          act.append(h("button", { type: "button", onclick: async () => {
+            try { await post("/api/family/children/" + encodeURIComponent(k.learner_id) + "/name", { name: box.value }); await reloadFamily(); drawTabs(); sayIn(msg, "okmsg", "Name changed."); } catch (e) { sayIn(msg, "err", e.message); }
+          } }, "Save name"));
+        }
+        return h("tr", {},
+          h("td", {}, k.example ? h("span", { dir: "auto", text: k.name }) : box),
+          h("td", { text: "Grade " + k.grade_now }), h("td", { "data-raw": true, text: String(k.records) }),
+          h("td", { class: "small muted", "data-raw": true, text: k.alias.replace("Learner ", "") }), act);
+      })))));
+    return kids;
+  };
   add.onclick = async () => {
     try {
       const r = await post("/api/family/children", { name: name.value, grade: Number(grade.value) });
       await reloadFamily();
       state.learnerId = r.learner_id; store("athar.learner", r.learner_id);
-      after();
+      name.value = "";
+      drawTabs();
+      await draw();
+      clear(msg).append(h("p", { class: "okmsg" }, "Added. ", "You can add another child, or go on."),
+        h("div", { class: "row" }, h("button", { type: "button", class: "primary", onclick: () => show("add") }, "Add a first result"),
+          h("button", { type: "button", onclick: () => show("home") }, "Go to the child's page")));
+      name.focus();
     } catch (e) { sayIn(msg, "err", e.message); }
   };
-  return h("div", { class: "card" },
-    h("h3", { text: "Add your child" }),
-    h("p", { class: "muted", text: "Only a first name and the grade they are in now. The name stays on this computer. There is no account for the child." }),
-    h("div", { class: "row" }, field("Name", name), field("Grade now", grade), add), msg);
+  name.addEventListener("keydown", (e) => { if (e.key === "Enter") add.click(); });
+  const example = h("button", { type: "button" }, "Add two made-up children to look around");
+  example.onclick = async () => {
+    try {
+      const first = await post("/api/family/example-child", {});
+      await post("/api/family/example-child", {});
+      await reloadFamily();
+      state.learnerId = first.learner_id; store("athar.learner", first.learner_id);
+      done("home");
+    } catch (e) { sayIn(msg, "err", e.message); }
+  };
+  const card = h("div", { class: "card" },
+    h("h3", { text: "My children" }),
+    h("p", { class: "muted", text: "Add each child with a first name and the grade they are in now. You can add as many as you have, and each one gets their own page. A child moves up a grade by themselves each school year. There is no account and no password for a child, and the names stay on this computer." }),
+    list,
+    h("h4", { style: "margin-top:18px", text: "Add a child" }),
+    h("div", { class: "row" }, field("Name", name), field("Grade now", grade), add),
+    msg,
+    h("p", { class: "muted small", style: "margin-top:16px", text: "Not ready to type anything? Look around with two made-up children who have three years of results. You can remove them at any time." }),
+    h("div", { class: "row" }, example));
+  draw();
+  return card;
 }
 
 async function viewFamilyHome(root) {
@@ -2495,16 +2580,8 @@ async function viewFamilyHome(root) {
   root.append(h("h2", {}, "Welcome, ", h("span", { dir: "auto", text: me.name || "" })));
   const child = familyChild();
   if (!child) {
-    const msg = h("div");
     root.append(h("p", { class: "muted", text: "Start by adding your child. Then add a few results, and Athar shows where they are doing well and where to help first." }),
-      addChildCard(() => show("add")),
-      h("div", { class: "card" },
-        h("h3", { text: "Or look around first" }),
-        h("p", { class: "muted", text: "See how it looks with a made-up child who has three years of results. You can remove them at any time." }),
-        h("div", { class: "row" }, h("button", { type: "button", onclick: async () => {
-          try { const r = await post("/api/family/example-child", {}); await reloadFamily(); state.learnerId = r.learner_id; show("home"); }
-          catch (e) { sayIn(msg, "err", e.message); }
-        } }, "Show a made-up child")), msg));
+      familyChildrenCard((view) => show(view || "home")));
     return;
   }
   const kids = (await api("/api/family/children")).children;
@@ -2612,7 +2689,7 @@ async function viewFamilyAdd(root) {
   clear(root);
   root.append(h("h2", { text: "Add a result or a note" }));
   const child = familyChild();
-  if (!child) { root.append(addChildCard(() => show("add"))); return; }
+  if (!child) { root.append(familyEmpty()); return; }
   const cur = state.session.curriculum;
   const picker = childPicker(() => show("add"));
   if (picker) root.append(h("div", { class: "card" }, h("div", { class: "row" }, picker)));
@@ -2686,13 +2763,12 @@ async function viewFamilyAdd(root) {
   const shot = h("input", { type: "file", id: "fp-file", accept: "image/jpeg,image/png,image/webp" });
   const pmsg = h("div", { "aria-live": "polite" });
   const read = h("button", { type: "button", class: "primary" }, "Read the photo");
-  read.onclick = async () => {
-    if (!shot.files.length) { sayIn(pmsg, "err", "Choose a photo first."); return; }
+  const readPicture = async (picture) => {
     read.disabled = true;
     sayIn(pmsg, "muted", "Reading the photo. This can take a minute or two...");
     try {
       const form = new FormData();
-      form.append("file", await preparePhoto(shot.files[0]), "paper.jpg");
+      form.append("file", await preparePhoto(picture), "paper.jpg");
       form.append("grade", grade.value);
       form.append("subject", subject.value || "");
       const r = await postForm("/api/family/children/" + encodeURIComponent(child.learner_id) + "/photo", form);
@@ -2728,10 +2804,26 @@ async function viewFamilyAdd(root) {
     } catch (e) { sayIn(pmsg, "err", e.message); }
     finally { read.disabled = false; }
   };
+  read.onclick = () => { if (!shot.files.length) { sayIn(pmsg, "err", "Choose a photo first."); return; } readPicture(shot.files[0]); };
+  const sample = (file, g, sub, label) => h("button", { type: "button", onclick: async () => {
+    try {
+      grade.value = g; subject.value = sub;
+      await loadTopics();
+      const got = await fetch("/static/samples/" + file);
+      if (!got.ok) throw new Error("The sample paper is missing from this copy of Athar.");
+      const blob = await got.blob();
+      await readPicture(blob);
+    } catch (e) { sayIn(pmsg, "err", e.message); }
+  } }, label);
   root.insertBefore(h("div", { class: "card" },
     h("h3", { text: "A photo of a marked paper" }),
     h("p", { class: "muted", text: "Lay the paper flat in good light and take the photo straight from above, with the marks showing. Athar reads it with the model on this computer and fills in the lines below. The photo is not kept, and it is never sent anywhere. Choose the subject and the grade below first." }),
-    h("div", { class: "row" }, field("Photo", shot), read), pmsg), resultCard);
+    h("div", { class: "row" }, field("Photo", shot), read),
+    h("p", { class: "muted small", style: "margin-top:12px", text: "No paper at hand? Try one of these made-up papers. They are pictures of invented tests, to show how it works." }),
+    h("div", { class: "row" }, sample("paper-maths-grade6-ar.png", "6", "maths", "Maths, grade 6, in Arabic"),
+      sample("paper-science-grade5-en.png", "5", "science", "Science, grade 5, in English"),
+      sample("paper-social-grade5-ar.png", "5", "social", "Social Studies, grade 5, one question unmarked")),
+    pmsg), resultCard);
 
   // ---- a note
   const note = h("textarea", { id: "fn-text", rows: 3, maxlength: 1000, dir: "auto", placeholder: "For example: she understands the idea when we use real things, but loses marks in written steps." });
@@ -2786,16 +2878,17 @@ async function viewFamilySettings(root) {
   clear(root);
   root.append(h("h2", { text: "Family and settings" }));
   const kids = (await api("/api/family/children")).children;
-  const kmsg = h("div");
+  root.append(familyChildrenCard((view) => show(view || "people")));
+
+  // ---- the parent's own name
+  const pname = h("input", { type: "text", id: "fs-name", maxlength: 60, value: (state.session.guardian || {}).name || "", dir: "auto" });
+  const pmsg2 = h("div");
   root.append(h("div", { class: "card" },
-    h("h3", { text: "Children" }),
-    kids.length ? h("ul", { class: "famlist" }, kids.map((k) => h("li", {}, strong(k.name), "  ·  ", "Grade " + k.grade_now, "  ·  ", "Records: ", String(k.records),
-      h("span", { class: "muted small", "data-raw": true, text: "  (" + k.alias.replace("Learner ", "") + ")" }),
-      k.example ? [" ", h("span", { class: "pill plain", text: "made up" }), " ", h("button", { type: "button", class: "linkish", onclick: async () => {
-        try { await api("/api/family/example-child", { method: "DELETE" }); await reloadFamily(); show("people"); } catch (e) { sayIn(kmsg, "err", e.message); }
-      } }, "Remove")] : null)))
-      : h("p", { class: "muted", text: "No child yet." }), kmsg));
-  root.append(addChildCard(() => show("people")));
+    h("h3", { text: "Your name" }),
+    h("p", { class: "muted", text: "Shown on this computer beside each note and decision you make." }),
+    h("div", { class: "row" }, field("Your name", pname), h("button", { type: "button", onclick: async () => {
+      try { await post("/api/mode", { mode: "family", name: pname.value }); location.reload(); } catch (e) { sayIn(pmsg2, "err", e.message); }
+    } }, "Save name")), pmsg2));
 
   // ---- keeping the records safe
   const bmsg = h("div");

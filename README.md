@@ -86,6 +86,8 @@ With fewer than six marks it says there is too little to tell, and says nothing 
 
 Nothing is sent anywhere. A family's records and a school's records live in the same file on the same computer, and each side shows only its own.
 
+The step-by-step version is [docs/FOR-PARENTS.md](docs/FOR-PARENTS.md).
+
 ## Arabic
 
 The page is written in English. In Arabic, every piece of text that reaches the screen is looked up in three dictionaries in `src/athar/web/static`: `ar.json` (the page), `ar-server.json` (sentences the server writes) and `ar-report.json` (the printable report). To change a word, change it there. Three registers are used on purpose:
@@ -129,7 +131,7 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 337 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **Tested by the authors only.** 339 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
 - **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for a small reference cohort on a generic curriculum (`uv run athar seed --pack generic-maths`), and `athar eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.
@@ -137,6 +139,7 @@ The same four jobs are on the School page for the admin. A backup holds names an
 ## Guides
 
 - [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md))
+- [For parents: the first five minutes](docs/FOR-PARENTS.md) ([بالعربي](docs/FOR-PARENTS.ar.md))
 - [Which model to use, especially for Arabic](docs/MODELS.md)
 - [Using your own class data](docs/DATA-GUIDE.md) ([بالعربي](docs/DATA-GUIDE.ar.md))
 - [How it is built](ARCHITECTURE.md), [what the code protects](SECURITY.md), [how it was tested](EVALS.md)
