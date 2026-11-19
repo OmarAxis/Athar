@@ -86,7 +86,8 @@ def test_expired_session_is_not_a_session(db_path):
 def test_demo_mode_is_open_until_an_admin_exists(client):
     assert client.get("/api/session").json()["sign_in"] is False
     assert client.get("/api/learners").status_code == 200
-    assert client.post("/api/learners", json={"name": "Test Child", "grade": 2}).status_code == 400
+    # With made-up data and no sign-in, a learner can be added to try things out.
+    assert client.post("/api/learners", json={"name": "Test Child", "grade": 2}).status_code == 200
 
 
 def test_data_needs_sign_in_once_an_admin_exists(client):

@@ -95,6 +95,15 @@ def children_ids(db_path=None) -> set[str]:
                                                  (FAMILY_CLASS,))}
 
 
+def own_children_ids(db_path=None) -> set[str]:
+    """The children a parent added themselves (not the made-up ones borrowed from the sample school).
+    These belong to the family and are never shown on the school side."""
+    with db.connect(db_path) as conn:
+        mine = {r["learner_id"] for r in db.rows(conn, "SELECT learner_id FROM class_learners WHERE class_id = ?",
+                                                 (FAMILY_CLASS,))}
+        return mine - set(_examples(conn))
+
+
 def _family(conn) -> dict:
     who = db.one(conn, "SELECT id, name FROM teachers WHERE id = ?", (_get(conn, "guardian_id") or "",))
     if _get(conn, "mode") != "family" or who is None:
@@ -134,36 +143,72 @@ def add_example_child(db_path=None) -> dict[str, Any]:
         planted = json.loads(truth.read_text(encoding="utf-8")).get("planted", []) if truth.exists() else []
         known = {r["id"] for r in found}
         first = [p["learner_id"] for p in planted if p.get("case") == "root_gap" and p["learner_id"] in known]
-        pick = next((i for i in [*first, *(r["id"] for r in found)] if i not in taken), None)
+        other = [p["learner_id"] for p in planted if p.get("case") in ("strand_strength", "what_worked")
+                 and p["learner_id"] in known]
+        pick = next((i for i in [*first[:1], *other[:1], *first, *(r["id"] for r in found)] if i not in taken), None)
         if pick is None:
             raise ValueError("There is no made-up learner to show. You can add your own child.")
+        if len(taken) >= MAX_CHILDREN:
+            raise ValueError(f"A family record holds up to {MAX_CHILDREN} children.")
         conn.execute("INSERT OR IGNORE INTO class_learners (class_id, learner_id) VALUES (?, ?)", (FAMILY_CLASS, pick))
-        _set(conn, "example_child", pick)
+        _set(conn, "example_child", ",".join([*_examples(conn), pick]))
     return {"learner_id": pick, "example": True}
 
 
-def remove_example_child(db_path=None) -> dict[str, Any]:
-    """Take the made-up learner out of the family again. Their made-up records stay in the sample school."""
+def _examples(conn) -> list[str]:
+    return [x for x in (_get(conn, "example_child") or "").split(",") if x]
+
+
+def remove_example_child(learner_id: str | None = None, db_path=None) -> dict[str, Any]:
+    """Take a made-up learner (or all of them) out of the family again. Their made-up records stay in the
+    sample school."""
     with db.connect(db_path) as conn:
-        pick = _get(conn, "example_child")
-        if pick:
+        shown = _examples(conn)
+        gone = [x for x in shown if learner_id in (None, x)]
+        for pick in gone:
             conn.execute("DELETE FROM class_learners WHERE class_id = ? AND learner_id = ?", (FAMILY_CLASS, pick))
-            _set(conn, "example_child", "")
-    return {"removed": bool(pick)}
+        _set(conn, "example_child", ",".join(x for x in shown if x not in gone))
+    return {"removed": len(gone)}
+
+
+def rename_child(learner_id: str, name: str, db_path=None) -> dict[str, Any]:
+    """Change the name shown for a child. The record code and the records stay as they are."""
+    name = " ".join(str(name or "").split())
+    if not 2 <= len(name) <= 60:
+        raise ValueError("Give the learner's name as the class list shows it (2 to 60 characters).")
+    with db.connect(db_path) as conn:
+        who = _family(conn)
+        _child(conn, learner_id)
+        if learner_id in _examples(conn):
+            raise ValueError("A made-up child cannot be renamed. Remove it and add your own child.")
+        conn.execute("UPDATE learners SET display_name = ? WHERE id = ?", (name, learner_id))
+        audit.write_row(conn, "rename_child", {"learner_id": learner_id}, {"renamed": True}, True, 0,
+                        actor=f"guardian:{who['id']}")
+    return {"learner_id": learner_id, "name": name}
 
 
 def children(db_path=None) -> list[dict[str, Any]]:
     with db.connect(db_path) as conn:
-        example = _get(conn, "example_child") or ""
+        example = _examples(conn)
         found = db.rows(conn, """
-            SELECT l.id AS learner_id, l.alias, l.display_name, l.start_grade,
+            SELECT l.id AS learner_id, l.alias, l.display_name, l.start_grade, l.start_year, l.pack_id,
                    MAX(e.grade) AS latest_grade, COUNT(e.id) AS records
             FROM learners l JOIN class_learners c ON c.learner_id = l.id AND c.class_id = ?
             LEFT JOIN evidence e ON e.learner_id = l.id AND e.status != 'retracted'
             GROUP BY l.id ORDER BY l.created_at, l.id""", (FAMILY_CLASS,))
+    found.sort(key=lambda r: r["learner_id"] in example)        # the family's own children first, made-up ones after
     return [{"learner_id": r["learner_id"], "alias": r["alias"], "name": r["display_name"] or r["alias"],
-             "grade_now": r["latest_grade"] or r["start_grade"], "records": r["records"],
-             "example": r["learner_id"] == example} for r in found]
+             "grade_now": _grade_now(r), "records": r["records"],
+             "example": r["learner_id"] in example} for r in found]
+
+
+def _grade_now(row: dict) -> int:
+    """The grade a child is in this school year. A child moves up a grade each year by itself, so a parent
+    who added a child last year does not have to change anything. A made-up child keeps the grade of its
+    latest record."""
+    top = load_pack(row["pack_id"]).grades[1]
+    by_year = row["start_grade"] + max(0, school_year() - row["start_year"])
+    return min(top, max(row["latest_grade"] or 0, by_year))
 
 
 def _number(text: Any) -> float | None:
@@ -183,7 +228,7 @@ def add_results(learner_id: str, items: list[dict], *, title: str = "", grade: i
         if not 1 <= int(term) <= pack.terms:
             raise ValueError(f"The term is 1 to {pack.terms}.")
         latest = db.one(conn, "SELECT MAX(grade) AS g FROM evidence WHERE learner_id = ?", (learner_id,))["g"]
-        grade = int(grade or latest or child["start_grade"])
+        grade = int(grade or _grade_now({**child, "latest_grade": latest}))
         if not pack.grades[0] <= grade <= pack.grades[1]:
             raise ValueError(f"This curriculum covers grades {pack.grades[0]} to {pack.grades[1]}.")
         year = int(year or school_year())
@@ -235,7 +280,7 @@ def add_note(learner_id: str, text: str, topic_id: str | None = None, db_path=No
         if topic_id and topic_id not in pack.concepts:
             raise ValueError("Choose a topic from the list, or leave it empty.")
         latest = db.one(conn, "SELECT MAX(grade) AS g FROM evidence WHERE learner_id = ?", (learner_id,))["g"]
-        year, grade = school_year(), int(latest or child["start_grade"])
+        year, grade = school_year(), _grade_now({**child, "latest_grade": latest})
         term = 1 if dt.date.today().month in (9, 10, 11, 12, 1) else min(2, pack.terms)
         evidence_id = db.new_id("evd")
         conn.execute(
@@ -310,7 +355,7 @@ def summary(learner_id: str, db_path=None) -> dict[str, Any]:
 
     # ---- coming next: topics of the child's grade with no record yet that need a topic which is low
     weak = {n["id"] for n in nodes.values() if n.get("mastery") is not None and n["mastery"] < CLEARLY_LOW}
-    grade_now = latest["g"] or child["start_grade"]
+    grade_now = _grade_now({**child, "latest_grade": latest["g"]})
     for concept in sorted(pack.concepts.values(), key=lambda c: (c.term or 0, c.id)):
         if len(out["next_up"]) >= 3:
             break

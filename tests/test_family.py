@@ -48,7 +48,11 @@ def test_a_family_sees_only_its_own_children(client):
 def test_switching_back_to_school_shows_the_school_again_and_loses_nothing(client):
     child = _home(client)
     assert client.post("/api/mode", json={"mode": "school"}).status_code == 200
-    assert len(client.get("/api/learners").json()["learners"]) == 6          # the five of the school and the child
+    shown = [row["learner_id"] for row in client.get("/api/learners").json()["learners"]]
+    assert len(shown) == 5 and child not in shown                          # a family's own child never shows at school
+    assert client.get(f"/api/learners/{child}/dashboard").status_code == 403
+    assert client.get(f"/api/learners/{child}/export").status_code == 403
+    assert client.post("/api/runs", json={"learner_id": child}).status_code == 403
     assert client.post("/api/mode", json={"mode": "family"}).json()["guardian"]["name"] == "Mona Farouk"
     assert [row["learner_id"] for row in client.get("/api/learners").json()["learners"]] == [child]
 
@@ -123,7 +127,7 @@ def test_a_made_up_child_can_be_shown_and_taken_away_again(client):
     shown = client.post("/api/family/example-child").json()
     assert shown["example"] and [c["example"] for c in client.get("/api/family/children").json()["children"]] == [True]
     assert client.get(f"/api/family/children/{shown['learner_id']}/summary").json()["records"] > 0
-    assert client.delete("/api/family/example-child").json()["removed"] is True
+    assert client.delete("/api/family/example-child").json()["removed"] == 1
     assert client.get("/api/family/children").json()["children"] == []
     with db.connect() as conn:                                        # the made-up records themselves are untouched
         assert db.one(conn, "SELECT COUNT(*) AS n FROM evidence WHERE learner_id = ?", (shown["learner_id"],))["n"] > 0
@@ -153,3 +157,40 @@ def test_once_a_school_has_sign_in_only_its_admin_changes_the_mode(client):
     assert client.post("/api/mode", json={"mode": "family", "name": "Someone"}).status_code == 401
     client.post("/api/session/sign-in", json={"username": "hany", "password": "another-long-pass"})
     assert client.post("/api/mode", json={"mode": "family", "name": "Someone"}).status_code == 403
+
+
+def test_two_made_up_children_a_rename_and_a_grade_that_moves_up_by_itself(client, monkeypatch):
+    child = _home(client)
+    one = client.post("/api/family/example-child").json()["learner_id"]
+    two = client.post("/api/family/example-child").json()["learner_id"]
+    assert one != two and len(client.get("/api/family/children").json()["children"]) == 3
+    assert client.delete(f"/api/family/example-child?learner_id={one}").json()["removed"] == 1
+    assert [c["learner_id"] for c in client.get("/api/family/children").json()["children"]] == [child, two]
+    assert client.post(f"/api/family/children/{two}/name", json={"name": "Someone"}).status_code == 400     # made up
+    assert client.post(f"/api/family/children/{child}/name", json={"name": "Salma Ibrahim"}).status_code == 200
+    kids = {c["learner_id"]: c for c in client.get("/api/family/children").json()["children"]}
+    assert kids[child]["name"] == "Salma Ibrahim" and kids[child]["grade_now"] == 4
+    listed = {row["learner_id"]: row for row in client.get("/api/learners").json()["learners"]}
+    assert listed[child]["grade_now"] == 4 and listed[two]["example"] is True
+    real = family.school_year()
+    monkeypatch.setattr(family, "school_year", lambda today=None: real + 1)          # a year later, nothing typed
+    assert {c["learner_id"]: c for c in client.get("/api/family/children").json()["children"]}[child]["grade_now"] == 5
+
+
+def test_a_family_has_its_own_folder_for_papers(client, db_path):
+    assert [f["name"] for f in client.get("/api/inbox").json()["files"]] == []
+    school = db_path.parent / "inbox"
+    school.mkdir(exist_ok=True)
+    (school / "quiz_sheet_A-01.md").write_text("made-up school file", encoding="utf-8")
+    assert [f["name"] for f in client.get("/api/inbox").json()["files"]] == ["quiz_sheet_A-01.md"]
+    _home(client)
+    assert client.get("/api/inbox").json()["files"] == []                 # the school's samples are not shown at home
+    sent = client.post("/api/upload/document", files={"file": ("paper.txt", b"Learner X-01: 3 out of 5", "text/plain")})
+    assert sent.status_code == 200 and (db_path.parent / "inbox-family" / "paper.txt").exists()
+    assert [f["name"] for f in client.get("/api/inbox").json()["files"]] == ["paper.txt"]
+
+
+def test_the_page_can_be_opened_in_a_language_and_has_a_parent_footer(client):
+    page = client.get("/").text
+    assert 'get("lang")' in page and 'id="foot"' in page
+    assert "Athar never compares your child with anyone" in page and "No records yet." in page
