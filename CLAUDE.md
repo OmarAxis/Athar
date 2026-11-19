@@ -42,6 +42,7 @@ Who does what:
 | `src/athar/classes.py` | Classes. Once sign-in is on, a teacher sees only the learners of their own classes |
 | `src/athar/privacy.py` | Backup and restore, one learner's record as a file, deleting one learner, withdrawing a record |
 | `src/athar/imports.py` | Marks sheet template and upload, new learner records, documents for the agent |
+| `src/athar/family.py` | The family side: the school-or-family choice, a parent's children, results and notes typed at home, and the summary a parent reads (plain code, no model) |
 | `src/athar/i18n.py` | The Arabic lookup in Python, used by the report |
 | `src/athar/web/` | Teacher web app (FastAPI and one HTML file), and the Arabic dictionaries in `static/` |
 | `src/athar/synth_school.py` | A synthetic school built from any pack's own graph (`generator: school` in the pack) |
@@ -50,7 +51,7 @@ Who does what:
 | `packs/egypt-*` | Egypt, grades 4 to 8, one pack per subject, and `egypt-school` which joins them. ALL DRAFT |
 | `packs/generic-*` | Small country-neutral packs, used by the evaluation set and as examples |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 317 tests, no model needed |
+| `tests/` | 328 tests, no model needed |
 
 ## Commands
 
@@ -115,6 +116,14 @@ Which models to use, and what was tried, is in `docs/MODELS.md`. Say which model
 5. **Every tool call is logged.** New tools must use `@audited`.
 6. **Report results as they are.** Do not edit the generated table in `EVALS.md` by hand. If something fails, write it down.
 7. **Keep the one-command run working.** `uv run athar demo` must work on a fresh clone.
+
+## School side and family side
+
+- `settings.mode` is unset on a fresh database: the page then asks who is using it (`showChooser` in `index.html`).
+- In family mode the page swaps `NAV` for `NAV_FAMILY` and the server limits every learner list to the family's group
+  (`family.children_ids()` through `_only` and `_check_learner` in `web/app.py`). There is no sign-in on that side.
+- A new family screen needs its text in `static/ar.json`. Put each literal piece in its own text node so it can be
+  looked up whole.
 
 ## Things that bite
 

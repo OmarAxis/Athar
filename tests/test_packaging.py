@@ -234,3 +234,23 @@ def test_the_launcher_picks_a_chat_model_from_a_local_server(tmp_path, monkeypat
     assert launch.find_local_server(timeout=0.3) is None
     env = launch.child_env(tmp_path, {}, 8780, "http://127.0.0.1:1234/v1", "llama-3")
     assert env["ATHAR_LLM_MODEL"] == "llama-3" and env["ATHAR_LLM_BASE_URL"] == "http://127.0.0.1:1234/v1"
+
+
+def test_the_model_is_offered_once_and_never_without_a_person_to_answer(tmp_path, monkeypatch):
+    assert launch.wants_model("") and launch.wants_model("y") and launch.wants_model("  ")
+    assert not launch.wants_model("n") and not launch.wants_model(" No ") and not launch.wants_model("لا")
+    monkeypatch.delenv("ATHAR_NO_BROWSER", raising=False)
+    monkeypatch.setattr(launch.sys, "stdin", None)                       # no window to type in: never ask, never download
+    assert launch.offer_model(tmp_path) is False and not (tmp_path / "data" / "model-asked.txt").exists()
+
+    class Keyboard:
+        def isatty(self):
+            return True
+    calls = []
+    monkeypatch.setattr(launch.sys, "stdin", Keyboard())
+    monkeypatch.setattr("builtins.input", lambda _prompt: "n")
+    monkeypatch.setattr(launch.subprocess, "call", lambda *a, **k: calls.append(a))
+    assert launch.offer_model(tmp_path) is False and calls == []          # said no: nothing is fetched
+    assert (tmp_path / "data" / "model-asked.txt").exists()
+    monkeypatch.setattr("builtins.input", lambda _prompt: "")
+    assert launch.offer_model(tmp_path) is False and calls == []          # already asked once: not asked again

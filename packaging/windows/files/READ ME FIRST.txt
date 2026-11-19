@@ -64,6 +64,12 @@ THE MODEL
 With the model (the larger zip): the file is in the "models" folder and it runs on this
 computer. Nothing leaves the computer.
 
+The first time Athar opens it asks who is using it: a parent, or a school. It is the same
+program. A parent sees only their own child. You can switch later in the settings.
+
+If there is no model yet, the black window offers to download one the first time. Press Enter
+and wait. You can also say no and do it later.
+
 Without the model (the smaller zip), choose one:
 
   0) If LM Studio or Ollama is already running on this computer with a model loaded, there is

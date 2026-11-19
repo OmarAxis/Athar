@@ -24,6 +24,7 @@ Status: stage two, on synthetic data only. It has not been used with a real teac
 - **An Add records page**: a marks sheet for Excel that needs no model, and document upload for the agent.
 - **Looking after the records** (School page, admin): a backup copy, one learner's whole record as a file, deleting one learner for good, and withdrawing one wrong record.
 
+- **Two sides in one program: a school, or a family.** The first time it opens, it asks who is using it. A teacher gets classes and marks sheets. A parent gets their own child only: they type in results and notes, and read what is going well, where to help first, and what to ask the teacher. See "For parents" below.
 - **Arabic, right to left.** The page opens in Egyptian Arabic and has a button to switch to English. Topic names, the made-up school, the marks sheet, the printable report and the agent's findings are in Arabic too. See "Arabic" below.
 
 Underneath: a graph engine in plain code that reaches the conclusions, an agent that only reads and words, two teacher gates, a guard that refuses labels, and a log of every action.
@@ -72,6 +73,19 @@ To make your own sheet, download the template on the same page. Choose a class a
 
 Seeding again (`uv run athar seed`) wipes all data, accounts and classes included.
 
+## For parents
+
+Choose **I am a parent** the first time Athar opens. Then:
+
+1. Add your child: a first name and the grade. There is no account for the child.
+2. Add a result: for each part of a test, the topic, the mark, and what it was out of. Old papers from earlier years count too.
+3. Write a note in your own words whenever you notice something while studying together.
+4. Read the home page. It is worked out in plain code from what you entered, and each part lists the results behind it.
+
+With fewer than six marks it says there is too little to tell, and says nothing else. It never compares a child with anyone. You can look around first with a made-up child, and remove them with one click.
+
+Nothing is sent anywhere. A family's records and a school's records live in the same file on the same computer, and each side shows only its own.
+
 ## Arabic
 
 The page is written in English. In Arabic, every piece of text that reaches the screen is looked up in three dictionaries in `src/athar/web/static`: `ar.json` (the page), `ar-server.json` (sentences the server writes) and `ar-report.json` (the printable report). To change a word, change it there. Three registers are used on purpose:
@@ -109,10 +123,11 @@ The same four jobs are on the School page for the admin. A backup holds names an
 - **In Arabic the model does not word the findings.** The local model's Arabic dropped words and added claims in our tries, so Arabic findings and questions use fixed sentences. They are correct but all sound alike. Notes for families are still worded by the model, and a teacher must approve each one.
 - **The guard is weaker in Arabic.** It is a word list written mostly for English. A teacher's Arabic edit that labels a child may get through. The teacher gates are the real protection.
 - **Parts still in English in Arabic mode:** the raw entries of the audit log, tool names, file names, model names, and any server message that has no entry in the dictionary yet. The learning map and charts keep their left-to-right shape (grade 4 on the left). Numbers are not given Arabic plural forms, so counts are written like "عدد السجلات: 5".
+- **The family side is new and untried.** No parent has used it. A parent cannot yet add a photo of a paper: results are typed in, or read by the assistant from a text file. The assistant and review pages still speak of "the teacher" in places. There is no password on the family side, so anyone who uses the computer can open it.
 - **Egyptian marking is not modelled.** A mark is a number out of a maximum. Term work, monthly tests and the colour levels used in the primary grades are not built in.
 - **A class opens the whole record.** A teacher with a learner in a class sees that learner in every subject and every year, not only their own subject.
 - **No HTTPS by default, no encryption at rest, no consent records, no scheduled or off-machine backup.** See [SECURITY.md](SECURITY.md).
-- **Tested by the authors only.** 317 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
+- **Tested by the authors only.** 328 automated tests pass and the pages were checked by hand in one browser on one computer. No teacher has used it.
 - **The agent was tried on the Egyptian school in a handful of runs, not measured.** The numbers in `EVALS.md` are for a small reference cohort on a generic curriculum (`uv run athar seed --pack generic-maths`), and `athar eval` still expects that cohort. See the note at the end of `EVALS.md`.
 - **No fine-tuned model.** The stock open-weights model is used.
 - **The offline Windows package was built and started on one computer only**, the one it was built on, which has a graphics card. It has not been tried on a school computer. Build it with `uv run python packaging/windows/build.py --out <a folder outside this one>`.

@@ -73,6 +73,26 @@
  },
  "patterns": [
   {
+   "re": "^The term is 1 to (\\d+)\\.$",
+   "ar": "الترم من 1 إلى $1."
+  },
+  {
+   "re": "^A family record holds up to (\\d+) children\\.$",
+   "ar": "ملف الأسرة بياخد لحد $1 أولاد."
+  },
+  {
+   "re": "^Line (\\d+): the mark is outside 0 to (.+)\\.$",
+   "ar": "السطر $1: الدرجة بره المدى من 0 إلى $2."
+  },
+  {
+   "re": "^Line (\\d+): write the mark and what it was out of, as numbers\\.$",
+   "ar": "السطر $1: اكتب الدرجة والدرجة من كام، بالأرقام."
+  },
+  {
+   "re": "^Line (\\d+): choose a topic from the list\\.$",
+   "ar": "السطر $1: اختار موضوع من القايمة."
+  },
+  {
    "re": "^Results in (.+?) are low now: (\\d+)% over (\\d+) records?\\.$",
    "ar": "النتائج في $1 منخفضة حاليا: $2% (عدد السجلات: $3)."
   },

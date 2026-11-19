@@ -41,6 +41,14 @@ What we think is different about Athar:
 
 The closest in how it works are i-Ready's prerequisite report and Squirrel AI's root-cause idea. The closest in how it is deployed is Kolibri. Sources are at the end. Some rows rest on our general knowledge of these products and were not checked again; they are marked there.
 
+## Two sides: a school, and a family
+
+Athar now asks, the first time it opens, whether a school or a parent is using it. The family side is built: a parent keeps their own child's results and notes at home and reads a short summary worked out from them. It is the same program and the same map, so a parent can show a school exactly what the school would get.
+
+What the family side still needs, in order: reading a photo of a marked paper, so a parent does not have to type; a file a family can carry between home and school; and wording on every page that speaks to a parent, not a teacher.
+
+The risk is particular to parents. A worried parent can turn "low in fractions since grade 4" into pressure on a child. So the family side leads with what is going well, says nothing when there is too little to tell, never compares, and keeps sending the parent back to the teacher.
+
 ## What does not change
 
 Any future feature has to pass these. If an idea cannot, the idea is wrong, not the rule.
