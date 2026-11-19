@@ -29,6 +29,10 @@
   .lead { color:var(--soft); }
   figure { margin:16px 0 6px; }
   figure img { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:10px; }
+  video { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:10px; background:#062a22; }
+  .films { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .films h3 { margin-top:6px; }
+  @media (max-width:640px) { .films { grid-template-columns:1fr; } }
   figcaption { color:var(--soft); font-size:14.5px; margin-top:6px; }
   .note { background:var(--mint); border-radius:10px; padding:12px 16px; margin:14px 0; }
   .care { background:var(--warn); border:1px solid var(--warnline); border-radius:10px; padding:12px 16px; margin:14px 0; }
@@ -56,6 +60,7 @@
   </div>
 </header>
 <nav><div class="wrap">
+  <a href="#videos"><span lang="ar">فيديو</span><span lang="en">Videos</span></a>
   <a href="#start"><span lang="ar">التشغيل</span><span lang="en">Starting</span></a>
   <a href="#parents"><span lang="ar">لولي الأمر</span><span lang="en">For parents</span></a>
   <a href="#teachers"><span lang="ar">للمدرس</span><span lang="en">For teachers</span></a>
@@ -72,6 +77,15 @@
   <p>أثر بيحتفظ بنتائج الطالب سنة ورا سنة، وبيوضح هو كويس في إيه، ومحتاج مساعدة في إيه، والصعوبة ممكن تكون بدأت منين. هو برنامج واحد له جانبين: جانب لولي الأمر، وجانب للمدرس والمدرسة.</p>
   <p>كل حاجة بتشتغل على الكمبيوتر ده. مفيش حساب عند أي شركة، ومفيش حاجة بتتبعت على الإنترنت، وبيشتغل من غير إنترنت.</p>
   <div class="care">دي نسخة مبكرة. الأسماء والسجلات اللي جاية مع البرنامج كلها مش حقيقية. المنهج اللي جواه مسودة لسه محتاجة مراجعة مدرسين.</div>
+</section>
+
+<section id="videos">
+  <h2>شوف أثر في دقيقتين</h2>
+  <p class="lead">الفيديوهين بالإنجليزي، وكل اللي على الشاشة بيانات مش حقيقية.</p>
+  <div class="films">
+    <div><h3>لولي الأمر</h3><video controls preload="metadata" src="video/athar-for-parents.mp4"></video></div>
+    <div><h3>للمدرس</h3><video controls preload="metadata" src="video/athar-for-teachers.mp4"></video></div>
+  </div>
 </section>
 
 <section id="start">
@@ -215,6 +229,15 @@
   <p>Athar keeps a learner's results from year to year and shows where they are doing well, where they need help, and where a difficulty may have started. It is one program with two sides: one for a parent, one for a teacher and a school.</p>
   <p>Everything runs on this computer. There is no account with any company, nothing is sent over the internet, and it works with no internet.</p>
   <div class="care">This is an early version. The names and records that come with it are all made up. The curriculum inside is a draft that teachers still need to review.</div>
+</section>
+
+<section id="videos">
+  <h2>See Athar in two minutes</h2>
+  <p class="lead">Both videos are narrated in English. Everything on screen is made-up data.</p>
+  <div class="films">
+    <div><h3>For parents</h3><video controls preload="metadata" src="video/athar-for-parents.mp4"></video></div>
+    <div><h3>For teachers</h3><video controls preload="metadata" src="video/athar-for-teachers.mp4"></video></div>
+  </div>
 </section>
 
 <section id="start">
