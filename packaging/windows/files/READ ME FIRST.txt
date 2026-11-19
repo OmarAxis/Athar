@@ -1,7 +1,7 @@
 ATHAR
 =====
 
-A GUIDE WITH PICTURES is in this folder. Double-click "Guide (English)" or "الدليل (عربي)".
+A GUIDE WITH PICTURES is in this folder. Double-click "Guide (English)" or "Guide (Arabic)".
 It shows how to start Athar, how a parent and a teacher use it, and what to do when something
 is not working. The same guide opens from inside Athar under "Guide and help".
 

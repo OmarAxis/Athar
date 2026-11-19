@@ -279,4 +279,5 @@ def test_the_guide_goes_into_the_folder_and_opens_without_the_app(tmp_path):
     assert len(pictures) >= 20 and all((tmp_path / "Guide" / p).is_file() for p in pictures)
     assert {p.rsplit("-", 1)[1] for p in pictures} == {"en.png", "ar.png"}        # every picture in both languages
     for name, lang in build.GUIDE_LINKS.items():
+        assert name.isascii()                    # an Arabic file name was lost by one unzip program
         assert f"Guide/guide.html?lang={lang}" in (tmp_path / name).read_text(encoding="utf-8")
