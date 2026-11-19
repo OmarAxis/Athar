@@ -139,7 +139,8 @@ def install_libraries(python: Path, work: Path) -> None:
     shutil.rmtree(python.parent / "Scripts", ignore_errors=True)  # launchers there hold absolute paths
 
 
-GUIDE_LINKS = {"Guide (English).html": "en", "الدليل (عربي).html": "ar"}
+# Plain letters only: a file name in Arabic did not survive every unzip program.
+GUIDE_LINKS = {"Guide (English).html": "en", "Guide (Arabic).html": "ar"}
 
 
 def add_guide(stage: Path) -> None:
