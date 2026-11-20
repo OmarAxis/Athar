@@ -284,3 +284,23 @@ def test_the_guide_goes_into_the_folder_and_opens_without_the_app(tmp_path):
     for name, lang in build.GUIDE_LINKS.items():
         assert name.isascii()                    # an Arabic file name was lost by one unzip program
         assert f"Guide/guide.html?lang={lang}" in (tmp_path / name).read_text(encoding="utf-8")
+
+
+def test_the_about_file_and_the_screenshots_go_into_the_folder(tmp_path):
+    import re
+
+    build.add_about(tmp_path)
+    about = (tmp_path / "About Athar.md").read_text(encoding="utf-8")
+    assert "for a parent" in about and "for a teacher" in about
+    assert "\u2014" not in about and "\u2013" not in about
+    pictures = re.findall(r"\]\((Screenshots/[^)]+)\)", about)
+    assert len(pictures) >= 4 and all((tmp_path / p).is_file() for p in pictures)
+    for lang in ("English", "Arabic"):
+        assert len(list((tmp_path / "Screenshots" / lang).glob("*.png"))) >= 15
+    assert all(p.name.isascii() for p in (tmp_path / "Screenshots").rglob("*"))
+
+
+def test_the_read_me_has_no_stray_control_characters():
+    text = (PACKAGING / "files" / "READ ME FIRST.txt").read_text(encoding="utf-8")
+    assert not [c for c in text if ord(c) < 32 and c not in "\r\n\t"]
+    assert "About Athar" in text and "Screenshots" in text
