@@ -139,6 +139,7 @@ The same four jobs are on the School page for the admin. A backup holds names an
 ## Guides
 
 - [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md))
+- [About Athar: what it does for a parent and for a teacher](docs/ABOUT.md), with [screenshots](docs/screenshots) in English and Arabic
 - [For parents: the first five minutes](docs/FOR-PARENTS.md) ([بالعربي](docs/FOR-PARENTS.ar.md))
 - [For teachers: the first ten minutes](docs/FOR-TEACHERS.md) ([بالعربي](docs/FOR-TEACHERS.ar.md))
 - Two short videos (English voice, made-up data): [for parents](src/athar/web/static/guide/video/athar-for-parents.mp4) and [for teachers](src/athar/web/static/guide/video/athar-for-teachers.mp4)

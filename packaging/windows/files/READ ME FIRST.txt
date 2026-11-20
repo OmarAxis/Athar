@@ -5,7 +5,10 @@ A GUIDE WITH PICTURES is in this folder. Double-click "Guide (English)" or "Guid
 It shows how to start Athar, how a parent and a teacher use it, and what to do when something
 is not working. The same guide opens from inside Athar under "Guide and help".
 Two short videos, one for parents and one for teachers, are at the top of the guide and in the
-"Guideideo" folder.
+"Guide" folder, inside "video".
+
+"About Athar" says what Athar is and what it does for a parent and for a teacher.
+The "Screenshots" folder has pictures of every main page, in English and in Arabic.
 
 Athar follows one learner across years and shows where that learner is strong, where they
 struggle, and where a struggle may have started. It is one program with two sides: one for a

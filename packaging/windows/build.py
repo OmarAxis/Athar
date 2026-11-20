@@ -154,6 +154,13 @@ def add_guide(stage: Path) -> None:
             f'<a href="Guide/guide.html?lang={lang}">Open the guide</a>\n', encoding="utf-8", newline="")
 
 
+def add_about(stage: Path) -> None:
+    """What Athar is and what it does for a parent and a teacher, with the pictures it shows, in English and Arabic."""
+    shutil.copytree(REPO / "docs" / "screenshots", stage / "Screenshots")
+    text = (REPO / "docs" / "ABOUT.md").read_text(encoding="utf-8").replace("](screenshots/", "](Screenshots/")
+    (stage / "About Athar.md").write_text(text.replace("\r\n", "\n").replace("\n", "\r\n"), encoding="utf-8", newline="")
+
+
 def copy_app(stage: Path) -> None:
     say("copying the app")
     app = stage / "app"
@@ -168,6 +175,7 @@ def copy_app(stage: Path) -> None:
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n").replace("\n", "\r\n")
         (stage / path.name).write_text(text, encoding="utf-8", newline="")
     add_guide(stage)
+    add_about(stage)
     (stage / "models").mkdir()
     (stage / "models" / "PUT THE MODEL FILE HERE.txt").write_text(
         "The model file goes in this folder: Qwen3.5-9B-Q4_K_M.gguf\r\n\r\n"
