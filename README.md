@@ -33,7 +33,9 @@ Underneath: a graph engine in plain code that reaches the conclusions, an agent 
 
 The full guide, with every step, is [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md)). In short:
 
-**Windows, no installing.** Download `Athar-windows.zip` from the Releases page, extract it, double-click **Start Athar**.
+**Windows, no installing, model inside (easiest).** Download `Athar-windows-with-model.zip` (6.4 GB) from the [Athar folder on Google Drive](https://drive.google.com/drive/folders/1Fg7QVpYEbY4f-Tua_oJ7YMvfS3-1tjMO), extract it, double-click **Start Athar**. Nothing else to download. The same folder has a `START HERE.txt`, two short videos and screenshots.
+
+**Windows, no installing, small download.** Download `Athar-windows.zip` from the Releases page, extract it, double-click **Start Athar**. The first start offers to fetch the model.
 
 **From the source.**
 

@@ -10,7 +10,7 @@ Pick one.
 
 ### A. Windows, no installing (easiest)
 
-1. Download `Athar-windows.zip` from the Releases page of this repository.
+1. Download `Athar-windows-with-model.zip` (6.4 GB) from the [Athar folder on Google Drive](https://drive.google.com/drive/folders/1Fg7QVpYEbY4f-Tua_oJ7YMvfS3-1tjMO). The model is inside, so there is nothing else to download. Google cannot scan a file this large, so press **Download anyway**. For a small download, take `Athar-windows.zip` from the Releases page of this repository instead; the first start then offers to fetch the model.
 2. Right-click the zip, choose **Extract All**, and open the extracted folder. Do not run it from inside the zip.
 3. Double-click **Start Athar**. A black window opens and stays open. If Windows shows "Windows protected your PC", choose **More info**, then **Run anyway**.
 4. Your browser opens at http://127.0.0.1:8780. If it does not, type that address yourself.
