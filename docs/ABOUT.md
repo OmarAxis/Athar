@@ -6,6 +6,8 @@ It is one program with two sides. A **parent** uses it at home for their own chi
 
 It runs on the person's own computer. It needs no internet, no account and no subscription, and nothing is sent anywhere.
 
+Arabic version: [ABOUT.ar.md](ABOUT.ar.md).
+
 ## The problem it answers
 
 A mark such as 12 out of 20 says that a child found a test hard. It does not say why. Very often the reason sits one or two years back: a child who cannot work with fractions in grade 6 may never have been secure in division in grade 4. Report cards do not show this, and every new school year starts from an empty page.
@@ -75,6 +77,11 @@ The model is an open-weights model (Qwen 3.5, 9B) that runs on the same computer
 | `Screenshots` | Pictures of every main page, in English and in Arabic, for anyone who writes about Athar. |
 | `models` | The model file, in the full package. |
 | `data` | Your records. It appears after the first start. Back this folder up. |
+
+## How to get it
+
+- **A parent or a teacher:** download `Athar-windows-with-model.zip` from the [Athar folder on Google Drive](https://drive.google.com/drive/folders/1Fg7QVpYEbY4f-Tua_oJ7YMvfS3-1tjMO) and open `START HERE.txt`. The model is inside and nothing needs installing.
+- **A developer:** the code is on [GitHub](https://github.com/OmarAxis/Athar). The steps are in [GETTING-STARTED.md](GETTING-STARTED.md).
 
 ## What the computer needs
 
