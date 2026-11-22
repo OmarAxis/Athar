@@ -196,3 +196,20 @@ CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- Topics a school adds to the installed curriculum: more grades, or another subject. A row starts as a
+-- draft (typed in, or read from a contents page by the model), a named teacher checks every topic and
+-- every link, and only an approved row is laid over the pack. The agent has no tool that touches this table.
+CREATE TABLE IF NOT EXISTS curriculum_additions (
+  id          TEXT PRIMARY KEY,              -- cur_xxxx
+  pack_id     TEXT NOT NULL,                 -- the installed pack it adds to
+  title       TEXT NOT NULL,
+  status      TEXT NOT NULL CHECK (status IN ('draft','approved','discarded','withdrawn')),
+  data        TEXT NOT NULL,                 -- JSON: the draft as the teacher sees and edits it
+  approved    TEXT,                          -- JSON: subject, areas, topics and links exactly as approved
+  read_by     TEXT NOT NULL,                 -- 'typed', or 'model:<name>' when a model read the document
+  created_by  TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  decided_by  TEXT,                          -- the teacher who approved, discarded or withdrew it
+  decided_at  TEXT
+);

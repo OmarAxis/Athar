@@ -279,3 +279,31 @@ What follows from this:
 - So nothing read from a photo is saved until the parent ticks that they checked every line against the paper.
   That tick is the real safeguard, and it depends on the parent actually checking.
 - This is a handful of drawn papers. It is not a measurement, and it says nothing yet about handwriting.
+
+### Reading a contents page to add to the curriculum
+
+Tried by hand in November 2026 with `qwen3.5-9b` on one computer. Both pages were made up for the test. **No
+real book was used**, and nobody who teaches the subject has judged the links. This is two pages, not a measurement.
+
+| Page | Topics | Links the model suggested | Time |
+|---|---|---|---|
+| Mathematics, grade 3, typed in English: 15 lessons in 6 units, two terms, with a revision line and a test line | 15 of 15, the revision and the test left out, terms and areas right, Arabic names added | 31 kept after the checks in code | 46 s |
+| Science, grade 3, a picture in Arabic: 9 lessons in 4 units, two terms, with a revision line | 9 of 9, the revision left out, areas right, English names added | 14 kept after the checks in code | 32 s |
+
+What went wrong on the way, and what was done:
+
+- First try, mathematics: the model shortened names and dropped the range ("Reading and writing numbers" for
+  "up to 10,000"), and gave almost every topic the same two "needs first" topics, 51 links in all. The prompt was
+  tightened, and code now removes a link that only repeats a longer path.
+- First try, science: it put every topic in term 1 although the page had a second-term heading, put the same two
+  thinking skills on all nine topics, and chained each topic to the one before it, so "States of matter" needed
+  "Parts of a plant". The prompt now names the term headings. Code now removes a skill that sits on nearly every
+  topic, and a suggested link between two new topics in different areas.
+- After those changes some links are still weak or wrong. "Sound and how it travels" needs "Light and shadow" was
+  suggested and kept, because both are in the same area. Several mathematics topics still lean on place value for
+  no strong reason.
+
+So the model is trusted to list topics, and not trusted on links. Nothing it returns is used until a named teacher
+has ticked that they checked every topic and every link. That check is the safeguard, and it depends on the teacher
+doing it.
+

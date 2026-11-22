@@ -254,3 +254,16 @@ def test_the_knowledge_graph_draws_itself_in_and_respects_reduced_motion(client)
     page = client.get("/").text
     assert "@keyframes kg-draw" in page and "pathLength: 1" in page
     assert "prefers-reduced-motion: reduce) { .kg-edge { animation: none" in page
+
+
+def test_the_school_page_has_the_curriculum_card_and_its_arabic(client):
+    import json
+    from pathlib import Path
+
+    page = client.get("/").text
+    arabic = json.loads((Path(__file__).parents[1] / "src" / "athar" / "web" / "static" / "ar.json").read_text(encoding="utf-8"))
+    for label in ("The curriculum", "Add topics", "Make a draft", "Check this draft", "Needs first:", "Needed by:",
+                  "I checked every topic and every link.", "Approve and add to the curriculum", "Discard this draft",
+                  "Let the model read it and suggest which topic needs which", "Read by the model"):
+        assert f'"{label}"' in page and label in arabic["exact"], label
+    assert "curriculumCard" in page and client.get("/api/curriculum").json()["additions"] == []

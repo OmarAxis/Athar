@@ -46,6 +46,25 @@ The assistant cannot approve anything. A learner's printable report is built fro
 
 **A new learner.** On the **School** page, use **Add a learner**. The learner gets a short record code.
 
+## Adding to the curriculum
+
+Athar comes with the Egyptian curriculum for grades 4 to 8. On the **School** page, under **The curriculum**, the school admin can add topics for another grade or another subject. Before sign-in is turned on, the teacher whose name is chosen can do it.
+
+1. Choose the subject (or type a new one), the grade and the term.
+2. Give Athar the topics. Type or paste them, one on each line, or upload the contents page of the book as a text, Word or Excel file, or as a picture. For a PDF, take a screenshot of the contents page.
+3. Tick **Let the model read it** if you want the model to list the topics and suggest which topic needs which. A picture is always read by the model. This takes about a minute.
+4. **Check the draft.** Every topic shows its name in both languages, its grade, term and area, the topics it needs first, and the later topics that need it. Fix the names. Remove every link you do not agree with and add the ones that are missing.
+5. Tick **I checked every topic and every link**, then press **Approve and add to the curriculum**.
+
+From then on the new topics appear in the marks sheet, the learning map and the trace-back.
+
+What to know:
+
+- The model reads topic names well. Its links are suggestions, and in our tries some were wrong. A wrong link sends a teacher or a parent to the wrong place to start helping, so the check in step 4 is the real safeguard.
+- The books that came with Athar are never changed. An addition sits on top of them, under your name.
+- An addition can be withdrawn as long as no record uses its topics. It cannot be edited after approval: withdraw it and make it again.
+- Parents cannot add to the curriculum.
+
 ## Sign-in
 
 Sign-in is off at first, so anyone at the computer can open Athar and act as any teacher. To turn it on, open the **School** page and create the school admin. From then on every page needs a username and a password, only the admin adds teachers, and each teacher sees only the learners of their own classes.

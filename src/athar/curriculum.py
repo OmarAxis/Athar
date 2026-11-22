@@ -1,9 +1,16 @@
 """Curriculum map: concepts and "needs this first" links, loaded from packs/<pack_id>/pack.yaml.
 
-We graph the school's curriculum; we never change it."""
+We graph the school's curriculum; we never change it.
+
+A school can add topics of its own (more grades, another subject). Those additions live in the database, each
+one approved by a named teacher, and are laid over the installed pack when it is loaded. The pack file itself
+is never rewritten, and an addition that does not fit is left out, so the installed curriculum always loads."""
 
 from __future__ import annotations
 
+import copy
+import json
+import sqlite3
 from collections import deque
 from contextvars import ContextVar
 from dataclasses import dataclass, field
@@ -16,6 +23,7 @@ from .config import get_settings
 
 SKILL_KINDS = ("thinking", "disposition")  # a disposition describes character, never a struggle finding
 _CACHE: dict[tuple[str, Path], Pack] = {}
+_MERGED: dict[tuple, Pack] = {}   # the same packs with a school's approved additions laid over them
 
 
 # The language labels are given in when a caller does not say. The web app sets it for each request from
@@ -51,6 +59,7 @@ class Pack:
     strand_subject: dict[str, str] = field(default_factory=dict)       # strand id -> subject id
     terms: int = 3                                                     # terms in a school year
     names: dict[str, str] = field(default_factory=dict)                # the pack's own name in other languages
+    additions: list[dict] = field(default_factory=list)               # what the school added: id, title, who approved, topic ids
 
     def title(self, lang: str | None = None) -> str:
         """The curriculum's name in the reader's language, else in English."""
@@ -93,9 +102,77 @@ def load_pack(pack_id: str | None = None, packs_dir: Path | None = None) -> Pack
     pack_id = pack_id or settings.default_pack
     folder = Path(packs_dir or settings.packs_dir).resolve()
     key = (pack_id, folder)
-    if key not in _CACHE:
-        _CACHE[key] = _read_pack(folder / pack_id / "pack.yaml")
-    return _CACHE[key]
+    stamp = _additions_stamp(pack_id, settings.db_path)
+    if not stamp:
+        if key not in _CACHE:
+            _CACHE[key] = _read_pack(folder / pack_id / "pack.yaml")
+        return _CACHE[key]
+    merged = (*key, str(settings.db_path), stamp)
+    if merged not in _MERGED:
+        for old in [k for k in _MERGED if k[:3] == merged[:3]]:
+            del _MERGED[old]
+        _MERGED[merged] = _read_pack(folder / pack_id / "pack.yaml", _additions(pack_id, settings.db_path))
+    return _MERGED[merged]
+
+
+def _query(db_path: Path, sql: str, params: tuple) -> list[tuple]:
+    """Read from the database without creating it. No file, or no such table yet, means no additions."""
+    path = Path(db_path)
+    if not path.exists():
+        return []
+    try:
+        conn = sqlite3.connect(path, timeout=5)
+        try:
+            return conn.execute(sql, params).fetchall()
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return []
+
+
+def _additions_stamp(pack_id: str, db_path: Path) -> tuple:
+    """Which additions are approved right now. Cheap, and it changes whenever one is approved or withdrawn."""
+    return tuple(_query(db_path, "SELECT id, decided_at FROM curriculum_additions WHERE pack_id = ? AND status = 'approved' "
+                                 "ORDER BY decided_at, id", (pack_id,)))
+
+
+def _additions(pack_id: str, db_path: Path) -> list[dict]:
+    found = []
+    for row in _query(db_path, "SELECT id, title, approved, decided_by, decided_at FROM curriculum_additions "
+                               "WHERE pack_id = ? AND status = 'approved' ORDER BY decided_at, id", (pack_id,)):
+        try:
+            body = json.loads(row[2])
+        except (TypeError, ValueError):
+            continue
+        if isinstance(body, dict):
+            found.append({**body, "id": row[0], "title": row[1], "decided_by": row[3], "decided_at": row[4]})
+    return found
+
+
+def apply_addition(data: dict, addition: dict) -> None:
+    """Lay one addition over pack data, in place: a subject if it is new, new areas, new topics, and links
+    from installed topics back to the new ones. Raises when it does not fit."""
+    subject = addition["subject"]
+    if subject["id"] not in {s["id"] for s in data["subjects"]}:
+        data["subjects"].append({"id": subject["id"], "label": dict(subject["label"])})
+    strands = {s["id"] for s in data["strands"]}
+    for strand in addition.get("strands") or []:
+        if strand["id"] in strands:
+            raise ValueError(f"area '{strand['id']}' is already in the curriculum")
+        data["strands"].append({"id": strand["id"], "label": dict(strand["label"]), "subject": subject["id"]})
+        strands.add(strand["id"])
+    by_id = {c["id"]: c for c in data["concepts"]}
+    for concept in addition["concepts"]:
+        if concept["id"] in by_id:
+            raise ValueError(f"topic '{concept['id']}' is already in the curriculum")
+        by_id[concept["id"]] = dict(concept)
+        data["concepts"].append(by_id[concept["id"]])
+    for link in addition.get("links") or []:
+        target = by_id[link["concept"]]
+        target["requires"] = list(dict.fromkeys(list(target.get("requires") or []) + list(link["requires"])))
+    grades = [int(c["grade"]) for c in addition["concepts"]]
+    if grades:
+        data["grades"] = [min(int(data["grades"][0]), *grades), max(int(data["grades"][1]), *grades)]
 
 
 def read_pack_data(path: Path) -> dict:
@@ -129,9 +206,28 @@ def read_pack_data(path: Path) -> dict:
     return data
 
 
-def _read_pack(path: Path) -> Pack:
-    """Parse pack.yaml into a Pack, then check it."""
+def _read_pack(path: Path, additions: list[dict] | tuple = ()) -> Pack:
+    """Parse pack.yaml into a Pack and check it, then lay each approved addition over it. An addition that
+    does not fit (a topic it leans on is gone, say) is left out and the rest still load."""
     data = read_pack_data(path)
+    pack = build_pack(data)
+    applied = []
+    for addition in additions:
+        trial = copy.deepcopy(data)
+        try:
+            apply_addition(trial, addition)
+            built = build_pack(trial)
+        except (ValueError, KeyError, TypeError, AttributeError):
+            continue
+        data, pack = trial, built
+        applied.append({"id": addition["id"], "title": addition.get("title"), "decided_by": addition.get("decided_by"),
+                        "decided_at": addition.get("decided_at"), "concepts": [c["id"] for c in addition["concepts"]]})
+    pack.additions = applied
+    return pack
+
+
+def build_pack(data: dict) -> Pack:
+    """Turn pack data (as `read_pack_data` returns it) into a checked Pack."""
     concepts = {c["id"]: _concept(c) for c in data.get("concepts", [])}
     pack = Pack(
         id=data["id"],
