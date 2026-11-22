@@ -40,6 +40,7 @@ Athar never compares your child with any other child, and it does not put a labe
 - **Trace back.** Click a weak topic and see the chain of earlier topics behind it, to find where the difficulty may have started.
 - **Patterns over time.** Which results held over several terms, and which teaching approaches were followed by better results.
 - **A review queue.** Every finding waits for a named teacher, who approves it, edits it or rejects it. Each finding lists the records behind it.
+- **More grades or subjects.** The school can add to the curriculum from a contents page. The model lists the topics and suggests links, and a teacher checks every one before it is used.
 - **Easy ways to add records.** A marks sheet you fill in with Excel, or a typed paper that the assistant reads.
 - **A printable report for each learner**, built from approved findings only.
 - **School tools.** Sign-in for teachers, classes (a teacher sees only their own learners), backup, and a log of every action and who did it.
