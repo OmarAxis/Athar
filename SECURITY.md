@@ -8,6 +8,7 @@ says what the code enforces today, what it does not, and how to report a problem
 | Rule | Where | Checked by |
 |---|---|---|
 | The agent cannot approve a finding or a note, or answer its own question. Those functions are not MCP tools. | `review.py`, `server.py` | `tests/test_server.py` |
+| The agent cannot add to the curriculum or approve an addition: there is no MCP tool for it. An addition is used only after a named teacher approves it, and on the family side nobody can add one. | `curriculum_add.py`, `web/app.py` | `tests/test_curriculum_add.py` |
 | Every tool call is written to the audit log, including refused ones, with who called it. | `audit.py` | `tests/test_tools.py` |
 | A finding must cite evidence that exists and belongs to that learner. | `tools.py` | `tests/test_tools.py` |
 | A statement that labels, ranks or tracks a child is refused, for the agent and for a teacher's edit. | `guard.py` | `tests/test_guard.py` |

@@ -69,7 +69,34 @@
   "That file is too large (the limit is 1 MB).": "الملف ده كبير (الحد الأقصى 1 ميجابايت).",
   "That file is not plain text. Save it as UTF-8 text and try again.": "الملف ده مش نص عادي. احفظه كنص بترميز UTF-8 وجرّب تاني.",
   "The process running this run stopped before it finished.": "التشغيل ده وقف قبل ما يخلص.",
-  "task needs a learner_id": "لازم تختار تلميذ للتشغيل."
+  "task needs a learner_id": "لازم تختار تلميذ للتشغيل.",
+  "Only the school admin can add to the curriculum.": "مسؤول المدرسة بس هو اللي يقدر يضيف للمنهج.",
+  "Adding to the curriculum is done on the school side.": "الإضافة للمنهج بتتعمل من ناحية المدرسة.",
+  "Tick the box to say you checked every topic and every link.": "علّم على المربع عشان تأكد إنك راجعت كل موضوع وكل ربط.",
+  "Choose your name first, so the record shows who approved this.": "اختار اسمك الأول، عشان السجل يبيّن مين اللي اعتمد ده.",
+  "That file is empty.": "الملف ده فاضي.",
+  "That file is too large (the limit is 8 MB).": "الملف ده كبير أوي (الحد 8 ميجا).",
+  "That picture is too large (the limit is 8 MB).": "الصورة دي كبيرة أوي (الحد 8 ميجا).",
+  "That Word file could not be opened. Paste the list of topics in instead.": "ملف الوورد ده ما اتفتحش. الصق قايمة الموضوعات بدل كده.",
+  "That Excel file could not be opened. Paste the list of topics in instead.": "ملف الإكسل ده ما اتفتحش. الصق قايمة الموضوعات بدل كده.",
+  "Athar does not read PDF files here. Take a screenshot or a photo of the contents page and upload that, or paste the list of topics in.": "أثر ما بيقراش ملفات PDF هنا. خد لقطة شاشة أو صورة لصفحة الفهرس وارفعها، أو الصق قايمة الموضوعات.",
+  "Use a text file (.txt, .md, .csv), a Word file (.docx), an Excel file (.xlsx), or a photo of the contents page (JPEG or PNG).": "استخدم ملف نصي (.txt أو .md أو .csv)، أو ملف وورد (.docx)، أو ملف إكسل (.xlsx)، أو صورة لصفحة الفهرس (JPEG أو PNG).",
+  "The model did not answer. Start it and try again, or type the topics in.": "النموذج ما ردش. شغله وجرب تاني، أو اكتب الموضوعات بنفسك.",
+  "The model could not read that. If it is a photo, the model may not be one that can see pictures. Paste the list of topics in instead.": "النموذج ما قدرش يقرا ده. لو دي صورة، ممكن النموذج مش من النوع اللي بيشوف الصور. الصق قايمة الموضوعات بدل كده.",
+  "The model did not return anything Athar could read. Type the topics in instead.": "النموذج ما رجعش حاجة أثر يقدر يقراها. اكتب الموضوعات بنفسك.",
+  "Choose the subject, or type the name of a new one.": "اختار المادة، أو اكتب اسم مادة جديدة.",
+  "There is no topic to add yet.": "مفيش موضوع يتضاف لسه.",
+  "Choose an area for every topic.": "اختار مجال لكل موضوع.",
+  "Two topics need each other, directly or through other topics. Remove one of the links and try again.": "فيه موضوعين محتاجين بعض، مباشرة أو عن طريق موضوعات تانية. شيل ربط منهم وجرب تاني.",
+  "That addition was not found.": "الإضافة دي مش موجودة.",
+  "That draft has already been decided.": "المسودة دي اتاخد فيها قرار قبل كده.",
+  "Only an approved addition can be withdrawn.": "الإضافة المعتمدة بس هي اللي ينفع تتسحب.",
+  "That picture is not one Athar can read. Use a JPEG or PNG picture.": "الصورة دي أثر مش قادر يقراها. استخدم صورة JPEG أو PNG.",
+  "A picture can only be read by the model. Turn that on, or type the topics in.": "الصورة النموذج بس هو اللي يقدر يقراها. شغل الاختيار ده، أو اكتب الموضوعات بنفسك.",
+  "Paste the list of topics, or choose a file or a picture of the contents page.": "الصق قايمة الموضوعات، أو اختار ملف أو صورة لصفحة الفهرس.",
+  "No topic was found in that. Type the topics in, one on each line.": "ما لقيناش أي موضوع في ده. اكتب الموضوعات، كل موضوع في سطر.",
+  "The model listed the topics but could not suggest links. Add them yourself below.": "النموذج كتب الموضوعات بس ما قدرش يقترح روابط. ضيفها بنفسك تحت.",
+  "The model is still starting. Wait a minute and try again.": "النموذج لسه بيشتغل. استنى دقيقة وجرب تاني."
  },
  "patterns": [
   {
@@ -1215,6 +1242,22 @@
   {
    "re": "^Run (.+?) is (.+?), not waiting for a teacher\\.$",
    "ar": "التشغيل $1 حالته ($2)، ومش مستني مدرس."
+  },
+  {
+   "re": "^Choose a grade from (\\d+) to (\\d+)\\.$",
+   "ar": "اختار صف من $1 إلى $2."
+  },
+  {
+   "re": "^This curriculum has (\\d+) terms in a year\\.$",
+   "ar": "المنهج ده فيه $1 ترم في السنة."
+  },
+  {
+   "re": "^This cannot be withdrawn: (\\d+) records already use its topics\\.$",
+   "ar": "ما ينفعش تتسحب: فيه $1 سجل بيستخدم موضوعاتها."
+  },
+  {
+   "re": "^This cannot be added as it is: (.*)$",
+   "ar": "ما ينفعش تتضاف بالشكل ده: $1"
   }
  ]
 }

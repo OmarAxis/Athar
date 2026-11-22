@@ -43,6 +43,7 @@ Who does what:
 | `src/athar/privacy.py` | Backup and restore, one learner's record as a file, deleting one learner, withdrawing a record |
 | `src/athar/imports.py` | Marks sheet template and upload, new learner records, documents for the agent |
 | `src/athar/family.py` | The family side: the school-or-family choice, a parent's children, results and notes typed at home, and the summary a parent reads (plain code, no model) |
+| `src/athar/curriculum_add.py` | Adding grades or a subject to the installed curriculum: a draft (typed, or read from a contents page by the model), plain-code checks, a named teacher's approval, withdrawal. Additions live in the database and `curriculum.py` lays them over the pack; pack files are never rewritten |
 | `src/athar/photo.py` | Reading a photo of a marked paper with the local model. Saves nothing; plain code checks the reply; refuses any model that is not on this computer |
 | `src/athar/i18n.py` | The Arabic lookup in Python, used by the report |
 | `src/athar/web/` | Teacher web app (FastAPI and one HTML file), and the Arabic dictionaries in `static/` |
@@ -52,7 +53,7 @@ Who does what:
 | `packs/egypt-*` | Egypt, grades 4 to 8, one pack per subject, and `egypt-school` which joins them. ALL DRAFT |
 | `packs/generic-*` | Small country-neutral packs, used by the evaluation set and as examples |
 | `packaging/windows/` | The offline Windows package: `build.py`, `launch.py`, model download, start files |
-| `tests/` | 347 tests, no model needed |
+| `tests/` | 363 tests, no model needed |
 
 ## Commands
 

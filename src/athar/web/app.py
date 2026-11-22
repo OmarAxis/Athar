@@ -22,6 +22,7 @@ from .. import (
     accounts,
     audit,
     classes,
+    curriculum_add,
     db,
     family,
     graph,
@@ -1037,6 +1038,112 @@ async def upload_document(request: Request, file: UploadFile = File(...),   # no
     audit.log_call("upload_document", {"file": saved["name"], "bytes": saved["bytes"]}, {"saved": True}, True, 0,
                    actor=f"teacher:{who}")
     return saved
+
+
+# ------------------------------------------------------------------ adding to the curriculum (school side)
+
+class DraftEdit(BaseModel):
+    title: str = ""
+    topics: list[dict[str, Any]] = []
+    areas: list[dict[str, Any]] = []
+    teacher_id: str = ""
+
+
+class DraftApprove(DraftEdit):
+    checked: bool = False
+
+
+class Actor(BaseModel):
+    teacher_id: str = ""
+
+
+def _curriculum_actor(request: Request, claimed: str | None) -> str:
+    """Who may add to the curriculum: the school admin once sign-in is on, and before that the teacher whose
+    name is chosen on the page. Never a parent: on the family side the curriculum arrives already reviewed."""
+    who = getattr(request.state, "who", None)
+    if who is not None:
+        if who["role"] != "admin":
+            raise accounts.NotAllowed("Only the school admin can add to the curriculum.")
+        return who["id"]
+    if family.mode() == "family":
+        raise accounts.NotAllowed("Adding to the curriculum is done on the school side.")
+    if not claimed:
+        raise ValueError("Choose your name first, so the record shows who did this.")
+    with db.connect() as conn:
+        if db.one(conn, "SELECT id FROM teachers WHERE id = ?", (claimed,)) is None:
+            raise ValueError("Choose your name first, so the record shows who did this.")
+    return claimed
+
+
+@app.get("/api/curriculum")
+def curriculum_view(request: Request) -> dict:
+    """What the school has added to the installed curriculum, and the drafts waiting for a teacher."""
+    pack = _pack()
+    who = getattr(request.state, "who", None)
+    found = curriculum_add.listing(pack)
+    found["can_add"] = (who["role"] == "admin") if who is not None else family.mode() != "family"
+    found["name"] = pack.title()
+    found["installed_grades"] = list(pack.grades)
+    return found
+
+
+@app.post("/api/curriculum/drafts")
+async def curriculum_draft(request: Request, file: UploadFile | None = File(None),   # noqa: B008
+                           title: str = Form(""), subject: str = Form(""), new_subject: str = Form(""),
+                           grade: int = Form(...), term: int = Form(0), text: str = Form(""),
+                           use_model: str = Form(""), teacher_id: str = Form("")) -> dict:
+    """Make a draft from pasted lines, a file, or a picture of a contents page. Nothing is added yet."""
+    actor = _curriculum_actor(request, teacher_id)
+    pack = _pack()
+    image, with_model = None, use_model in ("1", "true", "on", "yes")
+    if file is not None and file.filename:
+        data = await file.read(curriculum_add.MAX_FILE + 1)
+        if photo.kind_of(data):
+            image, with_model = data, True          # a picture can only be read by the model
+        else:
+            text = (text + "\n" + curriculum_add.text_of_file(file.filename, data)).strip()
+    model = None
+    if with_model:
+        model = get_settings().llm_model
+        try:
+            from ..agent import llm
+            model = _usable_model(llm.list_models(), model)
+        except Exception:  # noqa: BLE001, S110 - if the model is off, the reading step says so in plain words
+            pass
+    return await run_in_threadpool(lambda: curriculum_add.create_draft(
+        pack, title=title, subject_id=subject, new_subject=new_subject, grade=grade, term=term, text=text, image=image,
+        use_model=with_model, model=model, actor=actor))
+
+
+@app.get("/api/curriculum/drafts/{addition_id}")
+def curriculum_get(addition_id: str, request: Request, teacher_id: str = "") -> dict:
+    _curriculum_actor(request, teacher_id)
+    return curriculum_add.get(_pack(), addition_id)
+
+
+@app.post("/api/curriculum/drafts/{addition_id}")
+def curriculum_save(addition_id: str, body: DraftEdit, request: Request) -> dict:
+    actor = _curriculum_actor(request, body.teacher_id)
+    return curriculum_add.save_draft(_pack(), addition_id, title=body.title, topics=body.topics, areas=body.areas, actor=actor)
+
+
+@app.post("/api/curriculum/drafts/{addition_id}/approve")
+def curriculum_approve(addition_id: str, body: DraftApprove, request: Request) -> dict:
+    """A named teacher approves the draft exactly as it is on their screen."""
+    actor = _curriculum_actor(request, body.teacher_id)
+    pack = _pack()
+    curriculum_add.save_draft(pack, addition_id, title=body.title, topics=body.topics, areas=body.areas, actor=actor)
+    return curriculum_add.approve(pack, addition_id, teacher_id=actor, checked=body.checked)
+
+
+@app.post("/api/curriculum/drafts/{addition_id}/discard")
+def curriculum_discard(addition_id: str, body: Actor, request: Request) -> dict:
+    return curriculum_add.discard(addition_id, actor=_curriculum_actor(request, body.teacher_id))
+
+
+@app.post("/api/curriculum/additions/{addition_id}/withdraw")
+def curriculum_withdraw(addition_id: str, body: Actor, request: Request) -> dict:
+    return curriculum_add.withdraw(addition_id, actor=_curriculum_actor(request, body.teacher_id))
 
 
 # ------------------------------------------------------------------ page

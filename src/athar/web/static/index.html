@@ -156,6 +156,13 @@ button.linkish:hover { color: var(--bad); }
 .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .stack > * + * { margin-top: 10px; }
 .err { color: var(--bad); font-weight: 600; }
+.cur-topic { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; margin: 8px 0; }
+.cur-topic .row { align-items: flex-end; }
+.cur-topic .field.wide { flex: 1 1 280px; }
+.cur-topic .field.wide input { width: 100%; }
+.cur-links { margin-top: 8px; align-items: center !important; }
+.cur-links select { max-width: 260px; }
+.cur-n { min-width: 22px; color: var(--muted); align-self: center; }
 .okmsg { display: inline-block; color: var(--ok); background: var(--ok-soft); font-weight: 600; padding: 6px 12px; border-radius: var(--radius-sm); margin-top: 8px; }
 .empty { padding: 28px; color: var(--muted); text-align: center; }
 .foot { margin: 32px 0 0; padding-top: 16px; border-top: 1px solid var(--line); max-width: 90ch; }
@@ -2365,6 +2372,12 @@ async function viewPeople(root) {
     await loadPeople();
   }
 
+  if ((admin || demo) && !FAMILY) {
+    const cur = h("div", { class: "card" });
+    root.append(cur);
+    try { await curriculumCard(cur); } catch (e) { cur.append(h("p", { class: "err", role: "alert", text: e.message })); }
+  }
+
   if (admin || demo) {
     // ---- looking after the records
     const bbox = h("div");
@@ -2435,6 +2448,226 @@ async function viewPeople(root) {
     root.append(h("div", { class: "card" }, h("h3", { text: "My password" }),
       h("div", { class: "row" }, field("Current password", cur), field("New password", next), pbtn), pmsg));
   }
+}
+
+// ---------------------------------------------------------------- the curriculum: what the school added, and adding more
+// A draft comes from typed lines or from a page the model read. A teacher checks every topic and every link
+// here, and only an approved draft is laid over the installed curriculum. Topic names are data: they are
+// marked dir="auto" so the page dictionary leaves them alone.
+const nameOf = (x) => (LANG === "ar" && x.ar) || x.en || x.label || x.id;
+async function curriculumCard(card) {
+  const head = h("p"), listBox = h("div"), formBox = h("div"), msg = h("div"), draftBox = h("div");
+  clear(card).append(h("h3", { text: "The curriculum" }), head,
+    h("p", { class: "muted", text: "You can add topics for another grade or another subject. A model can read a contents page and suggest which topic needs which, but nothing is added until a teacher has checked every topic and every link." }),
+    listBox, formBox, msg, draftBox);
+  let info = null;
+  const who = () => teacherId() || "";
+  const statusPill = (a) => a.status === "approved" ? h("span", { class: "pill ok", text: "In the curriculum" })
+    : a.status === "draft" ? h("span", { class: "pill", text: "Draft, not added yet" }) : h("span", { class: "pill plain", text: "Withdrawn" });
+
+  async function afterChange(text) {
+    state.session = await api("/api/session");
+    state.graphs = {};
+    clear(draftBox);
+    await reload();
+    sayIn(msg, "okmsg", text);
+  }
+  async function withdraw(a) {
+    if (!window.confirm(tr("Take this addition out of the curriculum again? Its topics will no longer be shown."))) return;
+    try { await post("/api/curriculum/additions/" + encodeURIComponent(a.id) + "/withdraw", { teacher_id: who() }); await afterChange("Withdrawn from the curriculum."); }
+    catch (e) { sayIn(msg, "err", e.message); }
+  }
+  async function openDraft(id) {
+    try { showDraft(await api("/api/curriculum/drafts/" + encodeURIComponent(id) + "?teacher_id=" + encodeURIComponent(who()))); }
+    catch (e) { sayIn(msg, "err", e.message); }
+  }
+
+  async function reload() {
+    info = await api("/api/curriculum");
+    clear(head).append("Installed: ", h("strong", { dir: "auto", text: info.name }), ". ",
+      h("span", { text: "Grades " + info.installed_grades[0] + " to " + info.installed_grades[1] }));
+    clear(listBox);
+    if (info.additions.length) {
+      listBox.append(h("div", { class: "tablewrap", style: "margin:10px 0" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Added by the school", "Topics", "Links", "Status", "Decided by", "Action"].map((t) => h("th", { scope: "col", text: t })))),
+        h("tbody", {}, info.additions.map((a) => h("tr", {},
+          h("td", { dir: "auto", text: a.title }), h("td", { text: String(a.topic_count) }), h("td", { text: String(a.links) }),
+          h("td", {}, statusPill(a)), h("td", { dir: "auto", text: a.status === "draft" ? "" : (a.decided_by || "") }),
+          h("td", {}, !info.can_add ? null
+            : a.status === "draft" ? h("button", { type: "button", onclick: () => openDraft(a.id) }, "Open the draft")
+            : a.status === "approved" ? h("button", { type: "button", class: "linkish", onclick: () => withdraw(a) }, "Withdraw") : null)))))));
+    }
+    drawForm();
+  }
+
+  function drawForm() {
+    clear(formBox);
+    if (!info.can_add) { formBox.append(h("p", { class: "small muted", text: "Only the school admin can add to the curriculum." })); return; }
+    const title = h("input", { type: "text", id: "cur-title", maxlength: 80, dir: "auto" });
+    const subject = h("select", { id: "cur-subject", dir: "auto" }, info.subjects.map((x) => h("option", { value: x.id, text: x.label })),
+      h("option", { value: "", text: tr("A new subject") }));
+    const newSubject = h("input", { type: "text", id: "cur-new-subject", maxlength: 60, dir: "auto" });
+    const newField = field("Name of the new subject", newSubject);
+    newField.hidden = true;
+    subject.onchange = () => { newField.hidden = subject.value !== ""; };
+    const grade = h("select", { id: "cur-grade" });
+    for (let g = info.grades[0]; g <= info.grades[1]; g++) grade.append(h("option", { value: g, text: "Grade " + g }));
+    grade.value = String(Math.max(info.grades[0], info.installed_grades[0] - 1));
+    const term = h("select", { id: "cur-term" }, h("option", { value: 0, text: "As the page says" }));
+    for (let n = 1; n <= info.terms; n++) term.append(h("option", { value: n, text: "Term " + n }));
+    const text = h("textarea", { id: "cur-text", rows: 7, dir: "auto" });
+    const file = h("input", { type: "file", id: "cur-file", accept: ".txt,.md,.csv,.docx,.xlsx,image/png,image/jpeg,image/webp" });
+    const useModel = h("input", { type: "checkbox", id: "cur-model" });
+    const go = h("button", { type: "button", class: "primary" }, "Make a draft");
+    go.onclick = async () => {
+      const form = new FormData();
+      form.append("title", title.value);
+      form.append("subject", subject.value);
+      form.append("new_subject", newSubject.value);
+      form.append("grade", grade.value);
+      form.append("term", term.value);
+      form.append("text", text.value);
+      form.append("use_model", useModel.checked ? "1" : "");
+      form.append("teacher_id", who());
+      const picked = file.files[0];
+      if (picked) form.append("file", picked);
+      const reads = useModel.checked || (picked && picked.type.startsWith("image/"));
+      go.disabled = true;
+      sayIn(msg, "muted", reads ? "The model is reading it. This can take a minute or two." : "Making the draft.");
+      try {
+        const d = await postForm("/api/curriculum/drafts", form);
+        clear(msg);
+        await reload();
+        showDraft(d);
+      } catch (e) { sayIn(msg, "err", e.message); go.disabled = false; }
+    };
+    formBox.append(h("h3", { style: "margin-top:18px", text: "Add topics" }),
+      h("div", { class: "row" }, field("Subject", subject), newField, field("Grade", grade), field("Term", term), field("A name for this addition (optional)", title)),
+      h("div", { style: "margin-top:10px" }, field("The topics, one on each line", text)),
+      h("p", { class: "small muted", text: "A line such as \"Term 2\" sets the term for the lines under it. A line that starts with # names the area. Write \"English name | Arabic name\" to give both names." }),
+      h("div", { class: "row" }, field("Or a file, or a picture of the contents page", file)),
+      h("p", { class: "small muted", text: "A text, Word or Excel file, or a JPEG or PNG picture. A picture is always read by the model. For a PDF, upload a screenshot of its contents page." }),
+      h("label", { class: "famcheck", for: "cur-model" }, useModel, " ", h("span", { text: "Let the model read it and suggest which topic needs which" })),
+      h("div", { class: "row", style: "margin-top:10px" }, go));
+  }
+
+  function showDraft(d) {
+    const M = d.menus;
+    const installed = new Map(M.topics.map((t) => [t.id, t]));
+    const gradeWord = (g) => tr("Grade " + g);
+    const topicName = (ref) => {
+      const old = installed.get(ref);
+      if (old) return nameOf(old) + " · " + gradeWord(old.grade);
+      const fresh = d.topics.find((x) => x.key === ref);
+      return fresh ? (nameOf(fresh) || tr("New topic")) : ref;
+    };
+    const skillName = (id) => nameOf(M.skills.find((x) => x.id === id) || { en: id });
+    const titleIn = h("input", { type: "text", id: "cur-d-title", maxlength: 80, value: d.title, dir: "auto" });
+    const list = h("div"), dmsg = h("div"), counts = h("p", { class: "small muted" });
+    const body = () => ({ teacher_id: who(), title: titleIn.value, topics: d.topics, areas: d.areas });
+    const at = (t) => t.grade * 10 + t.term;
+
+    const pills = (items, label, remove) => items.map((ref) => h("span", { class: "pill plain", dir: "auto" }, label(ref), " ",
+      h("button", { type: "button", class: "x", "aria-label": tr("Remove"), onclick: () => { remove(ref); draw(); } }, "×")));
+    const adder = (id, label, options, add) => {
+      const sel = h("select", { id, dir: "auto", "aria-label": tr(label) }, h("option", { value: "", text: tr(label) }),
+        options.map(([value, text]) => h("option", { value, text })));
+      sel.onchange = () => { if (sel.value) { add(sel.value); draw(); } };
+      return sel;
+    };
+    const wide = (el) => { el.classList.add("wide"); return el; };
+    const numbers = (id, from, to, word, chosen) => {
+      const sel = h("select", { id });
+      for (let n = from; n <= to; n++) sel.append(h("option", { value: n, text: word + n }));
+      sel.value = String(chosen);
+      return sel;
+    };
+
+    function block(t, i) {
+      const en = h("input", { type: "text", id: "cur-en-" + i, value: t.en, maxlength: 120, dir: "ltr" });
+      en.oninput = () => { t.en = en.value; };
+      const ar = h("input", { type: "text", id: "cur-ar-" + i, value: t.ar || "", maxlength: 120, dir: "rtl", lang: "ar" });
+      ar.oninput = () => { t.ar = ar.value; };
+      const grade = numbers("cur-g-" + i, info.grades[0], info.grades[1], "Grade ", t.grade);
+      grade.onchange = () => { t.grade = Number(grade.value); draw(); };
+      const term = numbers("cur-t-" + i, 1, info.terms, "Term ", t.term);
+      term.onchange = () => { t.term = Number(term.value); draw(); };
+      const areas = [...M.areas.map((a) => [a.id, nameOf(a)]), ...d.areas.map((a) => [a.key, nameOf(a)])];
+      const area = h("select", { id: "cur-a-" + i, dir: "auto" }, areas.map(([value, text]) => h("option", { value, text })),
+        h("option", { value: "+", text: tr("A new area") }));
+      area.value = t.area;
+      area.onchange = () => {
+        if (area.value !== "+") { t.area = area.value; return; }
+        const name = (window.prompt(tr("Name of the new area")) || "").trim();
+        if (name) { const key = "n" + Date.now().toString(36); d.areas.push({ key, en: name, ar: "" }); t.area = key; }
+        draw();
+      };
+      // What a topic can lean on: installed topics of the same grade or earlier, and new topics taught no later.
+      const before = [...M.topics.filter((x) => x.grade <= t.grade && !t.needs.includes(x.id)).reverse().map((x) => [x.id, topicName(x.id)]),
+        ...d.topics.filter((x) => x !== t && at(x) <= at(t) && !t.needs.includes(x.key)).map((x) => [x.key, topicName(x.key)])];
+      const after = M.topics.filter((x) => x.grade >= t.grade && !t.needed_by.includes(x.id)).map((x) => [x.id, topicName(x.id)]);
+      const skills = M.skills.filter((x) => !t.skills.includes(x.id)).map((x) => [x.id, nameOf(x)]);
+      return h("div", { class: "cur-topic" },
+        h("div", { class: "row" }, h("strong", { class: "cur-n", text: String(i + 1) }),
+          wide(field("Name in English", en)), wide(field("Name in Arabic", ar)), field("Grade", grade), field("Term", term), field("Area", area),
+          t.from === "model" ? h("span", { class: "pill", text: "Read by the model" }) : null,
+          h("button", { type: "button", class: "linkish", onclick: () => {
+            d.topics = d.topics.filter((x) => x !== t);
+            for (const x of d.topics) x.needs = x.needs.filter((ref) => ref !== t.key);
+            draw();
+          } }, "Remove this topic")),
+        h("div", { class: "row cur-links" }, h("span", { class: "small muted", text: "Needs first:" }),
+          pills(t.needs, topicName, (ref) => { t.needs = t.needs.filter((x) => x !== ref); }),
+          t.needs.length < 3 ? adder("cur-n-" + i, "Add a topic it needs first", before, (v) => { t.needs.push(v); }) : null),
+        h("div", { class: "row cur-links" }, h("span", { class: "small muted", text: "Needed by:" }),
+          pills(t.needed_by, topicName, (ref) => { t.needed_by = t.needed_by.filter((x) => x !== ref); }),
+          after.length ? adder("cur-b-" + i, "Add a later topic that needs this one", after, (v) => { t.needed_by.push(v); }) : null),
+        h("div", { class: "row cur-links" }, h("span", { class: "small muted", text: "Thinking skills:" }),
+          pills(t.skills, skillName, (id) => { t.skills = t.skills.filter((x) => x !== id); }),
+          t.skills.length < 3 && skills.length ? adder("cur-s-" + i, "Add a thinking skill", skills, (v) => { t.skills.push(v); }) : null));
+    }
+    function draw() {
+      clear(list).append(...d.topics.map(block));
+      const links = d.topics.reduce((n, t) => n + t.needs.length + t.needed_by.length, 0);
+      clear(counts).append(h("span", { text: "Topics:" }), " " + d.topics.length + ". ", h("span", { text: "Links:" }), " " + links + ".");
+    }
+
+    const tick = h("input", { type: "checkbox", id: "cur-checked" });
+    const approve = h("button", { type: "button", class: "primary" }, "Approve and add to the curriculum");
+    approve.onclick = async () => {
+      if (!tick.checked) { sayIn(dmsg, "err", "Tick the box to say you checked every topic and every link."); return; }
+      try { await post("/api/curriculum/drafts/" + encodeURIComponent(d.id) + "/approve", { ...body(), checked: true }); await afterChange("Added to the curriculum."); }
+      catch (e) { sayIn(dmsg, "err", e.message); }
+    };
+    const save = h("button", { type: "button" }, "Save the draft");
+    save.onclick = async () => {
+      try { const saved = await post("/api/curriculum/drafts/" + encodeURIComponent(d.id), body()); await reload(); showDraft(saved); sayIn(msg, "okmsg", "Draft saved."); }
+      catch (e) { sayIn(dmsg, "err", e.message); }
+    };
+    const drop = h("button", { type: "button", class: "linkish" }, "Discard this draft");
+    drop.onclick = async () => {
+      if (!window.confirm(tr("Discard this draft? Nothing was added to the curriculum."))) return;
+      try { await post("/api/curriculum/drafts/" + encodeURIComponent(d.id) + "/discard", { teacher_id: who() }); clear(draftBox); await reload(); sayIn(msg, "okmsg", "Draft discarded."); }
+      catch (e) { sayIn(dmsg, "err", e.message); }
+    };
+    const more = h("button", { type: "button" }, "+ Add a topic");
+    more.onclick = () => {
+      const first = (M.areas[0] || {}).id || (d.areas[0] || {}).key || "";
+      d.topics.push({ key: "n" + Date.now().toString(36), en: "", ar: "", grade: d.grade, term: d.term || 1, area: first, skills: [], needs: [], needed_by: [], from: "typed" });
+      draw();
+    };
+    clear(draftBox).append(h("div", {}, h("h3", { style: "margin-top:22px", text: "Check this draft" }),
+      h("p", { class: "muted", text: "Nothing here is in the curriculum yet. Check every name, and every link in both directions. A wrong link sends a teacher or a parent to the wrong place to start helping." }),
+      d.note ? h("p", { class: "err", text: d.note }) : null,
+      h("div", { class: "row" }, field("Name of this addition", titleIn)), counts, list,
+      h("div", { class: "row" }, more),
+      h("label", { class: "famcheck", for: "cur-checked", style: "margin-top:14px" }, tick, " ", h("span", { text: "I checked every topic and every link." })),
+      h("div", { class: "row", style: "margin-top:10px" }, approve, save, drop), dmsg));
+    draw();
+    draftBox.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
+  await reload();
 }
 
 // ---------------------------------------------------------------- family mode: a parent and their own children
