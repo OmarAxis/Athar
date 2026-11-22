@@ -4,6 +4,15 @@ Athar follows one learner across years and shows a teacher where that learner is
 
 Status: stage two, on synthetic data only. It has not been used with a real teacher or a real learner. Do not put real learner data in it yet. See [SECURITY.md](SECURITY.md).
 
+## Which one is for you
+
+| You are | Take this | Then read |
+|---|---|---|
+| A parent or a teacher | `Athar-windows-with-model.zip` from the [Athar folder on Google Drive](https://drive.google.com/drive/folders/1Fg7QVpYEbY4f-Tua_oJ7YMvfS3-1tjMO). The model is inside. Nothing to install. | `START HERE.txt` in that folder ([بالعربي: «ابدأ من هنا»](https://drive.google.com/drive/folders/1Fg7QVpYEbY4f-Tua_oJ7YMvfS3-1tjMO)), then the guide inside the program |
+| A developer | This repository: `git clone https://github.com/OmarAxis/Athar.git` | [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md)), [ARCHITECTURE.md](ARCHITECTURE.md), [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+What Athar does, in one page: [About Athar](docs/ABOUT.md) ([بالعربي](docs/ABOUT.ar.md)).
+
 ## What it has
 
 - **The Egyptian curriculum for grades 4 to 8** (Primary 4 to Preparatory 2) as a map of topics and what each topic needs first, in five subjects. Every topic has its grade, its term and its source. All five maps are drafts: see "What is not finished".
@@ -141,7 +150,7 @@ The same four jobs are on the School page for the admin. A backup holds names an
 ## Guides
 
 - [Getting it running](docs/GETTING-STARTED.md) ([بالعربي](docs/GETTING-STARTED.ar.md))
-- [About Athar: what it does for a parent and for a teacher](docs/ABOUT.md), with [screenshots](docs/screenshots) in English and Arabic
+- [About Athar: what it does for a parent and for a teacher](docs/ABOUT.md) ([بالعربي](docs/ABOUT.ar.md)), with [screenshots](docs/screenshots) in English and Arabic
 - [For parents: the first five minutes](docs/FOR-PARENTS.md) ([بالعربي](docs/FOR-PARENTS.ar.md))
 - [For teachers: the first ten minutes](docs/FOR-TEACHERS.md) ([بالعربي](docs/FOR-TEACHERS.ar.md))
 - Two short videos (English voice, made-up data): [for parents](src/athar/web/static/guide/video/athar-for-parents.mp4) and [for teachers](src/athar/web/static/guide/video/athar-for-teachers.mp4)

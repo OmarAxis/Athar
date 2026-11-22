@@ -304,3 +304,16 @@ def test_the_read_me_has_no_stray_control_characters():
     text = (PACKAGING / "files" / "READ ME FIRST.txt").read_text(encoding="utf-8")
     assert not [c for c in text if ord(c) < 32 and c not in "\r\n\t"]
     assert "About Athar" in text and "Screenshots" in text
+
+
+def test_the_arabic_about_page_shows_pictures_that_exist_and_matches_the_glossary():
+    import re
+
+    docs = PACKAGING.parents[1] / "docs"
+    about = (docs / "ABOUT.ar.md").read_text(encoding="utf-8")
+    assert "\u2014" not in about and "\u2013" not in about
+    pictures = re.findall(r"\]\((screenshots/[^)]+)\)", about)
+    assert len(pictures) >= 4 and all((docs / p).is_file() for p in pictures)
+    assert "ولي الأمر" in about and "المدرس" in about and "النموذج" in about
+    for name in ("ABOUT.ar.md", "GETTING-STARTED.ar.md"):
+        assert "الموديل" not in (docs / name).read_text(encoding="utf-8")       # the glossary says النموذج
